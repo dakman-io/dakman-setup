@@ -14,3 +14,7 @@
 .env
 .env.*
 !.env.example
+
+# drawio 백업/잠금 파일
+.$*.bkp
+**/.$*.bkp

@@ -180,7 +180,7 @@
   <tr><th>#</th><th>산출물</th><th class="c">T1</th><th class="c">T2</th><th class="c">T3</th></tr>
   <tr><td>1 브리핑</td><td>작업 범위·접근·예상 변경·Tier·AI/사용자 시간</td><td class="c"><span class="badge b-skip">짧게</span></td><td class="c">✓</td><td class="c">✓</td></tr>
   <tr><td>2 기획</td><td><code>artifacts/planning/user-stories/*.md</code></td><td class="c"><span class="badge b-skip">skip</span></td><td class="c">최소</td><td class="c">✓ 정식</td></tr>
-  <tr><td>3 디자인</td><td><code>artifacts/planning/design/*</code> + 매핑</td><td class="c"><span class="badge b-skip">skip</span></td><td class="c">UI 시</td><td class="c">✓</td></tr>
+  <tr><td>3 디자인</td><td><code>artifacts/design/*</code> + 매핑</td><td class="c"><span class="badge b-skip">skip</span></td><td class="c">UI 시</td><td class="c">✓</td></tr>
   <tr><td>4 구현</td><td><code>feature/*</code> + 인수·단위 테스트 + 코드 + 디자인 대조</td><td class="c">테스트 면제 가능</td><td class="c">✓</td><td class="c">✓</td></tr>
   <tr><td>5 검증</td><td>리뷰 파일, E2E flow, pass-fail 로그</td><td class="c">자체 점검</td><td class="c">1회</td><td class="c">풀 루프</td></tr>
   <tr><td>6 형상관리</td><td>검수 + todo 갱신 + PR + merge</td><td class="c">✓</td><td class="c">✓</td><td class="c">✓</td></tr>
@@ -312,7 +312,7 @@
 <table>
   <tr><th>구역</th><th>문서</th></tr>
   <tr><td>설정·본문</td><td><code>docs/project-setup.md</code> (브랜치 전략·폴더 구조) · <code>docs/workflow.md</code>+<code>.drawio</code></td></tr>
-  <tr><td>planning</td><td><code>prd.md</code> · <code>user-stories/</code> · <code>architecture.md</code> · <code>ci-cd.md</code> · <code>design/design-system.md</code> · <code>design/us-to-frame-map.md</code></td></tr>
+  <tr><td>planning · design</td><td><code>prd.md</code> · <code>user-stories/</code> · <code>architecture.md</code> · <code>ci-cd.md</code> / <code>design/design-system.md</code> · <code>design/us-to-frame-map.md</code> (최상위 <code>artifacts/design/</code>)</td></tr>
   <tr><td>review · tests · progress</td><td>리뷰 이슈 파일 · E2E 로그/커버리지 · <code>todo.md</code>(spine) · <code>loop-triage.md</code></td></tr>
   <tr><td>.claude</td><td><code>agents/*.md</code> (6개 역할) · <code>skills/</code> · 글로벌 스킬 <code>multi-ai-discussion</code></td></tr>
   <tr><td>근거</td><td><code>docs/loop-engineering.md</code> (<a href="https://x.com/addyosmani/status/2064127981161959567">Addy Osmani 아티클</a>) · <code>workflow-tier-utility.md</code> · <code>loop-engineering-workflow.md</code> (3자 토론 결론)</td></tr>

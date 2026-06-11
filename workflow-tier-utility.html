@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>workflow.md Tier 분류 효용성 — 3자 토론 결론</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#181b24; --panel2:#1f2330; --line:#2a2f3e;
+    --text:#e6e9f0; --muted:#9aa3b5; --accent:#5b8def;
+    --ok:#2ea870; --ok-bg:#10331f; --warn:#d9a23a; --warn-bg:#33260e; --bad:#c75462; --bad-bg:#331318;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:"Apple SD Gothic Neo","Pretendard","Noto Sans KR",system-ui,sans-serif;line-height:1.65;padding:40px 20px;max-width:1080px;margin:0 auto}
+  h1{font-size:1.7rem;margin-bottom:6px}
+  h2{font-size:1.2rem;margin:38px 0 14px;padding-left:12px;border-left:4px solid var(--accent)}
+  .sub{color:var(--muted);font-size:.9rem;margin-bottom:24px}
+  .sub code{background:var(--panel2);padding:1px 6px;border-radius:4px;font-size:.82rem}
+
+  .verdict{background:linear-gradient(135deg,#16243d,#1b2030);border:1px solid #2e4a7a;border-radius:14px;padding:24px 28px;margin:22px 0}
+  .verdict .big{font-size:1.25rem;font-weight:800;line-height:1.5}
+  .verdict .big em{color:#8db4f8;font-style:normal}
+  .verdict p{margin-top:10px;color:var(--muted);font-size:.93rem}
+  .unanimous{display:inline-block;background:var(--ok-bg);color:#6fd9a6;border:1px solid var(--ok);border-radius:99px;padding:2px 12px;font-size:.8rem;font-weight:700;margin-bottom:12px}
+
+  table{width:100%;border-collapse:collapse;background:var(--panel);border-radius:10px;overflow:hidden;font-size:.9rem}
+  th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  th{background:var(--panel2);font-size:.82rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  tr:last-child td{border-bottom:none}
+  td.c,th.c{text-align:center}
+
+  .badge{display:inline-block;border-radius:6px;padding:2px 9px;font-size:.78rem;font-weight:700;white-space:nowrap}
+  .b-ok{background:var(--ok-bg);color:#6fd9a6;border:1px solid var(--ok)}
+  .b-warn{background:var(--warn-bg);color:#ecc678;border:1px solid var(--warn)}
+  .b-bad{background:var(--bad-bg);color:#ef93a0;border:1px solid var(--bad)}
+  .b-final{background:#16243d;color:#8db4f8;border:1px solid #2e4a7a}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:16px 0}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px}
+  .card h3{font-size:.95rem;margin-bottom:8px;color:#c6d4f5}
+  .card p{font-size:.88rem;color:var(--muted)}
+  .card .tag{float:right}
+
+  ol.fixes{counter-reset:fix;list-style:none;margin:14px 0}
+  ol.fixes li{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:13px 16px 13px 56px;margin-bottom:9px;position:relative;font-size:.92rem}
+  ol.fixes li::before{counter-increment:fix;content:counter(fix);position:absolute;left:16px;top:13px;width:26px;height:26px;border-radius:8px;background:#16243d;color:#8db4f8;border:1px solid #2e4a7a;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem}
+  ol.fixes li.core{border-color:#3b65a8}
+  ol.fixes b{color:#dbe5fa}
+  ol.fixes .ref{display:block;color:var(--muted);font-size:.8rem;margin-top:4px}
+  .legend{font-size:.82rem;color:var(--muted);margin:8px 0 4px}
+
+  .dissent{background:var(--panel);border:1px dashed var(--warn);border-radius:12px;padding:18px 22px;margin:14px 0}
+  .dissent h3{color:#ecc678;font-size:.95rem;margin-bottom:10px}
+  .dissent li{margin:8px 0 8px 18px;font-size:.9rem;color:#cfd6e4}
+  .dissent b{color:#ecc678}
+
+  .flow{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 20px;font-size:.9rem;color:var(--muted)}
+  .flow b{color:var(--text)}
+  footer{margin-top:42px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:.8rem}
+  a{color:#8db4f8}
+</style>
+</head>
+<body>
+
+<h1>workflow.md Tier 분류의 효용성 — 3자 토론 결론</h1>
+<div class="sub">
+  Claude(진행자) × Codex(내적 일관성 렌즈) × Gemini(외부 접지·현실성 렌즈) · 2라운드 · 2026-06-11<br>
+  공유 칠판 + 반증 의무 + 오라클 정박(문서 라인 인용 강제) · 원본 전사: <code>.cmux/debates/workflow-tier-utility/board.md</code> · 정본: <code>workflow-tier-utility.md</code>
+</div>
+
+<div class="verdict">
+  <span class="unanimous">3 / 3 만장일치 · confidence 0.85 ~ 0.88</span>
+  <div class="big">Tier 분류 체계는 효용이 실재한다 — 폐기하지 않는다.<br>그러나 현재 문서 그대로는 결함이 있어 결론은 <em>"유지"가 아니라 "수정"</em>이다.</div>
+  <p>유의: 만장일치는 첫 라운드의 합의가 아니라, claude 주장 1건 기각·gemini 주장 2건 교정·codex 제안 1건 조건화를 거친 <b>상호 반박 후 수렴</b>이다.</p>
+</div>
+
+<h2>질문별 최종 판정</h2>
+<table>
+  <tr><th>질문</th><th class="c">claude</th><th class="c">codex</th><th class="c">gemini</th><th class="c">최종</th></tr>
+  <tr><td>Q1. Tier 체계 자체 (유지/수정/폐기)</td><td class="c">수정<sup>†</sup></td><td class="c">수정</td><td class="c">수정</td><td class="c"><span class="badge b-final">수정</span></td></tr>
+  <tr><td>Q2a. §2 판정 함수 정리 (yes/no vs "중간" 혼용)</td><td class="c">채택</td><td class="c">채택</td><td class="c">채택</td><td class="c"><span class="badge b-final">채택</span></td></tr>
+  <tr><td>Q2b. 작업 중 재분류 트리거</td><td class="c">수정</td><td class="c">수정</td><td class="c">수정</td><td class="c"><span class="badge b-final">수정 채택 — 중재안</span></td></tr>
+  <tr><td>Q2c. Tier 오분류 사후 지표</td><td class="c">수정</td><td class="c">수정</td><td class="c">수정</td><td class="c"><span class="badge b-final">수정 채택 — 기록 스키마 선행</span></td></tr>
+</table>
+<p class="legend">† claude는 R1에서 "유지(수정 동반)"였으나 오라클 검증 후 R2에서 "수정"으로 갱신.</p>
+
+<h2>무엇이 살아남았고, 무엇이 깨졌나</h2>
+<div class="cards">
+  <div class="card"><span class="tag badge b-ok">생존</span><h3>결과 기준 3축</h3><p>크기(LOC) 기준보다 우월. "1줄짜리 인증 변경"이 자동 T3에 걸린다 — 크기 기준이면 T1으로 누출됐을 케이스.</p></div>
+  <div class="card"><span class="tag badge b-ok">생존</span><h3>T1 단축 흐름</h3><p>"지킬 수 없는 규칙 → 전면 사문화"를 막는 생존 장치. 15단계 풀 흐름 60% 사문화라는 실제 실패 경험에 근거.</p></div>
+  <div class="card"><span class="tag badge b-ok">생존</span><h3>의심 시 상향 + 자동 T3</h3><p>과소 분류(위험을 가볍게)가 과대 분류보다 비싸다는 비대칭을 올바르게 처리.</p></div>
+  <div class="card"><span class="tag badge b-warn">교정</span><h3>"판단 1회로 압축" (claude)</h3><p>과장. §6.1/§6.5가 시점별 재평가를 요구 — 정확히는 "분류 1회 + 발동 판정 N회(분류를 재사용)".</p></div>
+  <div class="card"><span class="tag badge b-warn">교정</span><h3>"raw를 알 방법이 없다" (gemini)</h3><p>과장. §6.7이 raw 경로 명시를 의무화. 단 요약자 편향(심판=선수) 위험 지적은 유효 → 수정 6번으로 흡수.</p></div>
+  <div class="card"><span class="tag badge b-bad">결함 적발</span><h3>T1의 "expectation 보정"</h3><p>테스트가 승인하는 대상을 바꾸는 행위가 T1 skip과 결합 — AC/TDD 원칙과 정면 충돌 (codex+gemini 합의).</p></div>
+</div>
+
+<h2>합의된 수정 패키지 — 10건</h2>
+<p class="legend">1~5 = Tier 체계 구조 결함 (필수) · 6~10 = 운영 보강 · 전 항목 3/3 합의</p>
+<ol class="fixes">
+  <li class="core"><b>§2 판정 함수 정규화</b> — 3축을 위험 방향 yes/no로 통일 (위험=1, 합 0=T1 / 1=T2 / 2+=T3, 위험 도메인=무조건 T3). 3치 논리 혼용 제거.<span class="ref">workflow.md §2 (53, 64행)</span></li>
+  <li class="core"><b>T1 범위 제한</b> — "기존 expectation 보정"을 T1에서 제외(최소 T2). T1 = "동작·의도·사용자 가시 문구를 바꾸지 않는 변경"으로 한정.<span class="ref">workflow.md 63, 39-40, 298-299행</span></li>
+  <li class="core"><b>재분류 규칙 (중재안)</b> — 상향 사유 발견 시 즉시 중단 + 초단축 재브리핑 → ① 게이트 통과 가능하면 증거 보강 ② 설계 변경·위험 도메인이면 동결 + 신규 작업 분리. <b>선택은 사용자가 결정</b> + 사유 기록.<span class="ref">codex 소급보강안 × gemini 분리안의 합성</span></li>
+  <li class="core"><b>Tier 기록 스키마</b> — PR 본문 필수값에 initial/final tier · 3축 판정 값 · 자동 T3 여부 · 재분류 사유 추가.<span class="ref">workflow.md 323행</span></li>
+  <li class="core"><b>§10 자기 점검 보강</b> — 탈출 결함의 Tier별 집계(오분류 지표) + summary C/M 수 ↔ raw 파일 집계 일치 점검(요약 편향 감지).<span class="ref">workflow.md §10</span></li>
+  <li><b>§6.7 summary에 raw C/M 집계 수치 병기 의무화</b> — 심판=선수 위험의 저비용 완화.<span class="ref">workflow.md §6.7</span></li>
+  <li><b>사용자 skip vs 필수 리뷰 우선순위 명문화</b> — 비위험 T2 필수 리뷰의 skip 가능 여부를 한 문장으로.<span class="ref">workflow.md 169-171, 180-181행</span></li>
+  <li><b>§5 T3 E2E 완화</b> — 기본은 전체, 명시적 Impact 분석 근거 시 관련 flow로 축소 허용.<span class="ref">workflow.md 137행</span></li>
+  <li><b>§7 정리</b> — 메타 행 ↔ T3+3인 리뷰 행의 비용 관계 명시 + 변동 요인에 rate limit 추가.<span class="ref">workflow.md 263-264, 273-276행</span></li>
+  <li><b>project-setup.md JSON 통합</b> — <code>"enforce_admins": true</code>를 PUT JSON에 통합 (복붙 시 원칙 위반 방지).<span class="ref">project-setup.md 48-63행</span></li>
+</ol>
+
+<h2>검증 원장 — 주장은 어디에 묶였나</h2>
+<p class="legend">오라클 = docs/workflow.md · docs/project-setup.md 원문 라인. R2에서 codex·gemini 모두 "원장 이의 없음".</p>
+<table>
+  <tr><th>주장</th><th class="c">판정</th><th>근거</th></tr>
+  <tr><td>§6.1/§6.5의 시점별 재평가 ↔ "판단 1회" 모순 (codex)</td><td class="c"><span class="badge b-ok">✅ 확정</span></td><td>workflow.md:150, 205-207</td></tr>
+  <tr><td>T1 "expectation 보정"의 AC/TDD·skip 충돌 (codex+gemini)</td><td class="c"><span class="badge b-ok">✅ 확정</span></td><td>workflow.md:63, 39-40, 298-299</td></tr>
+  <tr><td>T2 "UI 텍스트" 예시의 T1/T2 경계 모호 (codex)</td><td class="c"><span class="badge b-ok">✅ 확정</span></td><td>workflow.md:57, 64</td></tr>
+  <tr><td>사용자 skip ↔ "필수" 우선순위 불명 (codex)</td><td class="c"><span class="badge b-ok">✅ 확정</span></td><td>workflow.md:169-171, 180-181</td></tr>
+  <tr><td>§7 변동 요인에 rate limit 부재 (gemini)</td><td class="c"><span class="badge b-ok">✅ 확정</span></td><td>workflow.md:273-276</td></tr>
+  <tr><td>project-setup JSON 복붙 시 enforce_admins=false (codex)</td><td class="c"><span class="badge b-ok">✅ 확정</span></td><td>project-setup.md:48-50, 60-63</td></tr>
+  <tr><td>§7 메타 행 ↔ T3+3인 리뷰 비용 "모순" (codex)</td><td class="c"><span class="badge b-warn">⚠️ 부분 교정</span></td><td>모순이 아닌 표기 비일관 — wall-clock 상한↓, 사용자 검토↑ (workflow.md:263-264)</td></tr>
+  <tr><td>"사용자가 raw 리뷰를 알 방법이 없다" (gemini)</td><td class="c"><span class="badge b-warn">⚠️ 교정</span></td><td>§6.7이 raw 경로 명시 의무화 (workflow.md:241) — 위험 지적 자체는 유효</td></tr>
+  <tr><td>"업계 관행상 2주 안에 포기" 등 외부 관행 (gemini)</td><td class="c"><span class="badge b-bad">❌ 미검증</span></td><td>출처 없음 (gemini 자가 라벨) — 결론의 근거로 사용하지 않음</td></tr>
+</table>
+
+<h2>잔여 이견 · 한계 — 지우지 않고 보존</h2>
+<div class="dissent">
+  <h3>⚠️ 매끈한 만장일치를 신뢰하지 말 것 — 남은 것들</h3>
+  <ul>
+    <li><b>별도 요약 세션(심판-선수 분리)</b>: gemini 제기 → "1인 환경 과잉"으로 기각, gemini는 §10 엄격 실행을 전제로 수용. <b>기각 판단 자체가 [미검증]</b> — §10 점검에서 요약-raw 불일치가 반복 검출되면 재론.</li>
+    <li><b>재브리핑 "초단축(1분)" 형식</b>: 채택됐으나 구체 형식 미정 — 반영 시 정의 필요.</li>
+    <li><b>이 결론의 한계</b>: 세 참여자 모두 LLM(상관된 실패 모드). 문서 인용으로 정박했으나 "수정안이 사문화를 막는가"는 실행해야 아는 명제. <b>Walk-forward 체크</b>: 반영 후 첫 5개 PR에서 Tier 기록 스키마가 실제로 채워지는지 §10 첫 월간 점검(소유자: 사용자)에서 확인.</li>
+    <li><b>운영 사고</b>: gemini가 R2를 board 중간에 삽입하며 종료마커 2개 유실(본문 무결, 진행자 복구) — 다음 토론에서 gemini는 single-writer 폴백 고려.</li>
+  </ul>
+</div>
+
+<h2>토론 경과</h2>
+<div class="flow">
+  <b>R1</b> — claude "유지+보완 3개"(0.80) → codex: "판단 1회" 반박 + 결함 6건 적발 (수정, 0.78) → gemini: 검토 부하·Orchestrator 편향 제기, codex 소급보강안 비판 (수정, 0.85)<br>
+  <b>R2</b> — claude: 오라클 검증 원장 9건 + 자기 과장 정정 + Q2b 중재안 (수정, 0.85) → codex: 중재안 찬성·원장 이의 없음 (0.86) → gemini: 중재안 찬성·교정 수용·원장 이의 없음 (0.88) → <b>수렴 종료</b>
+</div>
+
+<footer>
+  산출물: <code>workflow-tier-utility.md</code> (정본) · 본 HTML은 동일 결론의 시각화 뷰 (새 주장 없음) ·
+  수정 패키지 반영은 workflow.md 규칙상 메타 변경 = 자동 Tier 3 — 본 토론이 3자 교차 리뷰에 해당하므로 사용자 검수 후 반영 가능
+</footer>
+
+</body>
+</html>

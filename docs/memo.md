@@ -10,7 +10,8 @@ workflow 개발
 
 
 
-/multi-ai-discussion
-  Loop Engineering 관련 토론
-  @docs/loop-engineering.md 필요하면 playwright mcp를 이용해서 직접 내용 확인 후 토론.
-  우리 workflow에 반영시 시너지 나는 항목 제안.
+workflow.md의 7단계 구분을 
+1. 브리핑, 2. 기획, 3. 디자인, 4. 구현, 5. 검증, 6. 형상관리, 7. 완료 (평가, 개선, 다음 작업 제안)
+
+workflow.draw.io에 7개 스윔레인으로 구분하고 각 스윔레인 내부는 A-1, A-2 형태로 넘버링
+A. 브리핑, B. 기획, C. 디자인, D. 구현, E. 검증, F. 형상관리, G. 완료 (평가, 개선, 다음 작업 제안)

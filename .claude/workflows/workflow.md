@@ -446,7 +446,7 @@ Tier / 리뷰 라운드 수 / 게이트 first-pass 여부 / 사용자 활성 검
 | `.claude/skills/` | 프로젝트 스킬 (커버리지 측정 SSoT 등) |
 | 글로벌 스킬 `multi-ai-discussion` | cmux 3-pane 셋업, codex/gemini 3인 교차 리뷰 프로토콜 (§6.8) |
 | `docs/loop-engineering.md` | Loop Engineering 원문 발췌 ([Addy Osmani 아티클](https://x.com/addyosmani/status/2064127981161959567)) — §8.4·§10.4·held-out 판정의 외부 근거 |
-| `workflow-tier-utility.md` · `loop-engineering-workflow.md` | 본 문서 개정의 근거가 된 3자 토론 결론 (Tier 체계 / Loop Engineering) |
+| `.cmux/debates/<토론명>/<토론명>.md`·`.html` | 3자 토론 결론 산출물 — 본 문서 개정 근거 (`workflow-tier-utility`, `loop-engineering-workflow`). 결과 파일만 git 추적, 전사·시그널은 무시 |
 
 > 새 프로젝트에서는 위 경로를 생성하면서 시작한다. 없는 문서는 해당 단계 첫 진입 시 작성.
 

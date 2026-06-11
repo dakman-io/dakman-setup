@@ -44,12 +44,13 @@ gh repo edit dakman-io/dakman-setup --default-branch develop
 
 ```bash
 # develop, staging, production에 각각 적용
+# enforce_admins: true = 관리자 포함 직접 푸시 금지 (PR로만 머지)
 for br in develop staging production; do
   gh api -X PUT "repos/dakman-io/dakman-setup/branches/$br/protection" \
     --input - <<'EOF'
 {
   "required_status_checks": null,
-  "enforce_admins": false,
+  "enforce_admins": true,
   "required_pull_request_reviews": {
     "required_approving_review_count": 0
   },
@@ -59,12 +60,10 @@ for br in develop staging production; do
 }
 EOF
 done
-
-# 관리자도 직접 푸시 못하게 강제 (PR로만 머지 가능)
-for br in develop staging production; do
-  gh api -X POST "repos/dakman-io/dakman-setup/branches/$br/protection/enforce_admins"
-done
 ```
+
+> 이미 보호가 적용된 저장소에서 관리자 강제만 나중에 켜려면:
+> `gh api -X POST "repos/<owner>/<repo>/branches/<br>/protection/enforce_admins"`
 
 #### main 브랜치 삭제
 
@@ -84,11 +83,20 @@ gh api repos/dakman-io/dakman-setup/branches \
 
 #### .gitignore 추가
 
-OS 잡파일과 환경 변수 파일이 커밋되지 않도록 프로젝트 루트에 `.gitignore`를 추가한다:
+OS 잡파일·환경 변수·AI 도구 임시 산출물이 커밋되지 않도록 프로젝트 루트에 `.gitignore`를 추가한다:
 
 ```gitignore
 # OS
 .DS_Store
+
+# cmux 토론 산출물
+.cmux/
+
+# playwright MCP 임시 산출물 (스냅샷·콘솔 로그·스크린샷)
+.playwright-mcp/
+
+# Claude Code 로컬 설정 (개인 권한 — 공유 금지)
+.claude/settings.local.json
 
 # 환경 변수
 .env
@@ -142,6 +150,10 @@ project/
 - 브리핑 - 기획 - 디자인 - 개발 - 테스트 - 배포 - 개선 - 다음 작업 제안
 
 ## skill 생성
+- **생성 트리거**: 같은 맥락 설명을 **2회 이상 반복 + 의도가 안정**되면 스킬화한다.
+  - 근거(intent debt): 에이전트는 매 세션 cold start라 의도의 빈틈을 추측으로 채운다 — 스킬이 없으면 매 사이클 프로젝트를 처음부터 재유도.
+- CLAUDE.md가 비대해져 에이전트 오류가 늘면 스킬로 분할한다.
+- **지점 바인딩**: 스킬은 workflow.md §9 배치 원칙을 따른다 — 어느 단계/게이트에서 발동하는지 명시하고 `.claude/skills/`에 기록.
 
 ## agent 생성 원칙
 - **만드는 에이전트가 있으면 반드시 리뷰 하는 에이전트가 있어야 한다. 예를 들면 developer 에이전트가 있으면 code-review 에이전트가 있어야 한다.**

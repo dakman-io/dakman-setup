@@ -1,6 +1,10 @@
 # OS
 .DS_Store
 
+# cmux 토론 산출물
+.cmux/*
+!.cmux/.gitignore
+
 # 환경 변수
 .env
 .env.*

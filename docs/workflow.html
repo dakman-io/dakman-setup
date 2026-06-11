@@ -169,8 +169,8 @@
 <h2 id="s3"><span class="sec">§3</span>7단계 기본 흐름</h2>
 <div class="steps">
   <div class="step s1"><span class="t">1 브리핑</span>Tier 분류 + 일정 산정<br>Orchestrator</div>
-  <div class="step s2"><span class="t">2 기획</span>US + AC (G-W-T)<br>Architect</div>
-  <div class="step s3"><span class="t">3 디자인</span>{디자인도구} 프레임<br>Architect</div>
+  <div class="step s2"><span class="t">2 기획</span>US + AC (G-W-T)<br>Planner</div>
+  <div class="step s3"><span class="t">3 디자인</span>{디자인도구} 프레임<br>Designer</div>
   <div class="step s4"><span class="t">4 구현</span>브랜치 + ATDD/TDD<br>Developer</div>
   <div class="step s5"><span class="t">5 검증</span>리뷰 + E2E<br>QA Reviewer</div>
   <div class="step s6"><span class="t">6 형상관리</span>검수 + PR + merge<br>Ops</div>
@@ -275,7 +275,8 @@
 <h2 id="s9"><span class="sec">§9</span>역할 · 배치 원칙 · DoD</h2>
 <div class="roles">
   <div class="role"><b>Orchestrator</b>Tier 분류, 흐름 선택, 리뷰 통합 판정, 3인 summary, 사용자 대화, 완료 단계 평가·다음 작업 제안<span class="stg">1 · 4 · 5(판정) · 6 · 7</span></div>
-  <div class="role"><b>Architect</b>US+AC 작성, 디자인, 디자인 스펙, Spec 체크리스트<span class="stg">2 · 3</span></div>
+  <div class="role"><b>Planner</b>US+AC 작성 (G-W-T), Spec 검토 체크리스트<span class="stg">2</span></div>
+  <div class="role"><b>Designer</b>디자인, 디자인 스펙 정리, 디자인 시스템 준수<span class="stg">3</span></div>
   <div class="role"><b>Developer</b>ATDD/TDD 이중 루프 구현, {위험도메인} 전문, 커버리지 보강<span class="stg">4</span></div>
   <div class="role"><b>QA Reviewer</b>코드 리뷰, 디자인 대조, E2E flow, 회귀 검증<span class="stg">5</span></div>
   <div class="role"><b>Ops</b>브랜치, todo, 커밋, PR, 릴리스<span class="stg">1(브랜치) · 6</span></div>
@@ -313,7 +314,7 @@
   <tr><td>설정·본문</td><td><code>docs/project-setup.md</code> (브랜치 전략·폴더 구조) · <code>docs/workflow.md</code>+<code>.drawio</code></td></tr>
   <tr><td>planning</td><td><code>prd.md</code> · <code>user-stories/</code> · <code>architecture.md</code> · <code>ci-cd.md</code> · <code>design/design-system.md</code> · <code>design/us-to-frame-map.md</code></td></tr>
   <tr><td>review · tests · progress</td><td>리뷰 이슈 파일 · E2E 로그/커버리지 · <code>todo.md</code>(spine) · <code>loop-triage.md</code></td></tr>
-  <tr><td>.claude</td><td><code>agents/*.md</code> (5개 역할) · <code>skills/</code> · 글로벌 스킬 <code>multi-ai-discussion</code></td></tr>
+  <tr><td>.claude</td><td><code>agents/*.md</code> (6개 역할) · <code>skills/</code> · 글로벌 스킬 <code>multi-ai-discussion</code></td></tr>
   <tr><td>근거</td><td><code>docs/loop-engineering.md</code> (<a href="https://x.com/addyosmani/status/2064127981161959567">Addy Osmani 아티클</a>) · <code>workflow-tier-utility.md</code> · <code>loop-engineering-workflow.md</code> (3자 토론 결론)</td></tr>
 </table>
 <div class="sub">변경 이력 — <b>2026-06-11</b> 토론 합의 일괄 반영(Tier 10건+Loop 8건) · 4대 운영 철학 명문화(원칙 11~13, §10 개편) · ATDD 이중 루프 · §11 경로 정합화 · 템플릿화 / <b>2026-05-08</b> SetBox 원본 (15단계 → 6단계+Tier 라우팅, 3인 교차 리뷰로 수렴)</div>

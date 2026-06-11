@@ -2,10 +2,82 @@
 ### 브랜치 생성 및 설정
 |브랜치명|디폴트|보호 브랜치|설명|
 |:-:|:-:|:-:|:-:|
-|feature|no|no|기능 개발|
+|feature/*|no|no|기능 개발 (예: feature/login)|
 |develop|yes|yes|개발 브랜치|
 |staging|no|yes|스테이징 브랜치|
 |production|no|yes|프로덕션 브랜치|
+
+보호 브랜치 규칙 (develop, staging, production 공통):
+- 직접 푸시 금지, PR을 통해서만 머지 (관리자 포함 `enforce_admins: true`)
+- 필수 승인 인원 0명 (혼자서도 머지 가능)
+- force push 금지, 브랜치 삭제 금지
+
+#### 브랜치 생성 및 푸시 (git)
+
+```bash
+git branch develop
+git branch staging
+git branch production
+git push -u origin develop staging production
+```
+
+작업 브랜치는 develop에서 `feature/*` 이름으로 생성:
+
+```bash
+git switch develop
+git switch -c feature/login   # 예시
+```
+
+> `feature`라는 브랜치가 존재하면 ref 이름 충돌로 `feature/login`을 만들 수 없으므로,
+> 고정 `feature` 브랜치는 두지 않고 `feature/*` 컨벤션만 사용한다.
+
+#### 디폴트 브랜치 설정 (gh)
+
+```bash
+gh repo edit dakman-io/dakman-setup --default-branch develop
+```
+
+#### 보호 브랜치 설정 (gh)
+
+```bash
+# develop, staging, production에 각각 적용
+for br in develop staging production; do
+  gh api -X PUT "repos/dakman-io/dakman-setup/branches/$br/protection" \
+    --input - <<'EOF'
+{
+  "required_status_checks": null,
+  "enforce_admins": false,
+  "required_pull_request_reviews": {
+    "required_approving_review_count": 0
+  },
+  "restrictions": null,
+  "allow_force_pushes": false,
+  "allow_deletions": false
+}
+EOF
+done
+
+# 관리자도 직접 푸시 못하게 강제 (PR로만 머지 가능)
+for br in develop staging production; do
+  gh api -X POST "repos/dakman-io/dakman-setup/branches/$br/protection/enforce_admins"
+done
+```
+
+#### main 브랜치 삭제
+
+```bash
+git switch develop              # main에서 벗어나기
+git branch -d main              # 로컬 삭제
+git push origin --delete main   # 원격 삭제
+```
+
+#### 설정 확인
+
+```bash
+gh repo view dakman-io/dakman-setup --json defaultBranchRef   # 디폴트 브랜치 확인
+gh api repos/dakman-io/dakman-setup/branches \
+  --jq '.[] | "\(.name)\tprotected=\(.protected)"'            # 보호 상태 확인
+```
 
 
 ## 기본 폴더

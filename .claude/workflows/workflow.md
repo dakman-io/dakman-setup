@@ -113,13 +113,13 @@ flowchart LR
 |---|------|------|------|:--:|:--:|:--:|
 | 1 | **브리핑** + Tier 분류 + 일정 산정 | Orchestrator | 작업 범위·접근·예상 변경·Tier·AI/사용자 시간 | 짧게 | ✓ | ✓ |
 | 2 | **기획** (US + AC) | Planner | `artifacts/planning/user-stories/*.md` (Given-When-Then) | skip | 최소 | ✓ 정식 |
-| 3 | **디자인** (`{디자인도구}`) | Designer | `artifacts/planning/design/*` 프레임 + 매핑 갱신 | skip | UI 시 | ✓ |
+| 3 | **디자인** (`{디자인도구}`) | Designer | `artifacts/design/*` 프레임 + 매핑 갱신 | skip | UI 시 | ✓ |
 | 4 | **구현** (브랜치 + ATDD/TDD) | Developer | `feature/*` + 인수·단위 테스트 + 코드 + 디자인 대조 | 테스트 면제 가능 | ✓ | ✓ |
 | 5 | **검증** (리뷰 + E2E) | QA Reviewer | 리뷰 파일, E2E flow, pass-fail 로그 | 자체 점검 | 1회 | 풀 루프 |
 | 6 | **형상관리** | Ops | 검수 + todo 갱신 + PR + merge | ✓ | ✓ | ✓ |
 | 7 | **완료** (평가·개선·다음 작업 제안) | Orchestrator | §10.1 지표 확정 · §10.3 기준 개선 제안 · todo spine 기반 다음 작업 제안 | 기록 1줄 | ✓ | ✓ |
 
-> 시각화: `docs/workflow.drawio` (7 스윔레인 A~G, 역할 색상) · `docs/workflow.html`
+> 시각화: `.claude/workflows/workflow.drawio` (7 스윔레인 A~G, 역할 색상) · `.claude/workflows/workflow.html`
 
 ---
 
@@ -427,18 +427,18 @@ Tier / 리뷰 라운드 수 / 게이트 first-pass 여부 / 사용자 활성 검
 
 ## 11. 참고 문서
 
-경로는 `docs/project-setup.md`의 기본 폴더 구조(`artifacts/planning·progress·review·tests`, `docs/`)를 따른다.
+경로는 `docs/project-setup.md`의 기본 폴더 구조(`artifacts/planning·design·progress·review·tests`, `docs/`)를 따른다.
 
 | 문서 | 내용 |
 |------|------|
 | `docs/project-setup.md` | 저장소 생성, 브랜치 전략(feature/* → develop → staging → production), 폴더 구조 |
-| `docs/workflow.md` · `docs/workflow.drawio` | 본 문서 + 워크플로우 다이어그램 |
+| `.claude/workflows/workflow.md` · `workflow.drawio` · `workflow.html` | 본 문서(정본) + 다이어그램 + 시각화 뷰 |
 | `artifacts/planning/prd.md` | 제품 요구사항 |
 | `artifacts/planning/user-stories/*.md` | US + AC (Given-When-Then) |
 | `artifacts/planning/architecture.md` | 기술 스택, 폴더 구조, 상태 관리 |
 | `artifacts/planning/ci-cd.md` | CI/CD 배포 파이프라인 (웹: Vercel/Cloudflare 등, 앱: EAS 등) |
-| `artifacts/planning/design/design-system.md` | 디자인 시스템 4 레이어, 토큰 |
-| `artifacts/planning/design/us-to-frame-map.md` | US ↔ 디자인 프레임 매핑 |
+| `artifacts/design/design-system.md` | 디자인 시스템 4 레이어, 토큰 |
+| `artifacts/design/us-to-frame-map.md` | US ↔ 디자인 프레임 매핑 |
 | `artifacts/review/` | 리뷰 이슈 파일 (§4 네이밍 규칙) |
 | `artifacts/tests/` | E2E flow, pass-fail 로그, 커버리지 리포트 |
 | `artifacts/progress/todo.md` | 진행 상황 + Fast-track `[FT]` 마킹 |
@@ -454,6 +454,8 @@ Tier / 리뷰 라운드 수 / 게이트 first-pass 여부 / 사용자 활성 검
 
 ## 12. 변경 이력
 
+- **2026-06-11 워크플로우 문서 이동**: `docs/workflow.{md,drawio,html}` → **`.claude/workflows/`** — 워크플로우 정의 문서를 Claude 설정 폴더 구조(project-setup.md §4)의 의도된 위치로 이동. 참조 경로 동반 수정.
+- **2026-06-11 design 폴더 분리**: 디자인 산출물을 `artifacts/planning/design/` → **`artifacts/design/`**(최상위)로 분리 — 기획(2)·디자인(3) 단계 분리 및 Planner·Designer 역할 분리와 정합. §3·§11·project-setup.md 트리·drawio 동반 수정.
 - **2026-06-11 역할 분리 (5→6)**: Architect를 **Planner(기획)·Designer(디자인)**로 분리 — 단계·산출물 책임이 명확해지고 maker-checker 쌍(planner↔us-reviewer, designer↔design-reviewer)이 1:1로 대응. §3 담당·§9 역할 표·배치 원칙·§11 동반 수정. workflow.drawio 레인 표기와 정합.
 - **2026-06-11 7단계 확장 + 다이어그램 재작성**: 6단계 → **7단계** — "7. 완료(평가·개선·다음 작업 제안)" 신설 (원칙 13·§10.1과 연결, 작업 단위 마이크로 평가). §8.3 T1 단축 흐름·§9 Orchestrator 단계 동반 수정. `workflow.drawio`를 현행 7단계 기준 7 스윔레인(A~G, 노드 A-1 형식 넘버링, 역할 색상)으로 전면 재작성 — 구버전(SetBox 15단계)은 폐기.
 - **2026-06-11 토론 합의 일괄 반영 (Tier 10건 + Loop 8건)**: 3자 교차 리뷰 결론(`workflow-tier-utility.md`, `loop-engineering-workflow.md`) 반영 — §2 판정 함수 정규화(위험 합계 0/1/2+) + T1 범위 제한(expectation 보정 → T2) + 재분류 규칙 신설 / §4 held-out 종결 판정(Tier 차등) / §5 T3 E2E 완화(Impact 근거 시 축소) / §6.1 skip 우선순위 + §6.6 Echo-back 옵션 + §6.7 raw C/M 병기 / §7 메타 행 각주 + rate limit 변동 요인 / **§8.4 자동 루프 등록 규칙 신설**(예산 cap·쓰기 금지·커넥터 이원화) / §9 DoD에 why·risk·rollback + Tier 기록 + todo spine 스키마 / §10.2 보강 + **§10.4 점검 자동화** / §0 AI 월 예산 행 / §11 근거 문서 링크.

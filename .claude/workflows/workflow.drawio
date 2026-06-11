@@ -4,7 +4,7 @@
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#ffffff;" value="AI-Driven Workflow — 7단계 · 정본: docs/workflow.md · 2026-06-11, by rtong" vertex="1">
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#ffffff;" value="AI-Driven Workflow — 7단계 · 정본: .claude/workflows/workflow.md · 2026-06-11, by rtong" vertex="1">
           <mxGeometry height="35" width="900" x="40" y="15" as="geometry" />
         </mxCell>
         <mxCell id="laneA" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#262626;strokeColor=#555555;dashed=1;verticalAlign=top;fontSize=13;fontColor=#ffffff;fontStyle=1;strokeWidth=1;spacingTop=8;" value="A. 브리핑 — Orchestrator" vertex="1">
@@ -58,7 +58,7 @@
         <mxCell id="b4" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ba68c8;strokeColor=#7b1fa2;fontColor=#ffffff;fontSize=11;fontStyle=1;strokeWidth=2;" value="B-4. 사용자 검토&#xa;summary 1쪽" vertex="1">
           <mxGeometry height="70" width="220" x="410" y="749" as="geometry" />
         </mxCell>
-        <mxCell id="c1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#42a5f5;strokeColor=#1976d2;fontColor=#ffffff;fontSize=11;fontStyle=1;strokeWidth=2;" value="C-1. 디자인 작성 ({디자인도구})&lt;br&gt;artifacts/planning/design/* + 매핑&lt;br&gt;(d&lt;span style=&quot;font-size: 13px;&quot;&gt;esigner&lt;/span&gt;)" vertex="1">
+        <mxCell id="c1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#42a5f5;strokeColor=#1976d2;fontColor=#ffffff;fontSize=11;fontStyle=1;strokeWidth=2;" value="C-1. 디자인 작성 ({디자인도구})&lt;br&gt;artifacts/design/* + 매핑&lt;br&gt;(d&lt;span style=&quot;font-size: 13px;&quot;&gt;esigner&lt;/span&gt;)" vertex="1">
           <mxGeometry height="70" width="220" x="750" y="150" as="geometry" />
         </mxCell>
         <mxCell id="c2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffa726;strokeColor=#f57c00;fontColor=#000000;fontSize=11;fontStyle=1;strokeWidth=2;" value="C-2. 3인 교차 리뷰 — 디자인&#xa;T3 필수 / T2 권장 (§6.2)&#xa;Claude + Codex + Gemini" vertex="1">

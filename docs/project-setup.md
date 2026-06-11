@@ -12,6 +12,9 @@
 - 필수 승인 인원 0명 (혼자서도 머지 가능)
 - force push 금지, 브랜치 삭제 금지
 
+#### git-commit 스킬 확인
+- 커밋 컨벤션 적용
+
 #### 브랜치 생성 및 푸시 (git)
 
 ```bash
@@ -77,6 +80,20 @@ git push origin --delete main   # 원격 삭제
 gh repo view dakman-io/dakman-setup --json defaultBranchRef   # 디폴트 브랜치 확인
 gh api repos/dakman-io/dakman-setup/branches \
   --jq '.[] | "\(.name)\tprotected=\(.protected)"'            # 보호 상태 확인
+```
+
+#### .gitignore 추가
+
+OS 잡파일과 환경 변수 파일이 커밋되지 않도록 프로젝트 루트에 `.gitignore`를 추가한다:
+
+```gitignore
+# OS
+.DS_Store
+
+# 환경 변수
+.env
+.env.*
+!.env.example
 ```
 
 

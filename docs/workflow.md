@@ -37,13 +37,13 @@
 **핵심 원칙** (보존):
 1. **문서 → 디자인 → 소스** — 변경 반영 순서 필수, 코드부터 시작 금지.
 2. **AC 기반 개발** — User Story의 Acceptance Criteria가 구현/테스트/리뷰의 단일 기준.
-3. **TDD 필수** — RED → GREEN → REFACTOR. 테스트 없는 기능 코드 금지.
+3. **ATDD + TDD 이중 루프 필수** — 외곽: AC를 *실패하는 인수 테스트*로 먼저 변환(ATDD), 내부: 단위 RED → GREEN → REFACTOR(TDD). 테스트 없는 기능 코드 금지. 인수 테스트는 가능한 가장 빠른 레벨(서비스/API/컴포넌트)에서 작성 — E2E는 §5의 별도 게이트.
 4. **Critical+Major 0건 원칙** — 자동 리뷰 루프는 Critical+Major 이슈가 0건이 될 때까지 반복. Minor는 Orchestrator 재량.
 5. **검수 후 커밋** — 사용자 확인 없이 형상관리 금지.
 6. **feature/* 브랜치만 직접 push** — develop 이후 PR 필수, `gh pr merge --merge` (PR/US 단위 추적성). 브랜치 전략 상세는 `docs/project-setup.md` 참조.
 7. **리뷰-수정 분리** — 리뷰어는 별도 파일로 이슈 기록, 원본 직접 수정 금지. 작성자가 반영.
 8. **디자인 시스템 준수** — Foundation → Component → Pattern → Screen 4 레이어, 토큰 단일 소스.
-9. **자기참조성** — 본 문서 / methodology / CLAUDE.md / cmux-guide.md 변경은 자동 Tier 3.
+9. **자기참조성** — 본 문서 / docs/project-setup.md / CLAUDE.md 변경은 자동 Tier 3.
 10. **쉬프트-레프트** — US/AC 단계 결함 검출이 가장 비용 효율적. 작성 시점에 강한 리뷰 적용.
 
 ---
@@ -71,7 +71,7 @@
 - 데이터 모델 / 마이그레이션 / 저장소 스키마
 - `{위험도메인}` — §0에서 정의한 프로젝트 핵심 로직
 - 보안 / 개인정보 / 인증
-- 메타 워크플로우 (workflow.md / methodology / CLAUDE.md / cmux-guide.md)
+- 메타 워크플로우 (workflow.md / project-setup.md / CLAUDE.md)
 - 신규 화면 + 신규 상태 + 신규 데이터 동시
 
 ---
@@ -82,7 +82,7 @@
 flowchart LR
     S1[1. 브리핑<br/>+ Tier 분류] --> S2[2. 기획<br/>US + AC]
     S2 --> S3[3. 디자인]
-    S3 --> S4[4. 구현<br/>브랜치 + TDD]
+    S3 --> S4[4. 구현<br/>브랜치 + ATDD/TDD]
     S4 --> S5[5. 검증<br/>리뷰 + E2E]
     S5 --> S6[6. 형상관리<br/>검수 + PR]
     S6 --> DONE((완료))
@@ -96,9 +96,9 @@ flowchart LR
 | # | 단계 | 담당 | 산출물 | T1 | T2 | T3 |
 |---|------|------|------|:--:|:--:|:--:|
 | 1 | **브리핑** + Tier 분류 + 일정 산정 | Orchestrator | 작업 범위·접근·예상 변경·Tier·AI/사용자 시간 | 짧게 | ✓ | ✓ |
-| 2 | **기획** (US + AC) | Architect | `artifacts/user-stories/*.md` (Given-When-Then) | skip | 최소 | ✓ 정식 |
-| 3 | **디자인** (`{디자인도구}`) | Architect | `artifacts/design/*` 프레임 + 매핑 갱신 | skip | UI 시 | ✓ |
-| 4 | **구현** (브랜치 + TDD) | Developer | `feature/*` + 테스트 + 코드 + 디자인 대조 | TDD 면제 가능 | ✓ | ✓ |
+| 2 | **기획** (US + AC) | Architect | `artifacts/planning/user-stories/*.md` (Given-When-Then) | skip | 최소 | ✓ 정식 |
+| 3 | **디자인** (`{디자인도구}`) | Architect | `artifacts/planning/design/*` 프레임 + 매핑 갱신 | skip | UI 시 | ✓ |
+| 4 | **구현** (브랜치 + ATDD/TDD) | Developer | `feature/*` + 인수·단위 테스트 + 코드 + 디자인 대조 | 테스트 면제 가능 | ✓ | ✓ |
 | 5 | **검증** (리뷰 + E2E) | QA Reviewer | 리뷰 파일, E2E flow, pass-fail 로그 | 자체 점검 | 1회 | 풀 루프 |
 | 6 | **형상관리** | Ops | 검수 + todo 갱신 + PR + merge | ✓ | ✓ | ✓ |
 
@@ -117,7 +117,7 @@ flowchart LR
 
 R2 초과 시 **Context Hygiene** — 세션을 새로 열고 핵심 스펙만 Read하여 컨텍스트 정화.
 
-**리뷰 파일**: `artifacts/reviews/{type}-{scope}-review[-{reviewer}]-round{N}.md` (type: us/design/code/e2e, reviewer: claude/codex/gemini).
+**리뷰 파일**: `artifacts/review/{type}-{scope}-review[-{reviewer}]-round{N}.md` (type: us/design/code/e2e, reviewer: claude/codex/gemini).
 
 **판정 주체**: **Orchestrator (Claude 메인 세션)**. 별도 "기획 판단 에이전트" 없음.
 
@@ -131,7 +131,7 @@ R2 초과 시 **Context Hygiene** — 세션을 새로 열고 핵심 스펙만 R
 | 단위 테스트 | 관련만 | 관련 + 회귀 | 풀 + 신규 | `{단위테스트}` pass |
 | 커버리지 | skip | 변경 영역 | `{커버리지}` 목표 달성 | 커버리지 리포트 |
 | 린트 | ✓ | ✓ | ✓ | `{린트}` 0 errors |
-| AC 충족 | n/a | ✓ | ✓ | US AC 모두 만족 |
+| AC 충족 (인수 테스트) | n/a | ✓ | ✓ | AC를 변환한 인수 테스트 pass로 증명 (ATDD 외곽 루프) |
 | 디자인 대조 | skip | UI 시 | UI 시 ✓ | `{디자인도구}` vs `{실행환경}` |
 | 코드 리뷰 | self | R1 | R1~R3 | Critical+Major 0 |
 | E2E (`{E2E도구}`) | skip | 핵심 영향 시 | 풀 ✓ | `{E2E실행}` pass. SYS 면제 가능 |
@@ -177,7 +177,7 @@ R2 초과 시 **Context Hygiene** — 세션을 새로 열고 핵심 스펙만 R
 |------|:--:|:--:|:--:|
 | US/AC 작성 | skip | **필수** | **필수** |
 | 디자인 작성 (신규 화면) | skip | 권장 | **필수** |
-| TDD 테스트 작성 | self | **필수** | **필수** |
+| 테스트 작성 (인수+단위) | self | **필수** | **필수** |
 | 소스 코드 작성 | self | **필수** | **필수** |
 | E2E 작성 | skip | **필수** | **필수** |
 
@@ -187,7 +187,7 @@ R2 초과 시 **Context Hygiene** — 세션을 새로 열고 핵심 스펙만 R
 |------|:--:|:--:|:--:|
 | US/AC 수정 | skip | 선택 (의미 변경 시 작성급 승격) | 의미 변경=3인 필수 / 단순 보정=QA |
 | 디자인 수정 | skip | skip (눈검수) | 구조 변경 시 권장 / 미세 조정=skip |
-| TDD 테스트 수정 | self | 선택 | 의도 변경 시 필수 / 단순 보정=QA |
+| 테스트 수정 (인수+단위) | self | 선택 | 의도 변경 시 필수 / 단순 보정=QA |
 | 소스 코드 수정 | self | 선택 | 설계 변경 시 필수 / 단순 보정=QA |
 | E2E 수정 | skip | skip (selector 안정화 = QA 단독) | 여정/순서 변경 시 필수 |
 
@@ -204,7 +204,7 @@ R2 초과 시 **Context Hygiene** — 세션을 새로 열고 핵심 스펙만 R
 
 ### 6.5 한 작업 안에서 시점 sequence
 
-T2/T3 작업 1건 = 4~5개 시점 (US/AC → 디자인 → TDD → 소스 → E2E)에서 각각 §6.1 결정 트리 검사.
+T2/T3 작업 1건 = 4~5개 시점 (US/AC → 디자인 → 테스트 → 소스 → E2E)에서 각각 §6.1 결정 트리 검사.
 
 **기본 원칙 (병렬 + 시점별 즉시 검토)**:
 - 각 시점 작성 직후 즉시 발동 (다음 시점 진입 전 완료)
@@ -234,17 +234,17 @@ T2/T3 작업 1건 = 4~5개 시점 (US/AC → 디자인 → TDD → 소스 → E2
 사용자가 raw 리뷰 3개를 읽지 않고 **Summary 1쪽만** 검토:
 
 ```markdown
-## 3인 리뷰 통합 (Round N, 시점: <US/AC|디자인|TDD|소스|E2E>)
+## 3인 리뷰 통합 (Round N, 시점: <US/AC|디자인|테스트|소스|E2E>)
 - Critical/Major 합의 이슈: <list>
 - 모델 간 의견 충돌: <있으면 명시>
 - 사용자 결정 필요 질문: <≤5개, 핵심 의도 결정>
-- raw 파일: artifacts/reviews/*-{claude|codex|gemini}-round{N}.md
+- raw 파일: artifacts/review/*-{claude|codex|gemini}-round{N}.md
 ```
 
 **최대 5개 결정 항목** cap. Critical+Major 0이면 사용자는 summary 보고 즉시 OK.
 
 ### 6.8 절차
-- 상세 cmux 명령: `artifacts/architecture/cmux-guide.md` §10 참조 (3-pane 셋업, 응답 완료 프로토콜).
+- 상세 cmux 명령·토론 프로토콜: 글로벌 스킬 `multi-ai-discussion` 참조 (3-pane 셋업, 응답 완료 프로토콜, 공유 칠판 모드).
 - 종결 판정: 3인 모두 Critical+Major 0건. 갈리면 가장 엄격한 기준 수용 후 R+1.
 
 ---
@@ -308,7 +308,7 @@ T1 = 브리핑 → 구현 → 형상관리 3단계만. 기획·디자인·검증
 |------|------|------|
 | **Orchestrator** (Claude 메인) | Tier 분류, 흐름 선택, 리뷰 통합 판정, **3인 summary 작성**, 사용자 대화 | 1, 4, 5(판정), 6 |
 | **Architect** | US+AC 작성, 디자인 (`{디자인도구}`), 디자인 스펙, Spec 검토 체크리스트 | 2, 3 |
-| **Developer** | TDD 구현, `{위험도메인}` 전문 작업, 커버리지 보강 | 4 |
+| **Developer** | ATDD/TDD 이중 루프 구현, `{위험도메인}` 전문 작업, 커버리지 보강 | 4 |
 | **QA Reviewer** | 코드 리뷰, 디자인 대조, E2E flow, 회귀 검증 (모드: code/design/E2E) | 5 |
 | **Ops** | 브랜치, todo, 커밋, PR, 릴리스 | 1(브랜치), 6 |
 
@@ -317,7 +317,7 @@ T1 = 브리핑 → 구현 → 형상관리 3단계만. 기획·디자인·검증
 
 ### 완료 조건 (Definition of Done)
 - 모든 적용 게이트 Critical+Major 0건
-- todo.md 해당 항목 체크
+- `artifacts/progress/todo.md` 해당 항목 체크
 - 사용자 검수 통과 (T1/SYS 면제 가능)
 - pre-merge 검증: `{단위테스트}` + `{타입체크}` pass
 - PR 본문에 Tier + Fast-track/SYS 면제 근거 (해당 시) + 3인 리뷰 summary 링크
@@ -330,7 +330,7 @@ T1 = 브리핑 → 구현 → 형상관리 3단계만. 기획·디자인·검증
 **매월 1회** 사용량 분석:
 - `git log --grep "FT"` Fast-track 빈도
 - 최근 PR 10개에서 실제 사용 단계 vs 문서 명시 단계
-- `artifacts/reviews/` R3+ 파일 카운트 (자동 루프 깊이)
+- `artifacts/review/` R3+ 파일 카운트 (자동 루프 깊이)
 - 3인 리뷰 summary 품질 (5개 결정 항목 cap 준수 여부)
 
 **처리**:
@@ -342,18 +342,24 @@ T1 = 브리핑 → 구현 → 형상관리 3단계만. 기획·디자인·검증
 
 ## 11. 참고 문서
 
+경로는 `docs/project-setup.md`의 기본 폴더 구조(`artifacts/planning·progress·review·tests`, `docs/`)를 따른다.
+
 | 문서 | 내용 |
 |------|------|
 | `docs/project-setup.md` | 저장소 생성, 브랜치 전략(feature/* → develop → staging → production), 폴더 구조 |
-| `artifacts/architecture/cmux-guide.md` | cmux 3-pane 셋업, codex/gemini 토론 프로토콜 |
-| `artifacts/architecture/ci-cd-guide.md` | CI/CD 배포 파이프라인 (웹: Vercel/Cloudflare 등, 앱: EAS 등) |
-| `artifacts/architecture/architecture.md` | 기술 스택, 폴더 구조, 상태 관리 |
-| `artifacts/design/design-system.md` | 디자인 시스템 4 레이어, 토큰 |
-| `artifacts/design/us-to-frame-map.md` | US ↔ 디자인 프레임 매핑 |
-| `artifacts/prd.md` | 제품 요구사항 |
-| `docs/todo.md` | 진행 상황 + Fast-track `[FT]` 마킹 |
-| `.claude/skills/check-coverage/SKILL.md` | 커버리지 측정 SSoT |
+| `docs/workflow.md` · `docs/workflow.drawio` | 본 문서 + 워크플로우 다이어그램 |
+| `artifacts/planning/prd.md` | 제품 요구사항 |
+| `artifacts/planning/user-stories/*.md` | US + AC (Given-When-Then) |
+| `artifacts/planning/architecture.md` | 기술 스택, 폴더 구조, 상태 관리 |
+| `artifacts/planning/ci-cd.md` | CI/CD 배포 파이프라인 (웹: Vercel/Cloudflare 등, 앱: EAS 등) |
+| `artifacts/planning/design/design-system.md` | 디자인 시스템 4 레이어, 토큰 |
+| `artifacts/planning/design/us-to-frame-map.md` | US ↔ 디자인 프레임 매핑 |
+| `artifacts/review/` | 리뷰 이슈 파일 (§4 네이밍 규칙) |
+| `artifacts/tests/` | E2E flow, pass-fail 로그, 커버리지 리포트 |
+| `artifacts/progress/todo.md` | 진행 상황 + Fast-track `[FT]` 마킹 |
 | `.claude/agents/*.md` | 5개 역할별 전문 프롬프트 |
+| `.claude/skills/` | 프로젝트 스킬 (커버리지 측정 SSoT 등) |
+| 글로벌 스킬 `multi-ai-discussion` | cmux 3-pane 셋업, codex/gemini 3인 교차 리뷰 프로토콜 (§6.8) |
 
 > 새 프로젝트에서는 위 경로를 생성하면서 시작한다. 없는 문서는 해당 단계 첫 진입 시 작성.
 
@@ -361,6 +367,8 @@ T1 = 브리핑 → 구현 → 형상관리 3단계만. 기획·디자인·검증
 
 ## 12. 변경 이력
 
+- **2026-06-11 ATDD 이중 루프**: 원칙 3을 TDD 단독 → **ATDD(외곽: AC→인수 테스트) + TDD(내부: 단위 RED-GREEN-REFACTOR) 이중 루프**로 변경. §5 "AC 충족" 게이트를 인수 테스트 pass로 객관화. 인수 테스트는 가장 빠른 레벨에서 작성(E2E와 분리). §3·§6 매트릭스·§9 역할 동반 수정.
+- **2026-06-11 §11 경로 정합화**: 참고 문서 경로를 `project-setup.md` 폴더 구조(`artifacts/planning·progress·review·tests`)에 맞춤. SetBox 시절 경로(`artifacts/architecture·design·reviews`, `docs/todo.md`) 제거, cmux-guide.md → 글로벌 스킬 `multi-ai-discussion` 참조로 교체. 본문 참조(§1, §2, §3, §4, §6.7, §6.8, §9, §10) 동반 수정.
 - **2026-06-11 템플릿화**: SetBox 전용 워크플로우 → 앱/웹 공용 범용 템플릿. §0 프로젝트 설정 신설, 도구·명령어·위험 도메인을 `{placeholder}`로 분리 (타입체크/테스트/린트/E2E/디자인 도구/커버리지/위험 도메인).
 - **2026-05-08 R1~R5 (SetBox 원본)**: 3인 교차 리뷰(Claude+Codex+Gemini) 메타 토론으로 수렴. 15단계 풀 흐름 → 6단계 + Tier 라우팅, 발동 결정 트리(§6.1), 작성/수정 분리 매트릭스, 사용자 활성 시간 비용 함수, Fast-track 안전장치 도입.
 

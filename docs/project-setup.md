@@ -6,21 +6,31 @@
 
 ## 셋업 체크리스트
 
-- [ ] 1. 저장소 생성 후 클론
-- [ ] 2. 브랜치 전략 적용 (생성 → 디폴트 → 보호 → main 삭제 → 확인)
-- [ ] 3. .gitignore 추가
-- [ ] 4. 폴더 구조 생성
-- [ ] 5. 커밋 컨벤션 확인 (git-commit 스킬)
-- [ ] 6. 워크플로우 문서 생성 (workflow.md · drawio · html)
-- [ ] 7. skill / agent 구성 (워크플로우 지점 바인딩)
+- [ ] 1. 페르소나 지정 (CLAUDE.md)
+- [ ] 2. 저장소 생성 후 클론
+- [ ] 3. 브랜치 전략 적용 (생성 → 디폴트 → 보호 → main 삭제 → 확인)
+- [ ] 4. .gitignore 추가
+- [ ] 5. 폴더 구조 생성
+- [ ] 6. 커밋 컨벤션 확인 (git-commit 스킬)
+- [ ] 7. 워크플로우 문서 생성 (workflow.md · drawio · html)
+- [ ] 8. skill / agent 구성 (워크플로우 지점 바인딩)
 
 ---
 
-## 1. 저장소 생성 후 클론
+## 1. 페르소나 지정
+
+프로젝트를 시작하면 가장 먼저 Claude의 페르소나를 지정하고 `CLAUDE.md`에 기록한다 (매 세션 유지):
+
+> **너는 이 역할 최적의 전문가이고, 이 프로젝트를 함께 수행하는 파트너이자 친구로서 나와 함께 해주면 돼.**
+
+- 단계별 전문성은 workflow.md §9의 6역할(Orchestrator·Planner·Designer·Developer·QA Reviewer·Ops)을 따른다 — 각 단계에서 그 역할 최적의 전문가로 임한다.
+- 파트너이자 친구로서: 지시 수행만 하지 않고 더 나은 방향을 제안하고, 틀렸다고 판단되면 근거를 들어 반대 의견을 낸다.
+
+## 2. 저장소 생성 후 클론
 
 GitHub에 저장소를 생성하고 클론한다. 이후 모든 설정은 클론한 디렉토리에서 진행.
 
-## 2. 브랜치 전략
+## 3. 브랜치 전략
 
 | 브랜치명 | 디폴트 | 보호 브랜치 | 설명 |
 |:-:|:-:|:-:|:-:|
@@ -34,7 +44,7 @@ GitHub에 저장소를 생성하고 클론한다. 이후 모든 설정은 클론
 - 필수 승인 인원 0명 (혼자서도 머지 가능)
 - force push 금지, 브랜치 삭제 금지
 
-### 2.1 브랜치 생성 및 푸시 (git)
+### 3.1 브랜치 생성 및 푸시 (git)
 
 ```bash
 git branch develop
@@ -53,13 +63,13 @@ git switch -c feature/login   # 예시
 > `feature`라는 브랜치가 존재하면 ref 이름 충돌로 `feature/login`을 만들 수 없으므로,
 > 고정 `feature` 브랜치는 두지 않고 `feature/*` 컨벤션만 사용한다.
 
-### 2.2 디폴트 브랜치 설정 (gh)
+### 3.2 디폴트 브랜치 설정 (gh)
 
 ```bash
 gh repo edit <owner>/<repo> --default-branch develop
 ```
 
-### 2.3 보호 브랜치 설정 (gh)
+### 3.3 보호 브랜치 설정 (gh)
 
 ```bash
 # develop, staging, production에 각각 적용
@@ -84,7 +94,7 @@ done
 > 이미 보호가 적용된 저장소에서 관리자 강제만 나중에 켜려면:
 > `gh api -X POST "repos/<owner>/<repo>/branches/<br>/protection/enforce_admins"`
 
-### 2.4 main 브랜치 삭제
+### 3.4 main 브랜치 삭제
 
 ```bash
 git switch develop              # main에서 벗어나기
@@ -92,7 +102,7 @@ git branch -d main              # 로컬 삭제
 git push origin --delete main   # 원격 삭제
 ```
 
-### 2.5 설정 확인
+### 3.5 설정 확인
 
 ```bash
 gh repo view <owner>/<repo> --json defaultBranchRef          # 디폴트 브랜치 확인
@@ -100,7 +110,7 @@ gh api repos/<owner>/<repo>/branches \
   --jq '.[] | "\(.name)\tprotected=\(.protected)"'           # 보호 상태 확인
 ```
 
-## 3. .gitignore 추가
+## 4. .gitignore 추가
 
 OS 잡파일·환경 변수·AI 도구 임시 산출물이 커밋되지 않도록 프로젝트 루트에 추가한다:
 
@@ -130,7 +140,7 @@ OS 잡파일·환경 변수·AI 도구 임시 산출물이 커밋되지 않도�
 !.env.example
 ```
 
-## 4. 폴더 구조
+## 5. 폴더 구조
 
 | 폴더 | 역할 |
 |:-:|:-|
@@ -171,11 +181,11 @@ project/
 
 > 경로 규약은 `workflow.md` §11과 단일 정합 — 없는 문서는 해당 단계 첫 진입 시 작성한다.
 
-## 5. 커밋 컨벤션
+## 6. 커밋 컨벤션
 
 `git-commit` 스킬을 따른다 — `[사용자명] <type>(<scope>): <설명>` 형식, 한글 명령형, 원자적 커밋, Co-Authored-By 서명 제외.
 
-## 6. 워크플로우 문서 생성
+## 7. 워크플로우 문서 생성
 
 위치: `.claude/workflows/`
 
@@ -185,14 +195,14 @@ project/
 - workflow에 필요한 skill · agent · hooks 제안 받기 (지점 바인딩 — workflow.md 원칙 11)
 - 기획 입력 문서 체인: 제안요청서 → 제안서 → PRD → TASK
 
-## 7. skill 생성
+## 8. skill 생성
 
 - **생성 트리거**: 같은 맥락 설명을 **2회 이상 반복 + 의도가 안정**되면 스킬화한다.
   - 근거(intent debt): 에이전트는 매 세션 cold start라 의도의 빈틈을 추측으로 채운다 — 스킬이 없으면 매 사이클 프로젝트를 처음부터 재유도.
 - CLAUDE.md가 비대해져 에이전트 오류가 늘면 스킬로 분할한다.
 - **지점 바인딩**: 스킬은 workflow.md §9 배치 원칙을 따른다 — 어느 단계/게이트에서 발동하는지 명시하고 `.claude/skills/`에 기록.
 
-## 8. agent 생성 원칙
+## 9. agent 생성 원칙
 
 - **maker-checker 쌍 필수** — 만드는 에이전트가 있으면 반드시 그 산출물을 검사하는 에이전트가 있어야 한다 (workflow.md 원칙 12):
   - planner ↔ us-reviewer
@@ -200,7 +210,7 @@ project/
   - developer ↔ code-reviewer
 - 발동 지점이 workflow.md에 없는 agent는 만들지 않는다 (원칙 11 — 지점 바인딩).
 
-## 9. 개발 방법론
+## 10. 개발 방법론
 
 - **SDD** (Specification Driven Development) — 문서 → 디자인 → 소스 순서 (workflow.md 원칙 1)
 

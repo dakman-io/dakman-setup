@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loop Engineering × 우리 워크플로우 — 3자 토론 결론</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#181b24; --panel2:#1f2330; --line:#2a2f3e;
+    --text:#e6e9f0; --muted:#9aa3b5; --accent:#5b8def;
+    --ok:#2ea870; --ok-bg:#10331f; --warn:#d9a23a; --warn-bg:#33260e; --bad:#c75462; --bad-bg:#331318;
+    --hold:#7a86a0; --hold-bg:#23283a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:"Apple SD Gothic Neo","Pretendard","Noto Sans KR",system-ui,sans-serif;line-height:1.65;padding:40px 20px;max-width:1100px;margin:0 auto}
+  h1{font-size:1.65rem;margin-bottom:6px}
+  h2{font-size:1.2rem;margin:38px 0 14px;padding-left:12px;border-left:4px solid var(--accent)}
+  .sub{color:var(--muted);font-size:.9rem;margin-bottom:24px}
+  .sub a{color:#8db4f8}
+  .sub code{background:var(--panel2);padding:1px 6px;border-radius:4px;font-size:.82rem}
+
+  .verdict{background:linear-gradient(135deg,#16243d,#1b2030);border:1px solid #2e4a7a;border-radius:14px;padding:24px 28px;margin:22px 0}
+  .verdict .big{font-size:1.2rem;font-weight:800;line-height:1.55}
+  .verdict .big em{color:#8db4f8;font-style:normal}
+  .verdict p{margin-top:10px;color:var(--muted);font-size:.93rem}
+  .unanimous{display:inline-block;background:var(--ok-bg);color:#6fd9a6;border:1px solid var(--ok);border-radius:99px;padding:2px 12px;font-size:.8rem;font-weight:700;margin-bottom:12px}
+
+  table{width:100%;border-collapse:collapse;background:var(--panel);border-radius:10px;overflow:hidden;font-size:.88rem}
+  th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  th{background:var(--panel2);font-size:.8rem;color:var(--muted);letter-spacing:.04em}
+  tr:last-child td{border-bottom:none}
+  td.c,th.c{text-align:center}
+
+  .badge{display:inline-block;border-radius:6px;padding:2px 9px;font-size:.76rem;font-weight:700;white-space:nowrap}
+  .b-ok{background:var(--ok-bg);color:#6fd9a6;border:1px solid var(--ok)}
+  .b-warn{background:var(--warn-bg);color:#ecc678;border:1px solid var(--warn)}
+  .b-bad{background:var(--bad-bg);color:#ef93a0;border:1px solid var(--bad)}
+  .b-hold{background:var(--hold-bg);color:#aab6d4;border:1px solid var(--hold)}
+  .b-final{background:#16243d;color:#8db4f8;border:1px solid #2e4a7a}
+
+  .tension{background:var(--panel);border:1px solid var(--warn);border-radius:12px;padding:16px 22px;margin:16px 0;font-size:.92rem}
+  .tension b{color:#ecc678}
+
+  ol.fixes{counter-reset:fix;list-style:none;margin:14px 0}
+  ol.fixes li{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:13px 16px 13px 60px;margin-bottom:9px;position:relative;font-size:.9rem}
+  ol.fixes li::before{counter-increment:fix;content:"L" counter(fix);position:absolute;left:14px;top:13px;width:32px;height:26px;border-radius:8px;background:#16243d;color:#8db4f8;border:1px solid #2e4a7a;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.82rem}
+  ol.fixes b{color:#dbe5fa}
+  ol.fixes .ref{display:block;color:var(--muted);font-size:.8rem;margin-top:4px}
+  .legend{font-size:.82rem;color:var(--muted);margin:8px 0 4px}
+
+  .dissent{background:var(--panel);border:1px dashed var(--warn);border-radius:12px;padding:18px 22px;margin:14px 0}
+  .dissent h3{color:#ecc678;font-size:.95rem;margin-bottom:10px}
+  .dissent li{margin:8px 0 8px 18px;font-size:.9rem;color:#cfd6e4}
+  .dissent b{color:#ecc678}
+
+  .flow{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 20px;font-size:.9rem;color:var(--muted)}
+  .flow b{color:var(--text)}
+  footer{margin-top:42px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:.8rem}
+  a{color:#8db4f8}
+</style>
+</head>
+<body>
+
+<h1>Loop Engineering × 우리 워크플로우 — 3자 토론 결론</h1>
+<div class="sub">
+  Claude(진행자) × Codex(내적 정합성 렌즈) × Gemini(비용·현실성 렌즈) · 2라운드 · 2026-06-11<br>
+  출처: <a href="https://x.com/addyosmani/status/2064127981161959567">Addy Osmani "Loop Engineering" 아티클</a>(전문) + 댓글 클러스터 — playwright MCP 직접 수집<br>
+  전사: <code>.cmux/debates/loop-engineering-workflow/board.md</code> · 정본: <code>loop-engineering-workflow.md</code>
+</div>
+
+<div class="verdict">
+  <span class="unanimous">3 / 3 만장일치 · confidence 0.85 ~ 0.90</span>
+  <div class="big">6요소를 "도입"할 필요는 없다 — 절반은 이미 우리 워크플로우에 있다.<br>결론은 <em>선별 채택 + 비용·권한 가드레일</em>이다.</div>
+  <p>핵심 교정 1건: "Sub-agents는 이미 있음"(claude 초기 주장)은 과대평가 — <b>종결 판정이 여전히 작성 참여자(Orchestrator)에게 남아 있다</b>는 codex의 적발이 패키지의 축(L2)이 됐다.</p>
+</div>
+
+<div class="tension">
+  <b>토론의 재료가 된 긴장</b> — 아티클 본문은 비전을 팔고, 댓글 286개는 <b>토큰 비용 / 품질(슬롭·회귀) / 'done' 정의</b>라는 현실 제약으로 반박.
+  Addy 본인이 답글로 인정: <i>"(1) token costs and (2) verification against what 'good' means are important factors"</i>. 이 구도가 그대로 가드레일 설계의 입력이 됐다.
+</div>
+
+<h2>6요소 최종 판정</h2>
+<table>
+  <tr><th>요소</th><th>우리 현황</th><th class="c">판정</th><th>방향</th></tr>
+  <tr><td><b>Sub-agents</b></td><td>부분 존재 — 리뷰-수정 분리 원칙은 있으나 종결 판정이 작성자에 남음</td><td class="c"><span class="badge b-final">수정채택</span></td><td>Tier 차등 held-out 판정 (T3 필수/T2 선택/T1 self)</td></tr>
+  <tr><td><b>Skills</b></td><td>구조 존재, 생성 규칙 없음 (빈 섹션)</td><td class="c"><span class="badge b-final">수정채택</span></td><td>intent debt 기반 생성 트리거</td></tr>
+  <tr><td><b>Memory</b></td><td>부분 존재 — todo.md가 "할 일" 수준</td><td class="c"><span class="badge b-final">수정채택</span></td><td>todo.md = 루프의 spine (상태 스키마)</td></tr>
+  <tr><td><b>Automations</b></td><td>부재 — §10 점검 수동</td><td class="c"><span class="badge b-final">수정채택</span></td><td>점검류 한정 + 예산 cap</td></tr>
+  <tr><td><b>Connectors</b></td><td>부분 존재 — MCP 사용 중, 규정 없음</td><td class="c"><span class="badge b-final">수정채택</span></td><td>읽기 자유 / 쓰기는 Draft PR까지</td></tr>
+  <tr><td><b>Worktrees</b></td><td>부재</td><td class="c"><span class="badge b-hold">보류</span></td><td>재론 조건: 병렬 구현 sub-agent 도입 시</td></tr>
+</table>
+
+<h2>합의된 반영 패키지 — 9건</h2>
+<p class="legend">L1~L8 = 실반영 · L9 = 보류 기록 · 전 항목 3/3 합의</p>
+<ol class="fixes">
+  <li><b>점검 자동화 (한정)</b> — §10 월간 점검을 cron//loop로. 점검류만(광역 버그 헌팅 금지), 루프마다 주기·예산 cap·산출물(<code>artifacts/progress/loop-triage.md</code>)·빈 결과 자동 종료 명시.<span class="ref">workflow.md §10</span></li>
+  <li><b>held-out 종결 판정 (Tier 차등)</b> — 리뷰 루프 종결(C+M 0건) 판정: T3·위험 도메인 = 작성 비참여 노드 필수, T2 = 선택, T1 = self. "코드를 쓴 에이전트가 자기 완료를 선언하지 않는다."<span class="ref">workflow.md §4 — Tier 수정 패키지 5·6번과 연결</span></li>
+  <li><b>Memory spine</b> — todo.md 항목별 1줄: <code>status(open/tried/passed/blocked) · 다음 행동 · 검증 증거 링크 · 되돌릴 커밋</code>. 상세 증거는 review/tests 링크로(todo 오염 방지). 세션 재개 시 첫 Read 대상.<span class="ref">workflow.md §9 DoD + §11</span></li>
+  <li><b>Skills 생성 트리거</b> — "같은 맥락 설명 2회 반복 + 의도 안정 시 스킬화. CLAUDE.md 비대로 오류 증가 시 분할." (intent debt 근거)<span class="ref">project-setup.md "## skill 생성" (현재 빈 섹션)</span></li>
+  <li><b>Comprehension Debt 가드</b> — PR/summary 필수 필드 <code>why / risk / rollback</code> + 사용자 확인. 위험 도메인 한정 옵션: Echo-back 검수.<span class="ref">workflow.md §9 DoD (+§6.6 1줄) — 최대 공백으로 진단된 항목</span></li>
+  <li><b>참고 문서</b> — Addy 아티클 + 본 토론 산출물 링크.<span class="ref">workflow.md §11</span></li>
+  <li><b>Loop Budget &amp; Permission Guard</b> — 자동 루프 등록 시 <code>목적/주기/예산 cap/허용 도구/쓰기 권한/종료 조건/산출물</code> 기록. <b>자동 루프는 커밋·머지·publish 금지.</b> §0에 "AI 월 예산" 행(선택). ★ cap 미지정 시 보수적 기본값(fail-safe) + 종료 시 사용량 1줄 기록.<span class="ref">workflow.md 신규 + §0 — ★ 2건은 gemini 최종 추가(codex 재확인 생략, 기합의 범위 내)</span></li>
+  <li><b>Connectors 이원화</b> — 읽기·증거 수집 자유 / 쓰기 행위는 Draft PR까지 — publish 버튼이 품질 게이트.<span class="ref">workflow.md §0 + 원칙 5 유지</span></li>
+  <li><b>Worktrees 보류</b> — 1인 환경에서 병렬 격리는 인지 파편화 비용이 더 큼 ("YOU are still the ceiling" — Addy). 병렬 구현 sub-agent 도입 시 재론.<span class="ref">반영 없음 — 재론 조건만 기록</span></li>
+</ol>
+
+<h2>3대 잔여 문제 — 우리 워크플로우 진단</h2>
+<table>
+  <tr><th>문제</th><th class="c">진단</th><th>대응</th></tr>
+  <tr><td><b>Verification</b> — "done is a claim, not a proof"</td><td class="c"><span class="badge b-ok">강함</span></td><td>검수 후 커밋 + ATDD 인수 테스트. unattended 루프엔 L2+L7로 보강</td></tr>
+  <tr><td><b>Comprehension Debt</b> — 루프가 빠를수록 이해 격차 증가</td><td class="c"><span class="badge b-bad">최대 공백</span></td><td>L5(why/risk/rollback) + L3(되돌릴 커밋). 실전 증언(댓글)과 일치하는 공포</td></tr>
+  <tr><td><b>Cognitive Surrender</b> — 잘 돌수록 무비판 수용</td><td class="c"><span class="badge b-warn">부분 대응</span></td><td>§6.6 "summary만 검토" 흐름이 취약점 — summary-raw 대조(Tier 패키지)와 L5로 보강</td></tr>
+</table>
+
+<h2>검증 원장</h2>
+<table>
+  <tr><th>주장</th><th class="c">판정</th><th>근거</th></tr>
+  <tr><td>5요소가 Claude Code에 모두 존재 (아티클)</td><td class="c"><span class="badge b-warn">⚠️ 부분 확인</span></td><td>/loop·cron·hooks·worktree isolation·agents·skills·MCP = 실환경 확인. <b>/goal은 이 환경에 없음</b> [부분 미검증]</td></tr>
+  <tr><td>"Sub-agents 이미 있음" (claude R1)</td><td class="c"><span class="badge b-warn">⚠️ 교정</span></td><td>종결 판정·summary가 작성 참여자에 남음 (workflow.md:122, 232-244)</td></tr>
+  <tr><td>3대 제약: 비용/품질/done 정의 (댓글)</td><td class="c"><span class="badge b-ok">✅ 확정</span></td><td>Addy 본인 답글로 인정 + 댓글 4건 이상</td></tr>
+  <tr><td>/loop 실사용 사례</td><td class="c"><span class="badge b-ok">✅ 확정</span></td><td>댓글 Maku Mazakpe — 커밋 감시 리뷰 루프 원문</td></tr>
+  <tr><td>"CLAUDE.md 10KB 분할 기준" (gemini)</td><td class="c"><span class="badge b-bad">❌ 미검증</span></td><td>수치 출처 없음 — 정성 기준만 채택</td></tr>
+  <tr><td>"Chaos Test" — 의도적 결함 주입 (gemini)</td><td class="c"><span class="badge b-bad">❌ 기각</span></td><td>[미검증] + 1인 환경 과잉 — 3/3 동의</td></tr>
+  <tr><td>"Complexity Delta" — 슬롭 지표 (gemini)</td><td class="c"><span class="badge b-bad">❌ 미검증 · 잔여 기록</span></td><td>가치는 인정, 측정 방법 없음 — §10 참고 팁 후보로만 보존</td></tr>
+</table>
+
+<h2>잔여 이견 · 한계 — 지우지 않고 보존</h2>
+<div class="dissent">
+  <h3>⚠️ 남은 것들</h3>
+  <ul>
+    <li><b>L7 ★ 2건의 codex 미확인</b> — 기합의 범위 내 추가 가드라 진행자가 수용. 반영 시 운영 가능성 재검 권장.</li>
+    <li><b>/goal 미확인</b> — 아티클의 핵심 사례지만 이 환경에서 재현 불가. L2는 /goal이 아닌 우리 3인 리뷰 구조로 구현하므로 결론엔 영향 없음.</li>
+    <li><b>Walk-forward 체크</b> — 반영 후 처음 등록되는 자동 루프 3개에서 L7 기록이 실제 채워지는지 §10 첫 점검에서 확인 (소유자: 사용자).</li>
+    <li><b>패키지의 실효성</b> — 세 참여자 모두 LLM. 원문 인용으로 정박했으나 "비용 폭주를 실제로 막는가"는 운영해 봐야 안다.</li>
+  </ul>
+</div>
+
+<h2>토론 경과</h2>
+<div class="flow">
+  <b>R1</b> — claude "절반은 이미 있음, 선별 채택"(0.75) → codex "'이미 있음' 과대평가 + P7 Budget Guard 신규"(0.82) → gemini "중앙집권형에 머물러 있다 — Worktrees 기각, 비용 가드 전면화"(0.85)<br>
+  <b>R2</b> — claude 중재안 v2(Tier 차등·todo 확장·Draft 게이트)(0.85) → codex 전반 찬성 + spine 1줄 조건(0.87) → gemini 전면 수용 + fail-safe 예산 추가(0.90) → <b>수렴 종료</b><br>
+  운영: gemini single-writer 모드로 board 무결성 사고 0 (직전 토론 friendly-fire 재발 없음) · enter 미제출 2회를 새 확인 절차가 자동 복구
+</div>
+
+<footer>
+  정본: <code>loop-engineering-workflow.md</code> · 본 HTML은 동일 결론의 시각화 뷰 (새 주장 없음) ·
+  Tier 수정 패키지 10건과 본 패키지(실반영 8건)는 충돌 없음 — 묶어서 일괄 반영 가능, 둘 다 메타 변경(자동 T3)이며 3자 교차 리뷰를 거침
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-Driven Workflow (범용 템플릿) — 시각화</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#181b24; --panel2:#1f2330; --line:#2a2f3e;
+    --text:#e6e9f0; --muted:#9aa3b5; --accent:#5b8def;
+    --ok:#2ea870; --ok-bg:#10331f; --warn:#d9a23a; --warn-bg:#33260e;
+    --bad:#c75462; --bad-bg:#331318; --hold:#7a86a0; --hold-bg:#23283a;
+    --t1:#2ea870; --t2:#d9a23a; --t3:#c75462;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:"Apple SD Gothic Neo","Pretendard","Noto Sans KR",system-ui,sans-serif;line-height:1.65;padding:40px 20px 80px;max-width:1180px;margin:0 auto;word-break:keep-all}
+  h1{font-size:1.7rem;margin-bottom:6px}
+  h2{font-size:1.25rem;margin:46px 0 16px;padding-left:12px;border-left:4px solid var(--accent)}
+  h2 .sec{color:var(--muted);font-weight:700;font-size:.95rem;margin-right:8px}
+  h3{font-size:1rem;margin:24px 0 10px;color:#c6d4f5}
+  .sub{color:var(--muted);font-size:.9rem;margin-bottom:18px}
+  code{background:var(--panel2);padding:1px 7px;border-radius:5px;font-size:.84em;color:#b9c8e8}
+
+  .premise{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 6px}
+  .chip{background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:7px 16px;font-size:.85rem;color:#cfd6e4}
+  .chip b{color:#8db4f8}
+
+  table{width:100%;border-collapse:collapse;background:var(--panel);border-radius:10px;overflow:hidden;font-size:.87rem;margin:10px 0}
+  th,td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  th{background:var(--panel2);font-size:.78rem;color:var(--muted);letter-spacing:.04em}
+  tr:last-child td{border-bottom:none}
+  td.c,th.c{text-align:center}
+
+  .badge{display:inline-block;border-radius:6px;padding:1px 9px;font-size:.76rem;font-weight:700;white-space:nowrap}
+  .b-ok{background:var(--ok-bg);color:#6fd9a6;border:1px solid var(--ok)}
+  .b-warn{background:var(--warn-bg);color:#ecc678;border:1px solid var(--warn)}
+  .b-bad{background:var(--bad-bg);color:#ef93a0;border:1px solid var(--bad)}
+  .b-skip{background:var(--hold-bg);color:#aab6d4;border:1px solid var(--hold)}
+  .b-blue{background:#16243d;color:#8db4f8;border:1px solid #2e4a7a}
+
+  .principles{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:11px;margin:14px 0}
+  .pcard{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:13px 15px 13px 50px;position:relative;font-size:.86rem;color:#c4ccdd}
+  .pcard b{color:#e8edf8;display:block;margin-bottom:2px}
+  .pcard .n{position:absolute;left:13px;top:13px;width:26px;height:26px;border-radius:8px;background:#16243d;color:#8db4f8;border:1px solid #2e4a7a;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.8rem}
+  .pcard.new{border-color:#3b65a8}
+
+  .tierbox{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:14px 0}
+  .tier{border-radius:12px;padding:16px 18px;background:var(--panel);border:1px solid var(--line);border-top:4px solid}
+  .tier.t1{border-top-color:var(--t1)} .tier.t2{border-top-color:var(--t2)} .tier.t3{border-top-color:var(--t3)}
+  .tier .name{font-weight:900;font-size:1.05rem}
+  .tier.t1 .name{color:#6fd9a6}.tier.t2 .name{color:#ecc678}.tier.t3 .name{color:#ef93a0}
+  .tier .def{font-size:.85rem;color:#cfd6e4;margin:6px 0}
+  .tier .ex{font-size:.78rem;color:var(--muted)}
+  .formula{background:#16243d;border:1px solid #2e4a7a;border-radius:12px;padding:14px 20px;font-size:.95rem;margin:12px 0}
+  .formula b{color:#8db4f8}
+
+  .steps{display:flex;align-items:stretch;gap:0;margin:18px 0;flex-wrap:wrap}
+  .step{flex:1;min-width:120px;position:relative;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 10px 12px 14px;margin-right:26px;font-size:.8rem;color:var(--muted)}
+  .step::after{content:"→";position:absolute;right:-21px;top:50%;transform:translateY(-50%);color:#3d4660;font-size:1.2rem;font-weight:900}
+  .step:last-child{margin-right:0}.step:last-child::after{content:""}
+  .step .t{font-weight:800;font-size:.92rem;display:block;margin-bottom:3px}
+  .step.s1{border-top:3px solid #4a9eff}.step.s1 .t{color:#7db8ff}
+  .step.s2,.step.s3{border-top:3px solid #5b8def}.step.s2 .t,.step.s3 .t{color:#8db4f8}
+  .step.s4{border-top:3px solid #ff6b6b}.step.s4 .t{color:#ff9b9b}
+  .step.s5{border-top:3px solid #ffd93d}.step.s5 .t{color:#ffe27a}
+  .step.s6{border-top:3px solid #6bcb77}.step.s6 .t{color:#8fdd99}
+  .step.s7{border-top:3px solid #9575cd}.step.s7 .t{color:#bda9e8}
+
+  .loopflow{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 22px;font-size:.88rem;color:#cfd6e4;margin:10px 0}
+  .loopflow b{color:#e8edf8}
+  .loopflow .branch{color:var(--muted);padding-left:18px}
+
+  .tree{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 22px;margin:12px 0}
+  .tnode{display:flex;gap:14px;align-items:flex-start;margin-bottom:10px;font-size:.88rem}
+  .tnode:last-child{margin-bottom:0}
+  .tnode .q{flex-shrink:0;width:30px;height:30px;border-radius:9px;background:#16243d;border:1px solid #2e4a7a;color:#8db4f8;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:.85rem}
+  .tnode .body{padding-top:3px}
+  .tnode .yes{color:#ef93a0;font-weight:700}.tnode .no{color:var(--muted)}
+
+  .callout{background:var(--panel);border-left:6px solid var(--accent);border-radius:10px;padding:14px 20px;font-size:.87rem;color:#cfd6e4;margin:12px 0}
+  .callout.warn{border-left-color:var(--warn)} .callout.warn b{color:#ecc678}
+  .callout b{color:#8db4f8}
+
+  .pipeline{display:flex;gap:0;flex-wrap:wrap;margin:14px 0}
+  .pipe{flex:1;min-width:200px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-right:26px;position:relative;font-size:.84rem;color:var(--muted)}
+  .pipe::after{content:"→";position:absolute;right:-21px;top:50%;transform:translateY(-50%);color:#3d4660;font-size:1.2rem;font-weight:900}
+  .pipe:last-child{margin-right:0}.pipe:last-child::after{content:""}
+  .pipe .t{color:#c6d4f5;font-weight:800;display:block;margin-bottom:4px;font-size:.9rem}
+
+  .roles{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:11px;margin:12px 0}
+  .role{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:13px 15px;font-size:.82rem;color:var(--muted)}
+  .role b{display:block;color:#8db4f8;font-size:.95rem;margin-bottom:4px}
+  .role .stg{display:inline-block;margin-top:6px;font-size:.74rem;color:#7d88a0;background:var(--panel2);border-radius:6px;padding:1px 8px}
+
+  .guard{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:11px;margin:12px 0}
+  .gcard{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:13px 16px;font-size:.84rem;color:#c4ccdd}
+  .gcard b{color:#ecc678;display:block;margin-bottom:3px}
+
+  footer{margin-top:50px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:.8rem}
+  .toc{position:sticky;top:0;z-index:5;background:rgba(15,17,23,.95);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 4px;margin:0 -20px 10px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+  .toc a{color:#9fb6e4;text-decoration:none;font-size:.78rem;background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:4px 12px}
+  .toc a:hover{border-color:var(--accent);color:#cfe0ff}
+  a{color:#8db4f8}
+</style>
+</head>
+<body>
+
+<h1>AI-Driven Workflow <span style="color:#8db4f8">(범용 템플릿)</span></h1>
+<div class="sub">1인 개발 환경 운영 매뉴얼 — 앱/웹 프로젝트 공용 · 정본: <code>.claude/workflows/workflow.md</code> (본 HTML은 동일 내용의 시각화 뷰) · 2026-06-11 기준</div>
+
+<div class="premise">
+  <span class="chip"><b>Lean Default + Escalation</b> — 기본은 단순, 위험하면 상향</span>
+  <span class="chip"><b>비용 1차 기준</b> = 사용자 활성 검토 시간</span>
+  <span class="chip"><b>본 문서 변경</b> = 자동 T3 + 3인 교차 리뷰</span>
+  <span class="chip"><b>템플릿 사용법</b> — §0 표의 {placeholder}만 채우면 시작</span>
+</div>
+
+<nav class="toc">
+  <a href="#s0">0 설정</a><a href="#s1">1 원칙</a><a href="#s2">2 Tier</a><a href="#s3">3 흐름</a><a href="#s4">4 리뷰 루프</a><a href="#s5">5 게이트</a><a href="#s6">6 3인 리뷰</a><a href="#s7">7 일정</a><a href="#s8">8 예외·루프 가드</a><a href="#s9">9 역할·DoD</a><a href="#s10">10 정량 평가</a><a href="#s11">11 참고</a>
+</nav>
+
+<h2 id="s0"><span class="sec">§0</span>프로젝트 설정 — 프로젝트별로 채우는 곳</h2>
+<table>
+  <tr><th>항목</th><th class="c">placeholder</th><th>웹 예시</th><th>앱 예시</th></tr>
+  <tr><td>프로젝트명 / 플랫폼</td><td class="c"><code>{프로젝트명}</code> <code>{플랫폼}</code></td><td>shop-web · 웹 (Next.js)</td><td>SetBox · 모바일 (Expo/RN)</td></tr>
+  <tr><td>타입 체크 / 단위 테스트 / 린트</td><td class="c"><code>{타입체크}</code> <code>{단위테스트}</code> <code>{린트}</code></td><td><code>tsc --noEmit</code> · <code>vitest run</code> · <code>eslint .</code></td><td><code>tsc --noEmit</code> · <code>jest</code> · <code>expo lint</code></td></tr>
+  <tr><td>E2E 도구 / 실행</td><td class="c"><code>{E2E도구}</code> <code>{E2E실행}</code></td><td>Playwright (+MCP) · <code>playwright test</code></td><td>Maestro · <code>e2e-test.sh</code></td></tr>
+  <tr><td>디자인 도구 / 실행 확인 환경</td><td class="c"><code>{디자인도구}</code> <code>{실행환경}</code></td><td>Pencil/Figma · 브라우저</td><td>Pencil · 시뮬레이터</td></tr>
+  <tr><td>커버리지 목표</td><td class="c"><code>{커버리지}</code></td><td colspan="2">핵심 도메인 80% / 서비스·스토어 70% / 유틸 90%</td></tr>
+  <tr><td><b>위험 도메인</b> ★ 자동 T3 입력값</td><td class="c"><code>{위험도메인}</code></td><td>결제, 인증, 주문 데이터</td><td>Timer core, 백그라운드 복구, 세션 기록</td></tr>
+  <tr><td>AI 월 예산 (선택)</td><td class="c"><code>{AI예산}</code></td><td colspan="2">월 $50 — §8.4 루프 cap의 상한</td></tr>
+</table>
+<div class="callout"><b>{위험도메인}</b> = 실패 시 사용자 데이터·돈·신뢰에 직접 영향을 주는 프로젝트 핵심 로직 — 프로젝트 시작 시 반드시 명시적으로 정의.</div>
+
+<h2 id="s1"><span class="sec">§1</span>핵심 원칙 13</h2>
+<div class="principles">
+  <div class="pcard"><span class="n">1</span><b>문서 → 디자인 → 소스</b>변경 반영 순서 필수, 코드부터 시작 금지</div>
+  <div class="pcard"><span class="n">2</span><b>AC 기반 개발</b>US의 Acceptance Criteria가 구현/테스트/리뷰의 단일 기준</div>
+  <div class="pcard"><span class="n">3</span><b>ATDD + TDD 이중 루프</b>외곽: AC→실패하는 인수 테스트 / 내부: RED→GREEN→REFACTOR. 테스트 없는 기능 코드 금지</div>
+  <div class="pcard"><span class="n">4</span><b>Critical+Major 0건</b>자동 리뷰 루프는 C+M 0건까지 반복. Minor는 재량</div>
+  <div class="pcard"><span class="n">5</span><b>검수 후 커밋</b>사용자 확인 없이 형상관리 금지</div>
+  <div class="pcard"><span class="n">6</span><b>feature/*만 직접 push</b>develop 이후 PR 필수, merge 커밋 (추적성)</div>
+  <div class="pcard"><span class="n">7</span><b>리뷰-수정 분리</b>리뷰어는 이슈 기록만, 원본 수정 금지 — 작성자가 반영</div>
+  <div class="pcard"><span class="n">8</span><b>디자인 시스템 준수</b>Foundation→Component→Pattern→Screen, 토큰 단일 소스</div>
+  <div class="pcard"><span class="n">9</span><b>자기참조성</b>본 문서/project-setup/CLAUDE.md 변경 = 자동 T3</div>
+  <div class="pcard"><span class="n">10</span><b>쉬프트-레프트</b>US/AC 단계 결함 검출이 가장 저렴 — 작성 시점에 강한 리뷰</div>
+  <div class="pcard new"><span class="n">11</span><b>agent·skill 지점 바인딩</b>워크플로우가 뼈대 — 발동 지점이 문서에 없는 agent/skill은 만들지 않는다</div>
+  <div class="pcard new"><span class="n">12</span><b>maker-checker 쌍</b>만드는 에이전트가 있으면 검사하는 에이전트 필수 (developer ↔ code-reviewer)</div>
+  <div class="pcard new"><span class="n">13</span><b>정량 평가 기반 진화</b>완료 시마다 지표 기록 → 개선/유지/폐기 결정. 측정 불가 규칙 금지</div>
+</div>
+
+<h2 id="s2"><span class="sec">§2</span>Tier 분류 — 모든 작업의 진입점</h2>
+<div class="formula">3축 위험 평가 (각 축 yes=1 / no=0, 30초 판단, 의심 시 yes) — <b>사용자 영향</b> · <b>되돌림 비용</b> · <b>검증 불명확</b> → 합계 <b>0 = T1 / 1 = T2 / 2+ = T3</b> · 위험 도메인이면 합계 무관 <b>자동 T3</b></div>
+<div class="tierbox">
+  <div class="tier t1"><div class="name">T1 Trivial</div><div class="def">위험 0 — 동작·의도·사용자 가시 문구를 바꾸지 않는 변경만</div><div class="ex">내부 오탈자, lint, 포맷팅, unused import</div></div>
+  <div class="tier t2"><div class="name">T2 Standard</div><div class="def">위험 1</div><div class="ex">기존 US 1개 구현, UI 텍스트 변경, 컴포넌트 추가, 기존 expectation 보정(최소 T2)</div></div>
+  <div class="tier t3"><div class="name">T3 Major</div><div class="def">위험 2+ 또는 자동 T3</div><div class="ex">신규 US, 데이터 모델/마이그레이션, {위험도메인}, 메타 워크플로우</div></div>
+</div>
+<h3>자동 T3 = 위험 도메인 (3인 리뷰 항상 발동)</h3>
+<div class="callout warn">데이터 모델/마이그레이션/스키마 · <b>{위험도메인}</b> · 보안/개인정보/인증 · 메타 워크플로우 · 신규 화면+상태+데이터 동시</div>
+<h3>재분류 — 스코프 드리프트 대응</h3>
+<div class="pipeline">
+  <div class="pipe"><span class="t">상향 사유 발견</span>위험 도메인 접촉, 새 위험 축 — 즉시 중단</div>
+  <div class="pipe"><span class="t">초단축 재브리핑</span>새 Tier로 재분류, Orchestrator가 처리안 제안</div>
+  <div class="pipe"><span class="t">사용자 결정</span>① 게이트 통과 가능 → 현 작업 증거 보강<br>② 설계 변경·위험 접촉 → 동결 + 신규 분리</div>
+  <div class="pipe"><span class="t">기록</span>사유를 PR 본문에 (§10.1) — 생략한 단계·증거를 새 Tier 기준으로 재구성</div>
+</div>
+
+<h2 id="s3"><span class="sec">§3</span>7단계 기본 흐름</h2>
+<div class="steps">
+  <div class="step s1"><span class="t">1 브리핑</span>Tier 분류 + 일정 산정<br>Orchestrator</div>
+  <div class="step s2"><span class="t">2 기획</span>US + AC (G-W-T)<br>Planner</div>
+  <div class="step s3"><span class="t">3 디자인</span>{디자인도구} 프레임<br>Designer</div>
+  <div class="step s4"><span class="t">4 구현</span>브랜치 + ATDD/TDD<br>Developer</div>
+  <div class="step s5"><span class="t">5 검증</span>리뷰 + E2E<br>QA Reviewer</div>
+  <div class="step s6"><span class="t">6 형상관리</span>검수 + PR + merge<br>Ops</div>
+  <div class="step s7"><span class="t">7 완료</span>평가·개선·다음 제안<br>Orchestrator</div>
+</div>
+<table>
+  <tr><th>#</th><th>산출물</th><th class="c">T1</th><th class="c">T2</th><th class="c">T3</th></tr>
+  <tr><td>1 브리핑</td><td>작업 범위·접근·예상 변경·Tier·AI/사용자 시간</td><td class="c"><span class="badge b-skip">짧게</span></td><td class="c">✓</td><td class="c">✓</td></tr>
+  <tr><td>2 기획</td><td><code>artifacts/planning/user-stories/*.md</code></td><td class="c"><span class="badge b-skip">skip</span></td><td class="c">최소</td><td class="c">✓ 정식</td></tr>
+  <tr><td>3 디자인</td><td><code>artifacts/design/*</code> + 매핑</td><td class="c"><span class="badge b-skip">skip</span></td><td class="c">UI 시</td><td class="c">✓</td></tr>
+  <tr><td>4 구현</td><td><code>feature/*</code> + 인수·단위 테스트 + 코드 + 디자인 대조</td><td class="c">테스트 면제 가능</td><td class="c">✓</td><td class="c">✓</td></tr>
+  <tr><td>5 검증</td><td>리뷰 파일, E2E flow, pass-fail 로그</td><td class="c">자체 점검</td><td class="c">1회</td><td class="c">풀 루프</td></tr>
+  <tr><td>6 형상관리</td><td>검수 + todo 갱신 + PR + merge</td><td class="c">✓</td><td class="c">✓</td><td class="c">✓</td></tr>
+  <tr><td>7 완료</td><td>§10.1 지표 확정 · §10.3 개선 제안 · todo spine 기반 다음 작업 제안</td><td class="c">기록 1줄</td><td class="c">✓</td><td class="c">✓</td></tr>
+</table>
+<p class="legend">시각화: <code>.claude/workflows/workflow.drawio</code> (7 스윔레인 A~G, 역할 색상) — 본 페이지와 동일 정본 기준</p>
+
+<h2 id="s4"><span class="sec">§4</span>공통 리뷰 루프</h2>
+<div class="loopflow">
+  작성자 산출물 → Reviewer 이슈 파일 → Orchestrator 판정<br>
+  <span class="branch">├─ Critical+Major 0건 → 다음 단계 또는 사람 판단</span><br>
+  <span class="branch">├─ Round 상한 도달 → 사용자 에스컬레이션</span><br>
+  <span class="branch">└─ 그 외 → 작성자 반영 → R+1</span>
+</div>
+<table>
+  <tr><th>규칙</th><th>내용</th></tr>
+  <tr><td>Round 상한</td><td>T1 없음 / T2 R1~R2 / T3 R1~R3 / 예외(사용자 승인) R5 — R2 초과 시 <b>Context Hygiene</b> (새 세션 + 핵심 스펙만 Read)</td></tr>
+  <tr><td>리뷰 파일</td><td><code>artifacts/review/{type}-{scope}-review[-{reviewer}]-round{N}.md</code></td></tr>
+  <tr><td>라운드 중 판정</td><td>Orchestrator (Claude 메인 세션)가 통합·중재</td></tr>
+  <tr><td><b>종결 판정 (held-out)</b></td><td><span class="badge b-bad">T3·위험 도메인</span> 작성 비참여 노드 <b>필수</b> — 코드를 쓴 에이전트가 자기 완료를 선언하지 않는다 · <span class="badge b-warn">T2</span> 선택 · <span class="badge b-ok">T1</span> self</td></tr>
+</table>
+
+<h2 id="s5"><span class="sec">§5</span>품질 게이트 매트릭스</h2>
+<table>
+  <tr><th>게이트</th><th class="c">T1</th><th class="c">T2</th><th class="c">T3</th><th>기준</th></tr>
+  <tr><td>타입 체크 / 린트</td><td class="c">✓</td><td class="c">✓</td><td class="c">✓</td><td><code>{타입체크}</code> · <code>{린트}</code> 0 errors</td></tr>
+  <tr><td>단위 테스트</td><td class="c">관련만</td><td class="c">관련+회귀</td><td class="c">풀+신규</td><td><code>{단위테스트}</code> pass</td></tr>
+  <tr><td>커버리지</td><td class="c"><span class="badge b-skip">skip</span></td><td class="c">변경 영역</td><td class="c">목표 달성</td><td><code>{커버리지}</code> 리포트</td></tr>
+  <tr><td><b>AC 충족 (인수 테스트)</b></td><td class="c">n/a</td><td class="c">✓</td><td class="c">✓</td><td>AC를 변환한 인수 테스트 pass로 증명 (ATDD 외곽 루프)</td></tr>
+  <tr><td>디자인 대조</td><td class="c"><span class="badge b-skip">skip</span></td><td class="c">UI 시</td><td class="c">UI 시 ✓</td><td><code>{디자인도구}</code> vs <code>{실행환경}</code></td></tr>
+  <tr><td>코드 리뷰</td><td class="c">self</td><td class="c">R1</td><td class="c">R1~R3</td><td>Critical+Major 0</td></tr>
+  <tr><td>E2E</td><td class="c"><span class="badge b-skip">skip</span></td><td class="c">핵심 영향 시</td><td class="c">기본 전체*</td><td><code>{E2E실행}</code> pass · *Impact 분석 근거 시 관련 flow 축소 가능 · SYS 면제 가능</td></tr>
+  <tr><td>3인 교차 리뷰</td><td colspan="4">§6 매트릭스 참조</td></tr>
+</table>
+<div class="callout">Tier별 최소 증거 — <b>T1</b> 변경 파일+테스트 / <b>T2</b> AC+리뷰 1개 / <b>T3</b> US+리뷰들+테스트·E2E</div>
+
+<h2 id="s6"><span class="sec">§6</span>cmux 3인 교차 리뷰 — Claude × Codex × Gemini</h2>
+<div class="callout"><b>검토 ≠ 3인 리뷰.</b> 3인 리뷰는 사용자 활성 시간을 줄이는 도구 (R1~R3 반복 검토 → 1회 검토로 압축). 절차는 글로벌 스킬 <code>multi-ai-discussion</code>.</div>
+<h3>6.1 발동 결정 트리 (작성/수정 직후)</h3>
+<div class="tree">
+  <div class="tnode"><div class="q">1</div><div class="body">위험 도메인인가? → <span class="yes">yes: 3인 필수 (Tier·작성/수정 무관, 사용자도 skip 불가)</span> <span class="no">/ no ↓</span></div></div>
+  <div class="tnode"><div class="q">2</div><div class="body">R2 초과 의견 갈림 또는 사용자 명시 요청? → <span class="yes">yes: 3인 필수</span> <span class="no">/ no ↓</span></div></div>
+  <div class="tnode"><div class="q">3</div><div class="body">T1인가? → <span class="yes">yes: skip (자체 점검만)</span> <span class="no">/ no ↓</span></div></div>
+  <div class="tnode"><div class="q">4</div><div class="body">작성(신규)? → §6.2 매트릭스 / 수정? → §6.3 + 의미 변경 승격 규칙</div></div>
+  <div class="tnode"><div class="q">5</div><div class="body">사용자 "skip" 명시? → yes: skip + PR에 근거 1줄 (사용자 skip은 "필수"보다 우선 — 단 위험 도메인 제외)</div></div>
+</div>
+<h3>6.2 작성 시 / 6.3 수정 시 매트릭스</h3>
+<table>
+  <tr><th>시점</th><th class="c">T1</th><th class="c">T2 작성</th><th class="c">T3 작성</th><th class="c">T2 수정</th><th class="c">T3 수정</th></tr>
+  <tr><td>US/AC</td><td class="c"><span class="badge b-skip">skip</span></td><td class="c"><span class="badge b-bad">필수</span></td><td class="c"><span class="badge b-bad">필수</span></td><td class="c">선택*</td><td class="c">의미 변경=필수 / 보정=QA</td></tr>
+  <tr><td>디자인</td><td class="c"><span class="badge b-skip">skip</span></td><td class="c">권장</td><td class="c"><span class="badge b-bad">필수</span></td><td class="c"><span class="badge b-skip">skip</span></td><td class="c">구조 변경 시 권장</td></tr>
+  <tr><td>테스트 (인수+단위)</td><td class="c">self</td><td class="c"><span class="badge b-bad">필수</span></td><td class="c"><span class="badge b-bad">필수</span></td><td class="c">선택</td><td class="c">의도 변경=필수 / 보정=QA</td></tr>
+  <tr><td>소스 코드</td><td class="c">self</td><td class="c"><span class="badge b-bad">필수</span></td><td class="c"><span class="badge b-bad">필수</span></td><td class="c">선택</td><td class="c">설계 변경=필수 / 보정=QA</td></tr>
+  <tr><td>E2E</td><td class="c"><span class="badge b-skip">skip</span></td><td class="c"><span class="badge b-bad">필수</span></td><td class="c"><span class="badge b-bad">필수</span></td><td class="c"><span class="badge b-skip">skip</span></td><td class="c">여정/순서 변경=필수</td></tr>
+</table>
+<div class="callout warn"><b>의미 변경 승격</b> — AC 의미 변경 / 설계 변경 / 데이터·{위험도메인}·보안 영향 / E2E 여정 변경 중 1+ 해당 시 "수정"이 작성급으로 승격. *T2 수정도 의미 변경 시 작성급.</div>
+<h3>6.5~6.7 운영 — 사용자 활성 시간 압축</h3>
+<div class="pipeline">
+  <div class="pipe"><span class="t">[1] AI 산출물 작성</span>시점별 (US/AC→디자인→테스트→소스→E2E)</div>
+  <div class="pipe"><span class="t">[2~4] 3인 리뷰 + summary + 반영</span>codex/gemini 병렬 · 사용자 시간 0</div>
+  <div class="pipe"><span class="t">[5] 사용자 검토 1회</span>summary 1쪽만 · 5~20분</div>
+  <div class="pipe"><span class="t">[6] OK → 다음 시점</span>작업당 총 활성 시간 20~100분</div>
+</div>
+<div class="callout">Summary 필수 형식 — C/M 합의 이슈 · <b>raw C/M 집계 병기</b>(claude/codex/gemini 각각 — 불일치 시 즉시 노출, 요약 편향 가드) · 모델 간 충돌 · 사용자 결정 질문 ≤5개 · raw 파일 경로. <br>묶음 검토 옵션(전 시점 후 1회)은 T2 단순 작업만 — T3는 조기 발견 가치가 큼. <b>위험 도메인 옵션:</b> Echo-back 검수(에이전트 설명 → 사용자 1문장 요약).</div>
+
+<h2 id="s7"><span class="sec">§7</span>AI 역량 기준 일정 산정</h2>
+<table>
+  <tr><th>Tier</th><th class="c">AI 작업</th><th class="c">사용자 검토</th><th class="c">대기·버퍼</th><th class="c">Wall-clock</th></tr>
+  <tr><td>T1</td><td class="c">5~20분</td><td class="c">0~10분</td><td class="c">0~10분</td><td class="c">10~40분</td></tr>
+  <tr><td>T2</td><td class="c">30~120분</td><td class="c">15~30분</td><td class="c">20~60분</td><td class="c">1~3.5시간</td></tr>
+  <tr><td>T3</td><td class="c">2~6시간</td><td class="c">30~90분</td><td class="c">1~4시간</td><td class="c">반나절~2일</td></tr>
+  <tr><td>T3 + 3인 리뷰</td><td class="c">3~8시간</td><td class="c">45~120분</td><td class="c">2~6시간</td><td class="c"><b>1~3일</b></td></tr>
+  <tr><td>메타 (workflow.md 등)*</td><td class="c">2~6시간</td><td class="c">1~3시간</td><td class="c">1~3시간</td><td class="c">1~2일</td></tr>
+</table>
+<div class="sub">*메타 = "T3+3인 리뷰"의 특수형 (문서 정합 검증, 사용자 검토 비중↑) · 브리핑 표기: "T2 작성, AI 60분 / 검토 15분 / 버퍼 30분 / 3인 리뷰 4회" · 변동 요인: 외부 AI 대기, <b>rate limit 중단</b>, approval 모달, 컨텍스트 비대화</div>
+
+<h2 id="s8"><span class="sec">§8</span>예외와 면제 + 자동 루프 가드</h2>
+<div class="guard">
+  <div class="gcard"><b>8.1 SYS 면제</b>UI 무변경 + 동등 단위·통합 검증 + C/M 0 → 수동 검수·E2E 면제. "면제 = 검증 방식 대체" (검증 없음 X). PR에 근거 1줄</div>
+  <div class="gcard"><b>8.2 Fast-track</b>release blocker만, 사용자 승인 필수. Scope Lockdown(데이터·위험·보안 금지) + Explicit Evidence + [FT] 마킹. 월 5회 초과 시 재검토</div>
+  <div class="gcard"><b>8.3 T1 단축</b>브리핑 → 구현 → 형상관리 3단계만. 단 타입 체크+관련 테스트는 생략 금지</div>
+</div>
+<h3>8.4 자동 루프 등록 규칙 (Loop Budget &amp; Permission Guard)</h3>
+<div class="callout warn">등록 시 7개 항목 기록 (<code>artifacts/progress/loop-triage.md</code> 상단): <b>목적 / 주기 / 예산 cap / 허용 도구 / 쓰기 권한 / 종료 조건 / 산출물 위치</b></div>
+<div class="guard">
+  <div class="gcard"><b>커밋·머지·publish 금지</b>자동 루프는 발견·기록까지만 — 결정은 사람이 (원칙 5)</div>
+  <div class="gcard"><b>예산 cap 필수</b>미지정 시 보수적 기본값(최대 3회 실행) 강제 + 종료 시 사용량 1줄 기록</div>
+  <div class="gcard"><b>점검류만 자동화</b>광역 버그 헌팅·탐사 금지 — §10.2 점검 항목이 1차 후보</div>
+  <div class="gcard"><b>커넥터 이원화</b>읽기·증거 수집 자유 / 쓰기는 Draft PR까지 — publish는 사용자 게이트</div>
+</div>
+
+<h2 id="s9"><span class="sec">§9</span>역할 · 배치 원칙 · DoD</h2>
+<div class="roles">
+  <div class="role"><b>Orchestrator</b>Tier 분류, 흐름 선택, 리뷰 통합 판정, 3인 summary, 사용자 대화, 완료 단계 평가·다음 작업 제안<span class="stg">1 · 4 · 5(판정) · 6 · 7</span></div>
+  <div class="role"><b>Planner</b>US+AC 작성 (G-W-T), Spec 검토 체크리스트<span class="stg">2</span></div>
+  <div class="role"><b>Designer</b>디자인, 디자인 스펙 정리, 디자인 시스템 준수<span class="stg">3</span></div>
+  <div class="role"><b>Developer</b>ATDD/TDD 이중 루프 구현, {위험도메인} 전문, 커버리지 보강<span class="stg">4</span></div>
+  <div class="role"><b>QA Reviewer</b>코드 리뷰, 디자인 대조, E2E flow, 회귀 검증<span class="stg">5</span></div>
+  <div class="role"><b>Ops</b>브랜치, todo, 커밋, PR, 릴리스<span class="stg">1(브랜치) · 6</span></div>
+</div>
+<h3>agent·skill 배치 원칙 (원칙 11·12)</h3>
+<div class="callout"><b>지점 바인딩</b> — 새 agent/skill은 §3 단계·§5 게이트·§6 시점 중 어디서 발동하는지 먼저 명시 · <b>maker-checker 쌍으로만 도입</b> (검사자 = 작성 비참여 노드) · <b>배치 맵 = §3 표의 "담당" 열</b> — 표에 없는 agent는 워크플로우에 없는 것</div>
+<h3>완료 조건 (Definition of Done)</h3>
+<table>
+  <tr><td>게이트</td><td>모든 적용 게이트 C+M 0건 — 종결 판정은 §4 held-out 규칙</td></tr>
+  <tr><td>todo spine</td><td><code>artifacts/progress/todo.md</code> 갱신 — 항목별 1줄: <code>status(open/tried/passed/blocked) · 다음 행동 · 검증 증거 링크 · 되돌릴 커밋</code> · 세션 재개 시 첫 Read 대상</td></tr>
+  <tr><td>검수·검증</td><td>사용자 검수 통과 (T1/SYS 면제 가능) + pre-merge: <code>{단위테스트}</code>+<code>{타입체크}</code> pass</td></tr>
+  <tr><td>PR 필수 필드</td><td><b>why / risk / rollback</b> 각 1줄 (Comprehension Debt 가드) + <b>Tier 기록</b>(initial/final·3축 값·자동 T3·재분류 사유) + §10.1 정량 기록 + summary 링크</td></tr>
+  <tr><td>머지</td><td><code>gh pr merge --merge</code> (rebase 금지 — PR/US 단위 추적성)</td></tr>
+</table>
+
+<h2 id="s10"><span class="sec">§10</span>정량 평가와 자기 점검 — 개선/유지/폐기 (원칙 13)</h2>
+<div class="pipeline">
+  <div class="pipe"><span class="t">10.1 완료 시 기록</span>PR 본문: Tier / 라운드 수 / first-pass / 활성 시간(분) / FT·면제 — 7단계(완료)에서 Orchestrator가 확정 + 즉시 개선·다음 작업 제안</div>
+  <div class="pipe"><span class="t">10.2 매월 집계</span>FT 빈도 · 실사용 vs 명시 단계 · R3+ 카운트 · summary↔raw 대조 · <b>탈출 결함(Tier별)</b> · <b>활성 시간 추이</b> · 루프 §8.4 준수</div>
+  <div class="pipe"><span class="t">10.3 결정</span>개선 / 유지 / 폐기</div>
+</div>
+<table>
+  <tr><th>신호</th><th>결정</th></tr>
+  <tr><td>지표 개선 또는 안정</td><td><span class="badge b-ok">유지</span></td></tr>
+  <tr><td>3회 이상 우회된 규칙</td><td><span class="badge b-warn">삭제·축약·예외화</span></td></tr>
+  <tr><td>3회 이상 즉흥 처리된 노하우</td><td><span class="badge b-blue">문서화 (흡수)</span></td></tr>
+  <tr><td>측정 불가능한 규칙</td><td><span class="badge b-warn">측정 가능하게 수정 또는 폐기</span></td></tr>
+  <tr><td>비용(활성 시간)↑ + 품질(탈출 결함) 미개선</td><td><span class="badge b-bad">단계/게이트 폐기 검토</span> — 워크플로우는 성역이 아니다</td></tr>
+</table>
+<div class="callout">새 규칙 도입 조건 — 30초 판단 / 산출물 위치 명확 / 생략 조건 명확 / 중복 X / <b>측정 지표 존재</b> · <b>10.4</b> §10.2 집계는 cron·/loop로 자동화 가능 (§8.4 준수, 점검류만, 산출물 <code>loop-triage.md</code>) · 잔여 아이디어: Complexity Delta(슬롭 신호) — 측정법 확립 전까지 정성 참고만</div>
+
+<h2 id="s11"><span class="sec">§11·12</span>참고 문서 · 변경 이력</h2>
+<table>
+  <tr><th>구역</th><th>문서</th></tr>
+  <tr><td>설정·본문</td><td><code>docs/project-setup.md</code> (브랜치 전략·폴더 구조) · <code>.claude/workflows/workflow.md</code>+<code>.drawio</code>+<code>.html</code></td></tr>
+  <tr><td>planning · design</td><td><code>prd.md</code> · <code>user-stories/</code> · <code>architecture.md</code> · <code>ci-cd.md</code> / <code>design/design-system.md</code> · <code>design/us-to-frame-map.md</code> (최상위 <code>artifacts/design/</code>)</td></tr>
+  <tr><td>review · tests · progress</td><td>리뷰 이슈 파일 · E2E 로그/커버리지 · <code>todo.md</code>(spine) · <code>loop-triage.md</code></td></tr>
+  <tr><td>.claude</td><td><code>agents/*.md</code> (6개 역할) · <code>skills/</code> · 글로벌 스킬 <code>multi-ai-discussion</code></td></tr>
+  <tr><td>근거</td><td><a href="https://x.com/addyosmani/status/2064127981161959567">Addy Osmani "Loop Engineering" 아티클</a> · <code>.cmux/debates/&lt;토론명&gt;/&lt;토론명&gt;.md·.html</code> (3자 토론 결론 — 결과 파일만 git 추적)</td></tr>
+</table>
+<div class="sub">변경 이력 — <b>2026-06-11</b> 토론 합의 일괄 반영(Tier 10건+Loop 8건) · 4대 운영 철학 명문화(원칙 11~13, §10 개편) · ATDD 이중 루프 · §11 경로 정합화 · 템플릿화 / <b>2026-05-08</b> SetBox 원본 (15단계 → 6단계+Tier 라우팅, 3인 교차 리뷰로 수렴)</div>
+
+<footer>정본: <code>.claude/workflows/workflow.md</code> — 본 HTML은 동일 내용의 시각화 뷰 (새 규칙 없음) · 본 문서 변경 = 자동 Tier 3 + 3인 교차 리뷰 · md 갱신 시 본 파일도 함께 갱신할 것</footer>
+
+</body>
+</html>

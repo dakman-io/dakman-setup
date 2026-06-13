@@ -1,0 +1,23 @@
+# OS
+.DS_Store
+
+# 임시 보관 (삭제 예정 파일)
+.trash/
+
+# cmux 토론 산출물
+.cmux/
+
+# playwright MCP 임시 산출물 (스냅샷·콘솔 로그·스크린샷)
+.playwright-mcp/
+
+# Claude Code 로컬 설정 (개인 권한 — 공유 금지)
+.claude/settings.local.json
+
+# 환경 변수
+.env
+.env.*
+!.env.example
+
+# drawio 백업/잠금 파일
+.$*.bkp
+**/.$*.bkp

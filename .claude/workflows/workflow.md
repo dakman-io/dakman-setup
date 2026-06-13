@@ -41,10 +41,10 @@
 3. **ATDD + TDD 이중 루프 필수** — 외곽: AC를 *실패하는 인수 테스트*로 먼저 변환(ATDD), 내부: 단위 RED → GREEN → REFACTOR(TDD). 테스트 없는 기능 코드 금지. 인수 테스트는 가능한 가장 빠른 레벨(서비스/API/컴포넌트)에서 작성 — E2E는 §5의 별도 게이트.
 4. **Critical+Major 0건 원칙** — 자동 리뷰 루프는 Critical+Major 이슈가 0건이 될 때까지 반복. Minor는 Orchestrator 재량.
 5. **검수 후 커밋** — 사용자 확인 없이 형상관리 금지.
-6. **feature/* 브랜치만 직접 push** — develop 이후 PR 필수, `gh pr merge --merge` (PR/US 단위 추적성). 브랜치 전략 상세는 `docs/project-setup.md` 참조.
+6. **feature/* 브랜치만 직접 push** — develop 이후 PR 필수, `gh pr merge --merge` (PR/US 단위 추적성). 브랜치 전략 상세는 `docs/project-init.md` 참조.
 7. **리뷰-수정 분리** — 리뷰어는 별도 파일로 이슈 기록, 원본 직접 수정 금지. 작성자가 반영.
 8. **디자인 시스템 준수** — Foundation → Component → Pattern → Screen 4 레이어, 토큰 단일 소스.
-9. **자기참조성** — 본 문서 / docs/project-setup.md / CLAUDE.md 변경은 자동 Tier 3.
+9. **자기참조성** — 본 문서 / docs/project-init.md / CLAUDE.md 변경은 자동 Tier 3.
 10. **쉬프트-레프트** — US/AC 단계 결함 검출이 가장 비용 효율적. 작성 시점에 강한 리뷰 적용.
 11. **agent·skill 지점 바인딩** — 워크플로우가 뼈대, agent와 skill은 그 위의 **명시된 지점**(§3 단계·§5 게이트·§6 시점)에 배치한다. 발동 지점이 문서에 없는 agent/skill은 만들지 않는다 (§9 배치 원칙).
 12. **maker-checker 쌍** — 만드는 에이전트가 있으면 그 산출물을 검사하는 에이전트가 반드시 있어야 한다 (예: developer ↔ code-reviewer). 검사 없는 생성 에이전트 도입 금지.
@@ -85,7 +85,7 @@
 - 데이터 모델 / 마이그레이션 / 저장소 스키마
 - `{위험도메인}` — §0에서 정의한 프로젝트 핵심 로직
 - 보안 / 개인정보 / 인증
-- 메타 워크플로우 (workflow.md / project-setup.md / CLAUDE.md)
+- 메타 워크플로우 (workflow.md / project-init.md / CLAUDE.md)
 - 신규 화면 + 신규 상태 + 신규 데이터 동시
 
 ---
@@ -427,11 +427,11 @@ Tier / 리뷰 라운드 수 / 게이트 first-pass 여부 / 사용자 활성 검
 
 ## 11. 참고 문서
 
-경로는 `docs/project-setup.md`의 기본 폴더 구조(`artifacts/planning·design·progress·review·tests`, `docs/`)를 따른다.
+경로는 `docs/project-init.md`의 기본 폴더 구조(`artifacts/planning·design·progress·review·tests`, `docs/`)를 따른다.
 
 | 문서 | 내용 |
 |------|------|
-| `docs/project-setup.md` | 저장소 생성, 브랜치 전략(feature/* → develop → staging → production), 폴더 구조 |
+| `docs/project-init.md` | 프로젝트 초기화 가이드 — 저장소 생성, 브랜치 전략(feature/* → develop → staging → production), 폴더 구조 |
 | `.claude/workflows/workflow.md` · `workflow.drawio` · `workflow.html` | 본 문서(정본) + 다이어그램 + 시각화 뷰 |
 | `artifacts/planning/prd.md` | 제품 요구사항 |
 | `artifacts/planning/user-stories/*.md` | US + AC (Given-When-Then) |
@@ -454,6 +454,7 @@ Tier / 리뷰 라운드 수 / 게이트 first-pass 여부 / 사용자 활성 검
 
 ## 12. 변경 이력
 
+- **2026-06-13 project-init 개명 + 검토 반영**: 3자 토론(`.cmux/debates/project-setup-review/`) 결론 반영 — `docs/project-setup.md` → **`docs/project-init.md`** 개명(SETUP=빌드·실행 오해 회피, 1회성 init 성격), 초기화 가이드 본문 8절 정렬·§2 저장소 생성·§5 mkdir·§7 workflow §0 채우기 보강, `.cmux/` 추적 정책 명시. 본 문서 원칙 6·9·§2·§11 참조 경로 동반 수정.
 - **2026-06-11 워크플로우 문서 이동**: `docs/workflow.{md,drawio,html}` → **`.claude/workflows/`** — 워크플로우 정의 문서를 Claude 설정 폴더 구조(project-setup.md §4)의 의도된 위치로 이동. 참조 경로 동반 수정.
 - **2026-06-11 design 폴더 분리**: 디자인 산출물을 `artifacts/planning/design/` → **`artifacts/design/`**(최상위)로 분리 — 기획(2)·디자인(3) 단계 분리 및 Planner·Designer 역할 분리와 정합. §3·§11·project-setup.md 트리·drawio 동반 수정.
 - **2026-06-11 역할 분리 (5→6)**: Architect를 **Planner(기획)·Designer(디자인)**로 분리 — 단계·산출물 책임이 명확해지고 maker-checker 쌍(planner↔us-reviewer, designer↔design-reviewer)이 1:1로 대응. §3 담당·§9 역할 표·배치 원칙·§11 동반 수정. workflow.drawio 레인 표기와 정합.

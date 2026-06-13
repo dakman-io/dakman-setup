@@ -444,6 +444,7 @@ Tier / 리뷰 라운드 수 / 게이트 first-pass 여부 / 사용자 활성 검
 | `artifacts/progress/todo.md` | 진행 상황 + Fast-track `[FT]` 마킹 |
 | `.claude/agents/*.md` | 6개 역할별 전문 프롬프트 |
 | `.claude/skills/` | 프로젝트 스킬 (커버리지 측정 SSoT 등) |
+| `.claude/skills/project-init/` | 프로젝트 초기화 스킬 — `docs/project-init.md`를 8단계 MAY/ASK/STOP 플레이북으로 실행 (비가역 원격 작업은 승인 게이트) |
 | 글로벌 스킬 `multi-ai-discussion` | cmux 3-pane 셋업, codex/gemini 3인 교차 리뷰 프로토콜 (§6.8) |
 | [Addy Osmani "Loop Engineering"](https://x.com/addyosmani/status/2064127981161959567) | §8.4·§10.4·held-out 판정의 외부 근거 (원문 발췌·댓글 클러스터: `.cmux/debates/loop-engineering-workflow/sources.md`) |
 | `.cmux/debates/<토론명>/<토론명>.md`·`.html` | 3자 토론 결론 산출물 — 본 문서 개정 근거 (`workflow-tier-utility`, `loop-engineering-workflow`). 결과 파일만 git 추적, 전사·시그널은 무시 |

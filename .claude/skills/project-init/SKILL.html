@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>project-init — 프로젝트 초기화 스킬 (local-first)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#10131a; --bg:#0d0f15; --panel:#161a24; --panel2:#1c2230; --line:#2b3242;
+    --text:#e7eaf2; --muted:#99a2b5; --faint:#6b7385;
+    --grn:#46c98a; --grn-bg:#0f2c20; --grn-ln:#2c7a57;
+    --amb:#e7b24a; --amb-bg:#33270d; --amb-ln:#8a6a23;
+    --red:#e26b76; --red-bg:#331519; --red-ln:#9c3b44;
+    --accent:#6ea0ff; --accent2:#a8c0ff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:
+      radial-gradient(900px 500px at 88% -8%, rgba(110,160,255,.10), transparent 60%),
+      radial-gradient(700px 460px at -5% 108%, rgba(70,201,138,.07), transparent 55%),
+      var(--bg);
+    color:var(--text);font-family:"IBM Plex Sans KR",system-ui,sans-serif;line-height:1.65;
+    padding:48px 22px 90px;max-width:1060px;margin:0 auto;word-break:keep-all;
+    -webkit-font-smoothing:antialiased;
+  }
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.025'/%3E%3C/svg%3E");}
+  .wrap{position:relative;z-index:1}
+  code,.mono{font-family:"JetBrains Mono",monospace}
+  code{background:var(--panel2);padding:1px 6px;border-radius:5px;font-size:.84em;color:#bcd0ff;border:1px solid #232a3a}
+
+  .eyebrow{font-family:"JetBrains Mono",monospace;font-size:.72rem;letter-spacing:.34em;color:var(--accent);text-transform:uppercase}
+  h1{font-family:"Space Grotesk",sans-serif;font-size:2.9rem;font-weight:700;letter-spacing:-.02em;margin:8px 0 4px;line-height:1.02}
+  h1 .dim{color:var(--faint)}
+  .tagline{color:var(--muted);font-size:1.02rem;max-width:62ch}
+  .tagline b{color:var(--accent2)}
+  .meta-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+  .chip{font-family:"JetBrains Mono",monospace;font-size:.74rem;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 13px;color:#c4ccdd}
+  .chip b{color:var(--accent2)}
+
+  h2{font-family:"Space Grotesk",sans-serif;font-size:1.35rem;font-weight:700;letter-spacing:-.01em;margin:52px 0 6px;display:flex;align-items:center;gap:11px}
+  h2 .hash{font-family:"JetBrains Mono",monospace;font-size:.9rem;color:var(--faint)}
+  .lead{color:var(--muted);font-size:.95rem;margin-bottom:18px}
+
+  .legend{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0 6px}
+  .gcard{border-radius:14px;padding:16px 18px;border:1px solid;position:relative;overflow:hidden}
+  .gcard .lab{font-family:"JetBrains Mono",monospace;font-weight:600;font-size:1.05rem;display:flex;align-items:center;gap:8px}
+  .gcard .desc{font-size:.86rem;color:var(--muted);margin-top:6px}
+  .g-grn{background:var(--grn-bg);border-color:var(--grn-ln)} .g-grn .lab{color:var(--grn)}
+  .g-amb{background:var(--amb-bg);border-color:var(--amb-ln)} .g-amb .lab{color:var(--amb)}
+  .g-red{background:var(--red-bg);border-color:var(--red-ln)} .g-red .lab{color:var(--red)}
+
+  .callout{background:var(--panel);border-left:4px solid var(--accent);border-radius:0 12px 12px 0;padding:14px 20px;font-size:.9rem;color:#cdd4e3;margin:18px 0}
+  .callout b{color:var(--accent2)}
+  .callout.grn{border-left-color:var(--grn)} .callout.grn b{color:var(--grn)}
+
+  .steps{display:flex;flex-direction:column;gap:11px;margin-top:8px}
+  .step{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px 16px 20px;position:relative;border-left-width:5px}
+  .step.s-grn{border-left-color:var(--grn-ln)}
+  .step.s-amb{border-left-color:var(--amb-ln)}
+  .step.s-mix{border-left-color:var(--amb-ln);border-image:linear-gradient(var(--grn-ln),var(--amb-ln)) 1}
+  .step.s-mixr{border-left-color:var(--red-ln);border-image:linear-gradient(var(--grn-ln),var(--red-ln)) 1}
+  .step .top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .step .num{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:1.05rem;color:var(--text);background:var(--panel2);border:1px solid var(--line);width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .step .ttl{font-weight:700;font-size:1rem}
+  .badge{font-family:"JetBrains Mono",monospace;font-size:.68rem;font-weight:600;border-radius:6px;padding:2px 8px;border:1px solid;white-space:nowrap}
+  .b-grn{background:var(--grn-bg);color:var(--grn);border-color:var(--grn-ln)}
+  .b-amb{background:var(--amb-bg);color:var(--amb);border-color:var(--amb-ln)}
+  .b-red{background:var(--red-bg);color:var(--red);border-color:var(--red-ln)}
+  .step .body{margin-top:10px;font-size:.9rem;color:#cdd4e3}
+  .step .body ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+  .step .body li{padding-left:20px;position:relative}
+  .step .body li::before{content:"›";position:absolute;left:4px;color:var(--faint)}
+  .step .body li .badge{margin-right:6px}
+  pre{background:var(--ink);border:1px solid var(--line);border-radius:10px;padding:13px 15px;overflow-x:auto;font-family:"JetBrains Mono",monospace;font-size:.8rem;line-height:1.55;color:#cfe0ff;margin:10px 0 2px}
+
+  .plan{background:linear-gradient(160deg,#1a1410,#161a24);border:1px solid var(--red-ln);border-radius:16px;padding:20px 22px;margin-top:8px}
+  .plan h3{font-family:"Space Grotesk",sans-serif;font-size:1.05rem;color:var(--red);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+  .plan .grp{margin-bottom:12px}
+  .plan .grp .h{font-family:"JetBrains Mono",monospace;font-size:.78rem;font-weight:600;margin-bottom:6px}
+  .plan .grp.local .h{color:var(--grn)} .plan .grp.remote .h{color:var(--red)}
+  .plan .local-line{font-family:"JetBrains Mono",monospace;font-size:.82rem;color:#bfedd4;padding-left:4px}
+  .plan ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+  .plan ul li{padding-left:18px;position:relative;font-size:.83rem;font-family:"JetBrains Mono",monospace;color:#d6deec}
+  .plan ul li::before{content:"·";position:absolute;left:4px;color:var(--red)}
+  .plan ul li .anno{color:var(--faint);font-family:"IBM Plex Sans KR";font-size:.8rem}
+  .plan ul li.crit{color:#ffb9c0}
+  .plan .ask{margin-top:14px;font-size:.88rem;color:var(--accent2);font-weight:500}
+
+  .notes{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin-top:8px}
+  .notes ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+  .notes li{padding-left:22px;position:relative;font-size:.9rem;color:#cdd4e3}
+  .notes li::before{content:"▸";position:absolute;left:2px;color:var(--red)}
+
+  footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--line);color:var(--faint);font-size:.8rem;font-family:"JetBrains Mono",monospace}
+  a{color:var(--accent)}
+
+  .reveal{opacity:0;transform:translateY(14px);transition:opacity .5s ease,transform .5s ease}
+  .reveal.in{opacity:1;transform:none}
+  @media print{.reveal{opacity:1!important;transform:none!important;transition:none!important}}
+  @media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+  @media(max-width:780px){ body{padding:32px 16px 70px} h1{font-size:2.1rem} .legend{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="reveal">
+    <div class="eyebrow">.claude/skills · 프로젝트 로컬 스킬</div>
+    <h1>project-init <span class="dim">→ 프로젝트 초기화</span></h1>
+    <p class="tagline">새 앱/웹 프로젝트를 dakman 표준으로 부트스트랩하는 <b>local-first 8단계 플레이북</b>. 로컬에서 첫 커밋까지 준비한 뒤, 원격(생성·push·보호·삭제)은 승인 게이트 뒤에서 한 번에.</p>
+    <div class="meta-row">
+      <span class="chip">name: <b>project-init</b></span>
+      <span class="chip">발동: "새 프로젝트 시작"</span>
+      <span class="chip">순서: <b>local-first</b></span>
+      <span class="chip">정본: <b>references/project-init.md</b></span>
+    </div>
+  </header>
+
+  <section class="reveal">
+    <h2><span class="hash">§</span>행동 규칙 — 먼저 읽어라</h2>
+    <p class="lead">이 스킬은 <b>LLM이 따르는 지시문</b>이지 자동 실행기가 아니다. 모든 단계는 아래 3등급 중 하나.</p>
+    <div class="legend">
+      <div class="gcard g-grn"><div class="lab">🟢 MAY</div><div class="desc"><b>로컬·가역</b> — 바로 실행. 로컬 파일/폴더/커밋. 되돌리기 쉬움.</div></div>
+      <div class="gcard g-amb"><div class="lab">🟡 ASK</div><div class="desc"><b>값 수집</b> — 사용자에게 먼저 묻는다. 추측 금지.</div></div>
+      <div class="gcard g-red"><div class="lab">🔴 STOP</div><div class="desc"><b>비가역·원격</b> — 임의 실행 금지. §9 Dry-run 요약에 모아 1회 승인 후에만.</div></div>
+    </div>
+    <div class="callout grn"><b>local-first 원칙</b> — §1~§7(로컬 준비 + 첫 커밋 + 로컬 브랜치)은 전부 🟢/🟡 가역. 원격을 건드리는 🔴는 전부 §9 게이트로 모인다. <b>첫 커밋으로 HEAD가 먼저 생기므로 "초기 커밋 없음 → 브랜치 생성 실패" 문제가 원천 소멸.</b> (workflow.md 원칙 5·§8.4 정합)</div>
+  </section>
+
+  <section class="reveal">
+    <h2><span class="hash">▸</span>진행 순서</h2>
+    <p class="lead">먼저 🟡 값을 수집하고, §1~§7의 🟢 로컬 작업을 끝낸 뒤, §9에서 🔴 원격 작업을 일괄 승인받는다.</p>
+
+    <div class="steps">
+
+      <div class="step s-amb">
+        <div class="top"><span class="num">0</span><span class="ttl">값 수집 (먼저)</span><span class="badge b-amb">🟡 ASK</span></div>
+        <div class="body">사용자에게 묻는다 (추측 금지):
+          <ul>
+            <li><b>로컬 경로</b> — 규약 <code>&lt;도메인&gt;/workspace/&lt;repo&gt;</code> (예: <code>~/dakman/workspace/&lt;repo&gt;</code>)</li>
+            <li><b>신규(a) vs 기존 remote(b)</b> — remote 없는 신규인지, 빈 repo가 이미 있고 클론됐는지 → §2·§9 분기</li>
+            <li><code>&lt;owner&gt;/&lt;repo&gt;</code> + 프로젝트 성격(웹/앱) + workflow.md §0 placeholder (<code>{프로젝트명}</code>·<code>{플랫폼}</code>·<code>{타입체크}</code>·<code>{단위테스트}</code>·<code>{린트}</code>·<code>{E2E도구}</code>·<code>{디자인도구}</code>·<code>{커버리지}</code>·<code>{위험도메인}</code>·<code>{AI예산}</code>)</li>
+            <li><code>{위험도메인}</code> 특히 명시적으로 — 실패 시 데이터·돈·신뢰에 직접 영향 (자동 T3 입력값)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step s-mix">
+        <div class="top"><span class="num">1</span><span class="ttl">페르소나 지정 + 로컬 경로 확인</span><span class="badge b-amb">🟡 경로</span><span class="badge b-grn">🟢 기록</span></div>
+        <div class="body">
+          <ul>
+            <li><span class="badge b-amb">🟡</span>로컬 경로·신규/기존 확정 (위 §0)</li>
+            <li><span class="badge b-grn">🟢</span><code>CLAUDE.md</code>에 페르소나: "너는 이 역할 최적의 전문가이고, 이 프로젝트를 함께 수행하는 파트너이자 친구로서 나와 함께 해주면 돼." (workflow.md §9의 6역할 + 제안·반론)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step s-grn">
+        <div class="top"><span class="num">2</span><span class="ttl">로컬 초기화</span><span class="badge b-grn">🟢 로컬</span></div>
+        <div class="body">확정 경로에서 로컬 git 준비 (원격 생성은 §9로 미룸):
+<pre><span style="color:#6b7385"># (a) 신규</span> mkdir -p &lt;도메인&gt;/workspace/&lt;repo&gt; && cd $_ && git init
+<span style="color:#6b7385"># (b) 기존 클론(빈 repo)</span> cd &lt;도메인&gt;/workspace/&lt;repo&gt;   <span style="color:#6b7385"># origin 이미 연결됨</span></pre>
+        </div>
+      </div>
+
+      <div class="step s-grn">
+        <div class="top"><span class="num">3</span><span class="ttl">.gitignore 추가</span><span class="badge b-grn">🟢 로컬</span></div>
+        <div class="body"><code>references/project-init.md</code> §3 블록 그대로 (.DS_Store·.trash·.cmux·.playwright-mcp·drawio bkp·.env). <code>.cmux/</code>는 전체 무시 + 결론 산출물만 <code>git add -f</code>.</div>
+      </div>
+
+      <div class="step s-grn">
+        <div class="top"><span class="num">4</span><span class="ttl">폴더 구조 생성</span><span class="badge b-grn">🟢 로컬</span></div>
+        <div class="body">
+<pre>mkdir -p .claude/{agents,skills,hooks,workflows,guides} \
+  artifacts/planning/user-stories artifacts/design \
+  artifacts/progress artifacts/review artifacts/tests docs/prompt app</pre>
+          빈 디렉터리 유지가 필요하면 <code>.gitkeep</code>.
+        </div>
+      </div>
+
+      <div class="step s-mix">
+        <div class="top"><span class="num">5</span><span class="ttl">워크플로우 문서 준비 + 정합</span><span class="badge b-grn">🟢 복사</span><span class="badge b-amb">🟡 §0 채우기</span></div>
+        <div class="body">
+          <ul>
+            <li><span class="badge b-grn">🟢</span><code>.claude/workflows/workflow.{md,drawio,html}</code> 확보 (이 템플릿에서 복사 또는 생성)</li>
+            <li><span class="badge b-amb">🟡</span>workflow.md §0 placeholder를 §0에서 수집한 값으로 채움</li>
+            <li>핵심 원칙 정합 확인: SDD(원칙1)·ATDD+TDD(원칙3)·디자인시스템(원칙8)·Tier(§2)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step s-grn">
+        <div class="top"><span class="num">6</span><span class="ttl">첫 커밋 (HEAD 생성)</span><span class="badge b-grn">🟢 로컬</span></div>
+        <div class="body">§1~§5의 로컬 파일을 한 번에 커밋 → HEAD 생성(이후 브랜치 가능). .gitignore가 이미 있어 첫 커밋부터 깨끗.
+<pre>git add -A
+git commit -m "[&lt;사용자명&gt;] init: 프로젝트 초기 셋업 (페르소나·gitignore·구조·workflow)"</pre>
+          커밋 컨벤션은 <code>git-commit</code> 스킬 (<code>[사용자명] &lt;type&gt;(&lt;scope&gt;): &lt;설명&gt;</code>, 한글 명령형, Co-Authored-By 제외).
+        </div>
+      </div>
+
+      <div class="step s-mixr">
+        <div class="top"><span class="num">7</span><span class="ttl">브랜치 전략</span><span class="badge b-grn">🟢 로컬 생성</span><span class="badge b-red">🔴 원격 → §9</span></div>
+        <div class="body">
+          <ul>
+            <li><span class="badge b-grn">🟢</span>로컬 브랜치 생성: <code>git branch develop && git branch staging && git branch production</code></li>
+            <li><span class="badge b-red">🔴</span>이하 원격 작업은 §9 승인 게이트로: push · 디폴트 설정 · 보호 · main 삭제</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step s-amb">
+        <div class="top"><span class="num">8</span><span class="ttl">skill / agent 구성</span><span class="badge b-amb">🟡 초기엔 비어도 됨</span></div>
+        <div class="body">필요 시 maker-checker 쌍으로만 (planner↔us-reviewer, designer↔design-reviewer, developer↔code-reviewer). 발동 지점 없는 agent 금지 (workflow.md 원칙 11·12).</div>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="reveal">
+    <h2><span class="hash">§9</span>실행 계획 요약 → 1회 승인 <span class="badge b-red" style="font-size:.7rem">🔴 비가역 게이트</span></h2>
+    <p class="lead">§1~§8은 전부 로컬(가역)이라 이미 끝나 있다. 이제 <b>원격 작업을 모아 한 번에 승인</b>받는다. 승인 전 절대 실행 금지.</p>
+    <div class="plan">
+      <h3>📋 [실행 계획 — 승인 필요]</h3>
+      <div class="grp local">
+        <div class="h">🟢 로컬 (이미 완료 / 되돌리기 쉬움)</div>
+        <div class="local-line">CLAUDE.md · .gitignore · 폴더 구조 · workflow 문서 · 첫 커밋 · 로컬 브랜치</div>
+      </div>
+      <div class="grp remote">
+        <div class="h">⚠️ 비가역 원격 작업</div>
+        <ul>
+          <li><code>(a 신규) gh repo create &lt;owner&gt;/&lt;repo&gt; --private --source=. --remote=origin --push</code> <span class="anno">— 원격 생성 + push</span></li>
+          <li><code>(b 기존) git push -u origin develop staging production</code> <span class="anno">— 브랜치 push</span></li>
+          <li><code>gh repo edit &lt;owner&gt;/&lt;repo&gt; --default-branch develop</code></li>
+          <li><code>scripts/protect-branches.sh &lt;owner&gt;/&lt;repo&gt;</code> <span class="anno">— 3개 브랜치 보호 (JSON 환각 방지 결정적 스크립트)</span></li>
+          <li class="crit"><code>git push origin --delete main</code> <span class="anno">— ★ 원격 main 영구 삭제 (있을 때만)</span></li>
+        </ul>
+      </div>
+      <div class="ask">승인하시겠습니까? (개별 제외도 가능)</div>
+    </div>
+    <div class="callout">승인 후 순서대로 실행하고, 마지막에 <code>references/project-init.md</code> §7.6 확인 명령으로 결과 검증.</div>
+  </section>
+
+  <section class="reveal">
+    <h2><span class="hash">!</span>주의</h2>
+    <div class="notes">
+      <ul>
+        <li>🔴 작업은 환경·권한·승인에 따라 달라지므로 <b>절대 자동 일괄 실행하지 말 것</b>.</li>
+        <li>값을 모르면 추측하지 말고 <b>묻는다</b>.</li>
+        <li>상세 명령·근거가 필요하면 <code>references/project-init.md</code>를 정본으로 참조.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    src: <code>.claude/skills/project-init/SKILL.md</code> · local-first 8단계 · MAY/ASK/STOP · 첫 커밋 후 HEAD → 브랜치 · 원격=승인 게이트
+  </footer>
+
+</div>
+<script>
+  const obs=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');obs.unobserve(e.target)}})},{threshold:.08});
+  document.querySelectorAll('.reveal').forEach((el,i)=>{el.style.transitionDelay=(i*70)+'ms';obs.observe(el)});
+  setTimeout(()=>document.querySelectorAll('.reveal:not(.in)').forEach(el=>el.classList.add('in')),4000);
+</script>
+</body>
+</html>

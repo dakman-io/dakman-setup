@@ -4,7 +4,8 @@
 # 임시 보관 (삭제 예정 파일)
 .trash/
 
-# cmux 토론 산출물
+# cmux 토론 산출물 (전사·시그널 전부 무시)
+# 단, 토론 결론(.cmux/debates/<주제>/<주제>.md·.html)은 git add -f 로 추적 (workflow.md §11)
 .cmux/
 
 # playwright MCP 임시 산출물 (스냅샷·콘솔 로그·스크린샷)

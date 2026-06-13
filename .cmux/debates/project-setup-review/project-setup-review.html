@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>project-setup.md 검토 — 3자 토론 결론</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#181b24; --panel2:#1f2330; --line:#2a2f3e;
+    --text:#e6e9f0; --muted:#9aa3b5; --accent:#5b8def;
+    --ok:#2ea870; --ok-bg:#10331f; --warn:#d9a23a; --warn-bg:#33260e; --bad:#c75462; --bad-bg:#331318;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:"Apple SD Gothic Neo","Pretendard","Noto Sans KR",system-ui,sans-serif;line-height:1.65;padding:40px 20px 80px;max-width:1080px;margin:0 auto;word-break:keep-all}
+  h1{font-size:1.6rem;margin-bottom:6px}
+  h2{font-size:1.2rem;margin:40px 0 14px;padding-left:12px;border-left:4px solid var(--accent)}
+  .sub{color:var(--muted);font-size:.9rem;margin-bottom:22px}
+  .sub code{background:var(--panel2);padding:1px 6px;border-radius:4px;font-size:.82rem}
+  table{width:100%;border-collapse:collapse;background:var(--panel);border-radius:10px;overflow:hidden;font-size:.88rem;margin:10px 0}
+  th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+  th{background:var(--panel2);font-size:.8rem;color:var(--muted);letter-spacing:.04em}
+  tr:last-child td{border-bottom:none}
+  td.c,th.c{text-align:center}
+  .badge{display:inline-block;border-radius:6px;padding:1px 9px;font-size:.76rem;font-weight:700;white-space:nowrap}
+  .b-ok{background:var(--ok-bg);color:#6fd9a6;border:1px solid var(--ok)}
+  .b-warn{background:var(--warn-bg);color:#ecc678;border:1px solid var(--warn)}
+  .b-bad{background:var(--bad-bg);color:#ef93a0;border:1px solid var(--bad)}
+  .b-final{background:#16243d;color:#8db4f8;border:1px solid #2e4a7a}
+  .verdict{background:linear-gradient(135deg,#16243d,#1b2030);border:1px solid #2e4a7a;border-radius:14px;padding:22px 26px;margin:20px 0}
+  .verdict .big{font-size:1.15rem;font-weight:800;line-height:1.5}
+  .verdict .big em{color:#8db4f8;font-style:normal}
+  .verdict p{margin-top:10px;color:var(--muted);font-size:.92rem}
+  .unanimous{display:inline-block;background:var(--ok-bg);color:#6fd9a6;border:1px solid var(--ok);border-radius:99px;padding:2px 12px;font-size:.8rem;font-weight:700;margin-bottom:12px}
+  ol.fixes{counter-reset:fix;list-style:none;margin:14px 0}
+  ol.fixes li{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:13px 16px 13px 56px;margin-bottom:9px;position:relative;font-size:.9rem}
+  ol.fixes li::before{counter-increment:fix;content:"F" counter(fix);position:absolute;left:14px;top:13px;width:30px;height:26px;border-radius:8px;background:#16243d;color:#8db4f8;border:1px solid #2e4a7a;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.8rem}
+  ol.fixes li.top{border-color:#c75462}
+  ol.fixes li.top::before{background:var(--bad-bg);color:#ef93a0;border-color:var(--bad)}
+  ol.fixes b{color:#dbe5fa}
+  ol.fixes .ref{display:block;color:var(--muted);font-size:.8rem;margin-top:4px}
+  .legend{font-size:.82rem;color:var(--muted);margin:8px 0 4px}
+  .dissent{background:var(--panel);border:1px dashed var(--warn);border-radius:12px;padding:16px 22px;margin:14px 0}
+  .dissent h3{color:#ecc678;font-size:.95rem;margin-bottom:10px}
+  .dissent li{margin:8px 0 8px 18px;font-size:.9rem;color:#cfd6e4}
+  .dissent b{color:#ecc678}
+  .flow{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 20px;font-size:.9rem;color:var(--muted)}
+  .flow b{color:var(--text)}
+  footer{margin-top:42px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:.8rem}
+  code{background:var(--panel2);padding:1px 6px;border-radius:4px;font-size:.85em;color:#b9c8e8}
+</style>
+</head>
+<body>
+
+<h1>docs/project-setup.md 검토 — 목적 적합성 + 파일명</h1>
+<div class="sub">
+  Claude(진행자) × Codex(내적 정합성·실행 가능성) × Gemini(외부 접지·UX·명명) · 2라운드 · 2026-06-13<br>
+  전사: <code>.cmux/debates/project-setup-review/board.md</code> · 정본: <code>project-setup-review.md</code>
+</div>
+
+<div class="verdict">
+  <span class="unanimous">3 / 3 만장일치 · confidence 0.80 ~ 0.90</span>
+  <div class="big">골격은 건전하나 실행 구멍·자기모순이 있어 <em>수정 필요</em>.<br>파일명은 <em>project-setup.md → project-init.md</em>로 변경.</div>
+  <p>만장일치는 첫 합의가 아니라 — gemini "부적합·SETUP.md" → 교정 수용, claude "유지" → 변경 수용, codex "init-checklist" → init 단축의 <b>상호 수렴</b>이다.</p>
+</div>
+
+<h2>질문별 최종 판정</h2>
+<table>
+  <tr><th>질문</th><th class="c">claude</th><th class="c">codex</th><th class="c">gemini</th><th class="c">최종</th></tr>
+  <tr><td>Q1. 목적 적합성</td><td class="c">수정필요</td><td class="c">수정필요</td><td class="c">부적합→수정필요</td><td class="c"><span class="badge b-final">수정필요 (강)</span></td></tr>
+  <tr><td>Q2. 파일명</td><td class="c">유지(조건부)</td><td class="c">init-checklist→init</td><td class="c">SETUP→init</td><td class="c"><span class="badge b-final">project-init.md</span></td></tr>
+</table>
+<p class="legend">Q1: 골격(8단계 흐름) 건전 + git-commit·workflow.md로 명시적 위임 → "부적합" 아님. 단 §2·§7 실행 구멍, §10·.cmux 자기모순 → 수정 필요. · Q2: "project" 중복 + SETUP은 "빌드·실행" 오해(이 저장소는 실행 앱 없는 템플릿) → init이 "1회성 초기화" 정확.</p>
+
+<h2>합의된 수정 패키지 — 7건</h2>
+<p class="legend">빨강 = 최우선 · 전 항목 3/3 합의 (F5는 codex·gemini, F7은 gemini 발의·무이견)</p>
+<ol class="fixes">
+  <li class="top"><b>.cmux/ 추적 정책 충돌 해소</b> — project-setup §4 예시는 <code>.cmux/</code> 전체 ignore(125행)인데 workflow §11은 <code>.cmux/debates/…md·html</code> 추적(448행). 현재 토론 결과 파일이 실제 추적 중이라 예시 복붙 시 무시됨 → <code>!.cmux/debates/**/*.md</code> 예외 추가(또는 정책 통일).<span class="ref">최우선 — 오라클 확정 모순</span></li>
+  <li><b>파일명 project-setup.md → project-init.md</b> + workflow §11·도입부 참조 갱신<span class="ref">project 중복 + SETUP 오해 회피</span></li>
+  <li><b>§2에 저장소 생성/클론 명령 추가</b> — <code>gh repo create</code>/<code>git clone</code>/초기 커밋. 없으면 §3.1 <code>git branch develop</code>이 HEAD 없어 막힘<span class="ref">실행 구멍</span></li>
+  <li><b>§7에 복사 원본 + workflow §0 placeholder 작성 + md/drawio/html 동기화 확인</b> — "생성"만 있고 원본·§0 연결 부재 → 파일 생성에 그쳐 운영 준비 미완<span class="ref">실행 구멍</span></li>
+  <li><b>§5에 mkdir -p + 빈 디렉터리 보존 정책</b> — 폴더 트리만 있고 생성 명령 없어 체크 불가<span class="ref">codex·gemini</span></li>
+  <li><b>본문을 체크리스트 8개에 1:1 정렬</b> — §8(skill)·§9(agent)를 체크 8번 아래 하나로, §10은 §7 하위 "workflow §0 + 핵심 원칙 확인"으로 <b>축약</b>(삭제 아님). 체크 8 vs 본문 10 불일치 + §10 유령 섹션·workflow 중복 해소<span class="ref">정합</span></li>
+  <li><b>진입점 확보</b> — 루트 README·CLAUDE.md 최상단에 "신규 프로젝트는 docs/project-init.md부터" 인바운드 링크 (현재 두 파일 실재 안 함 → 발견성 0)<span class="ref">UX</span></li>
+</ol>
+
+<h2>검증 원장</h2>
+<table>
+  <tr><th>주장</th><th class="c">판정</th><th>근거</th></tr>
+  <tr><td>.cmux 전체 ignore vs workflow §11 추적 = 충돌</td><td class="c"><span class="badge b-ok">✅ 확정</span></td><td>project-setup:125 · workflow:448 grep, 현 추적 파일 존재</td></tr>
+  <tr><td>§2 repo 생성/clone 명령 없음</td><td class="c"><span class="badge b-ok">✅ 확정</span></td><td>§2 (29-31) 산문만</td></tr>
+  <tr><td>§7 복사 원본·§0 연결 부재</td><td class="c"><span class="badge b-ok">✅ 확정</span></td><td>§7(188-196) vs workflow:10-29</td></tr>
+  <tr><td>체크 8 vs 본문 10 불일치 (§10 유령)</td><td class="c"><span class="badge b-ok">✅ 확정</span></td><td>체크 7-16 vs §1~§10</td></tr>
+  <tr><td>README/CLAUDE.md 진입점 부재</td><td class="c"><span class="badge b-ok">✅ 확정</span></td><td>루트에 두 파일 실재 안 함</td></tr>
+  <tr><td>"예시 하드코딩 오염 위험 크다" (gemini)</td><td class="c"><span class="badge b-warn">⚠️ 교정</span></td><td>5·37·60·63행 모두 "예시" 라벨 + 명령은 <code>&lt;owner&gt;/&lt;repo&gt;</code> — 과장, gemini 수용</td></tr>
+  <tr><td>Q1 "부적합" (gemini R1)</td><td class="c"><span class="badge b-warn">⚠️ 교정</span></td><td>골격 건전 + 명시적 위임 → 수정필요로 하향, gemini 수용</td></tr>
+  <tr><td>파일명 SETUP.md (gemini R1)</td><td class="c"><span class="badge b-bad">❌ 기각</span></td><td>템플릿 메타 저장소엔 SETUP=빌드·실행 오해 → project-init.md</td></tr>
+</table>
+
+<h2>잔여 이견 · 한계 (보존)</h2>
+<div class="dissent">
+  <h3>⚠️ 남은 것들</h3>
+  <ul>
+    <li><b>F7 진입점 형태</b> — "강제 인바운드 링크"(gemini)에 codex·claude 적극 논의 없는 약한 합의. README 작성 시 문구 확정 필요.</li>
+    <li><b>외부 명명 관행 인용</b>(GETTING_STARTED·CONTRIBUTING 표준 운운)은 [미검증] 일반론. project-init.md 결정은 이게 아니라 "실행 앱 없는 템플릿"이라는 내부 사실에 근거.</li>
+    <li><b>오라클 경계</b> — F1·F3·F4·F6·진입점은 파일 grep으로 확정. 파일명·UX(F2·F7)는 오라클 없는 소프트 결론.</li>
+  </ul>
+</div>
+
+<h2>토론 경과</h2>
+<div class="flow">
+  <b>R1</b> — claude "수정필요·파일명 유지 조건부"(0.7) → codex "§2·§5·§7 실행 구멍 + .cmux 충돌 발견, init-checklist"(0.82) → gemini "부적합·SETUP.md·진입점 부재"(0.85)<br>
+  <b>R2</b> — claude 오라클 검증(.cmux 충돌 확정·하드코딩 과장 교정) + 중재(SETUP 반박, init 제안)(0.8) → codex 전면 찬성·init 수렴(0.86) → gemini 교정 2건 수용·init 수렴(0.9) → <b>수렴 종료</b><br>
+  운영: gemini single-writer로 board 무결성 사고 0 · codex 자동 업데이트 후 재기동 1회.
+</div>
+
+<h2>R3~R4 — 프로젝트 초기화 스킬 설계 (3/3 수렴)</h2>
+<div class="verdict">
+  <span class="unanimous">궁극 목표 반영 · confidence 0.82~0.92</span>
+  <div class="big"><code>project-init.md</code>는 최종물이 아니라 <em>초기화 스킬의 원료</em>.<br>결론: <em>문서/스킬 분리 + Dry-run 일괄 승인 + 지금 제작</em>.</div>
+  <p>R3에서 진짜 이견 발생(scripts 범위, 승인 게이트 granularity) → R4 중재로 수렴. 매끈한 합의 아님.</p>
+</div>
+<table>
+  <tr><th>질문</th><th>결론</th><th class="c">합의</th></tr>
+  <tr><td><b>A.</b> 스킬↔문서 분담</td><td>분리 — <code>docs/project-init.md</code>(참조) + <code>.claude/skills/project-init/SKILL.md</code>(플레이북) + references + <b>선별 scripts 1개</b></td><td class="c"><span class="badge b-final">3/3</span></td></tr>
+  <tr><td><b>B.</b> 자동화 경계</td><td><b>Dry-run 일괄 승인</b> — 값 선수집 → 실행 계획 요약(로컬 + ⚠️비가역 원격 분리) → 1회 승인. per-step 결재 철회</td><td class="c"><span class="badge b-final">3/3</span></td></tr>
+  <tr><td><b>C.</b> 스킬 이름</td><td><code>project-init</code> (문서·workflow와 동명)</td><td class="c"><span class="badge b-final">3/3</span></td></tr>
+  <tr><td><b>D.</b> 적기</td><td><b>지금 제작</b> (self-bootstrapping 첫 실습), 비가역 자동화는 첫 실행 walk-forward 검증</td><td class="c"><span class="badge b-final">3/3</span></td></tr>
+</table>
+<p class="legend"><b>8단계 자동화 3등급</b> (SKILL.md 행동 규칙 — 스킬=LLM 지시문, 결정적 실행기 아님): <code>MAY 로컬</code>(.gitignore·mkdir·workflow 복사) / <code>ASK 값</code>(페르소나·repo명·§0 placeholder) / <code>STOP 승인</code>(gh repo create·보호 PUT·main 삭제·push = 비가역 원격). 발동 description "새 프로젝트 저장소를 초기화할 때". workflow.md 원칙 5·§8.4와 정합.</p>
+<div class="dissent">
+  <h3>⚠️ R3~R4 잔여 이견 (보존)</h3>
+  <ul>
+    <li><b>scripts 범위</b> — 보호 1개(claude·codex) vs 전면 필수(gemini). 첫 실프로젝트에서 반복 환각 블록으로 판가름.</li>
+    <li><b>일괄 승인 비가역 분리 강도</b> — 완전 일괄(gemini) vs 비가역 명시 플래그(claude·codex). SKILL.md 요약 포맷에서 확정.</li>
+    <li><b>create-next-app/yeoman 유추</b> ⚠️ 부분 부적합 — 그 도구는 로컬 스캐폴딩(가역), 우리 §2·§3.4는 비가역 원격 [도구 동작 미검증].</li>
+  </ul>
+</div>
+
+<footer>
+  정본: <code>project-setup-review.md</code> · 본 HTML은 동일 결론의 시각화 뷰 (새 주장 없음) ·
+  R1~R2(문서) 반영 완료 · R3~R4(<code>.claude/skills/project-init/</code> 스킬 골격) 미착수 — 메타 변경=자동 Tier 3, 본 토론이 교차 리뷰
+</footer>
+
+</body>
+</html>

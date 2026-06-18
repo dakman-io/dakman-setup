@@ -1,0 +1,147 @@
+# 회원가입·인증 스키마 — D2 (DBML 대안 프로토타입)
+# 원리: 정체성≠인증수단 / core·edge 분리 / 상태기계 / 단일 진실의 출처
+# 렌더: d2 --layout elk --direction right erd-signup.d2 erd-signup-d2.svg
+# DBML 대비 강점 = 컨테이너로 core/edge 그룹 유지 + ELK 레이아웃 엔진으로 가로 배치 제어
+
+direction: right
+
+# ===================== CORE =====================
+core: core {
+  style.fill: "#eef2ff"
+  style.stroke: "#6ea8fe"
+
+  users: {
+    shape: sql_table
+    id: uuid {constraint: primary_key}
+    email: citext {constraint: unique}
+    email_verified_at: timestamptz
+    status: user_status
+    display_name: text
+    created_at: timestamptz
+    updated_at: timestamptz
+    deleted_at: timestamptz
+  }
+  user_profiles: {
+    shape: sql_table
+    user_id: uuid {constraint: primary_key}
+    avatar_url: text
+    bio: text
+    locale: text
+    timezone: text
+    preferences: jsonb
+    updated_at: timestamptz
+  }
+  auth_identities: {
+    shape: sql_table
+    id: uuid {constraint: primary_key}
+    user_id: uuid
+    provider: auth_provider
+    provider_uid: text
+    password_hash: text
+    last_used_at: timestamptz
+    created_at: timestamptz
+  }
+  roles: {
+    shape: sql_table
+    id: uuid {constraint: primary_key}
+    name: text {constraint: unique}
+    description: text
+  }
+  user_roles: {
+    shape: sql_table
+    user_id: uuid {constraint: primary_key}
+    role_id: uuid {constraint: primary_key}
+    granted_at: timestamptz
+  }
+}
+
+# ===================== EDGE =====================
+edge: edge {
+  style.fill: "#2d2417"
+  style.stroke: "#f0a868"
+
+  sessions: {
+    shape: sql_table
+    id: uuid {constraint: primary_key}
+    user_id: uuid
+    refresh_token_hash: text {constraint: unique}
+    user_agent: text
+    ip_address: inet
+    expires_at: timestamptz
+    revoked_at: timestamptz
+    created_at: timestamptz
+  }
+  auth_tokens: {
+    shape: sql_table
+    id: uuid {constraint: primary_key}
+    user_id: uuid
+    purpose: token_purpose
+    token_hash: text {constraint: unique}
+    expires_at: timestamptz
+    consumed_at: timestamptz
+    created_at: timestamptz
+  }
+  auth_events: {
+    shape: sql_table
+    id: uuid {constraint: primary_key}
+    user_id: uuid
+    event_type: auth_event_type
+    ip_address: inet
+    user_agent: text
+    metadata: jsonb
+    created_at: timestamptz
+  }
+}
+
+# ===================== ENUMS =====================
+enums: enums {
+  style.fill: "#161a24"
+  style.stroke: "#9aa3b2"
+
+  user_status: {
+    shape: sql_table
+    pending
+    active
+    suspended
+    deleted
+  }
+  auth_provider: {
+    shape: sql_table
+    password
+    google
+    apple
+    kakao
+  }
+  token_purpose: {
+    shape: sql_table
+    email_verify
+    password_reset
+    magic_link
+  }
+  auth_event_type: {
+    shape: sql_table
+    signup
+    login
+    login_failed
+    logout
+    pw_reset
+  }
+}
+
+# ===================== RELATIONSHIPS =====================
+core.users.id <-> core.user_profiles.user_id: 1:1 {
+  source-arrowhead: 1
+  target-arrowhead: 1
+}
+core.auth_identities.user_id -> core.users.id: N:1
+core.user_roles.user_id -> core.users.id
+core.user_roles.role_id -> core.roles.id
+edge.sessions.user_id -> core.users.id
+edge.auth_tokens.user_id -> core.users.id
+edge.auth_events.user_id -> core.users.id
+
+# enum 사용 (컬럼 → enum 정의)
+core.users.status -> enums.user_status
+core.auth_identities.provider -> enums.auth_provider
+edge.auth_tokens.purpose -> enums.token_purpose
+edge.auth_events.event_type -> enums.auth_event_type

@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>회원가입 스키마 ERD — 테이블 뷰 (강조·논리명·컬럼헤더)</title>
+<style>
+  :root{
+    --bg:#0d1017; --panel:#141a24; --ink:#e7ecf3; --muted:#8a94a6; --line:#283142;
+    --core:#6ea8fe; --core-bg:#16203a; --edge:#f0a868; --edge-bg:#2a2113;
+    --enum:#9aa3b2; --enum-bg:#1a1f29; --pk:#ffd166; --fk:#7ee0c0; --uk:#c9a3ff;
+    --sel:#6ee7ff; --dim:0.16;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,"Apple SD Gothic Neo","Pretendard","Noto Sans KR",Segoe UI,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:radial-gradient(1200px 600px at 70% -10%,#16203a40,transparent),var(--bg);
+       color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.4;overflow:hidden}
+  header{padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  header h1{font-size:16px;margin:0;font-weight:700;letter-spacing:-.01em}
+  header .sub{color:var(--muted);font-size:12.5px}
+  header .legend{margin-left:auto;display:flex;gap:12px;align-items:center;font-size:11.5px;color:var(--muted);flex-wrap:wrap}
+  .chip{display:inline-flex;align-items:center;gap:5px}
+  .dot{width:9px;height:9px;border-radius:2px;display:inline-block}
+  .badge{font-family:var(--mono);font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;line-height:1.5}
+  .b-pk{color:#1a1304;background:var(--pk)} .b-fk{color:#04241b;background:var(--fk)} .b-uk{color:#1c0f33;background:var(--uk)}
+
+  /* toolbar */
+  .erd-toolbar{display:flex;gap:8px;align-items:center;padding:8px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap;background:#0f141d}
+  .erd-toolbar label{color:var(--muted);font-size:12px}
+  select,.erd-btn{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:7px;
+        padding:5px 10px;font-size:12.5px;cursor:pointer;font-family:var(--sans)}
+  select{min-width:230px}
+  .erd-btn:hover{border-color:var(--sel);color:var(--sel)}
+  .erd-spd{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:11.5px;margin-left:4px}
+  input[type=range]{accent-color:var(--sel)}
+
+  /* viewport / stage */
+  .erd-viewport{position:absolute;inset:auto 0 0 0;top:0;height:100%;overflow:hidden;cursor:grab;
+        background:linear-gradient(0deg,#0b0e14,#0d1017)}
+  .erd-wrap{position:absolute;inset:0;top:104px}  /* below header+toolbar; JS adjusts */
+  .erd-viewport.drag{cursor:grabbing}
+  .erd-stage{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform;padding:40px}
+  .groups{display:flex;gap:90px;align-items:flex-start}
+  .col{display:flex;flex-direction:column;gap:26px}
+  #groups h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 2px;font-weight:700;opacity:.85}
+  #groups h2.h-core{color:var(--core)} #groups h2.h-edge{color:var(--edge)} #groups h2.h-enums{color:var(--enum)}
+
+  /* connector layer (inside stage so it scales together) */
+  svg.links{position:absolute;left:0;top:0;overflow:visible;pointer-events:none;z-index:0}
+  svg#hits{z-index:4}                                   /* 클릭 레이어 = 테이블 위(z1)보다 위 → 선 전체 클릭 */
+  svg#hits path{fill:none;stroke:transparent;stroke-width:13;pointer-events:stroke;cursor:pointer}
+  svg#links path{fill:none;stroke:#a8b8d4;stroke-width:2.2;opacity:.7;transition:opacity .18s,stroke .18s,stroke-width .18s;pointer-events:none}
+  svg#links path.enum{stroke:#8f9bb3;stroke-dasharray:5 4}
+  svg#links text.card{fill:#cfd6e2;font:700 10px var(--mono);text-anchor:middle;dominant-baseline:central;
+        paint-order:stroke;stroke:#0d1017;stroke-width:3px;opacity:.82;transition:opacity .18s;pointer-events:none}
+  svg#links g.elink.on path{opacity:1;stroke:var(--sel);stroke-width:3.2}
+  svg#links g.elink.on path.enum{stroke:var(--enum);stroke-width:2.6}
+  svg#links g.elink.on text.card{opacity:1;fill:var(--sel)}
+  svg#links g.elink.off path{opacity:.12}
+  svg#links g.elink.off text.card{opacity:.08}
+
+  /* tables */
+  table.tbl{position:relative;z-index:1;border-collapse:separate;border-spacing:0;background:var(--panel);
+        border:2px solid #586480;border-radius:11px;overflow:hidden;min-width:300px;
+        box-shadow:0 10px 28px #0008;transition:opacity .18s,box-shadow .18s,transform .12s}
+  table.tbl tr.tname th{text-align:left;padding:9px 13px;font-weight:700;cursor:grab;
+        user-select:none;-webkit-user-select:none;touch-action:none;border-bottom:1px solid var(--line)}
+  table.tbl tr.tname th::before{content:"⠿ ";color:var(--muted);font-size:11px;opacity:.6;font-weight:400}
+  table.tbl.dragging{z-index:6 !important;box-shadow:0 20px 46px #000d;opacity:1 !important}
+  table.tbl.dragging tr.tname th{cursor:grabbing}
+  table.tbl tr.tname .phys{font-family:var(--mono);font-size:13.5px}
+  table.tbl tr.tname .log{font-size:12px;color:var(--muted);font-weight:600;margin-left:9px}
+  table.tbl.g-core tr.tname th{background:var(--core-bg)} table.tbl.g-core{border-color:#6f9ae6}
+  table.tbl.g-edge tr.tname th{background:var(--edge-bg)} table.tbl.g-edge{border-color:#d59a5a}
+  table.tbl.g-enums tr.tname th{background:var(--enum-bg)} table.tbl.g-enums{border-color:#79859f}
+  table.tbl tr.chead th{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);
+        text-align:left;padding:6px 12px;background:#0e131c;border-bottom:1px solid var(--line);font-weight:700}
+  table.tbl tbody td{padding:5px 12px;border-bottom:1px solid #1d2430;vertical-align:top;font-size:12.5px}
+  table.tbl tbody tr:last-child td{border-bottom:none}
+  table.tbl tbody tr:hover{background:#1b2230}
+  td.c{font-family:var(--mono);white-space:nowrap}
+  td.c .arrow{color:var(--fk)}
+  td.t{font-family:var(--mono);color:#9fb3d1;white-space:nowrap}
+  td.k{white-space:nowrap}
+  td.d{color:var(--muted);max-width:260px}
+  tr.fkrow td.c{color:var(--fk)}
+  td.ref{font-family:var(--mono);font-size:11px;color:var(--enum)}
+
+  /* highlight states */
+  .erd-stage.has-sel table.tbl{opacity:var(--dim)}
+  .erd-stage.has-sel table.tbl.sel{opacity:1;box-shadow:0 0 0 2px var(--sel),0 14px 32px #000a;transform:translateY(-2px)}
+  .erd-stage.has-sel table.tbl.rel{opacity:1}
+  table.tbl.rel{box-shadow:0 0 0 1px var(--sel)66,0 10px 28px #0008}
+
+  footer{position:absolute;left:0;bottom:0;width:100%;padding:6px 18px;font-size:11px;color:var(--muted);
+        border-top:1px solid var(--line);background:#0b0e14cc;backdrop-filter:blur(4px);z-index:5}
+  kbd{font-family:var(--mono);background:#1c2330;border:1px solid var(--line);border-radius:4px;padding:0 5px;font-size:10.5px}
+  :fullscreen .erd-viewport{top:0}
+</style>
+</head>
+<body>
+<header>
+  <h1>회원가입·인증 스키마 ERD</h1>
+  <span class="sub">테이블 뷰 — 컬럼 헤더 · 논리명 · 강조 / 완전 오프라인</span>
+  <span class="legend">
+    <span class="chip"><span class="dot" style="background:var(--core)"></span>core</span>
+    <span class="chip"><span class="dot" style="background:var(--edge)"></span>edge</span>
+    <span class="chip"><span class="dot" style="background:var(--enum)"></span>enum</span>
+    <span class="chip"><span class="badge b-pk">PK</span></span>
+    <span class="chip"><span class="badge b-fk">FK</span></span>
+    <span class="chip"><span class="badge b-uk">UK</span></span>
+  </span>
+</header>
+
+<div class="erd-toolbar">
+  <label for="hl">🔦 강조</label>
+  <select id="hl"><option value="">— 전체 보기 —</option></select>
+  <button class="erd-btn" onclick="erdClear()">초기화</button>
+  <button class="erd-btn" onclick="erdRelayout()" title="테이블 위치 원상복구">↺ 배치</button>
+  <span style="flex:1"></span>
+  <button class="erd-btn" onclick="erdZoom(1.2)">＋</button>
+  <button class="erd-btn" onclick="erdZoom(1/1.2)">－</button>
+  <button class="erd-btn" onclick="erdReset()">맞춤</button>
+  <button class="erd-btn" onclick="erdFull()">⛶ 전체화면</button>
+  <span class="erd-spd">줌속도<input id="spd" type="range" min="0.2" max="2.5" step="0.05" value="0.7"></span>
+</div>
+
+<div class="erd-wrap">
+  <div class="erd-viewport" id="vp">
+    <div class="erd-stage" id="stage">
+      <svg class="links" id="links"></svg>
+      <div class="groups" id="groups"></div>
+      <svg class="links" id="hits"></svg>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <b>제목(⠿) 드래그=테이블 이동</b> · 빈 곳 드래그=화면 이동 · 휠=확대/축소 · 제목 클릭/드롭다운=강조 · <b>관계선 클릭=양끝 강조</b>(재클릭 해제) · ↺배치=원위치 ·
+  <kbd>FK</kbd> 행은 <span style="color:var(--fk)">→ 대상.컬럼</span> 표기 · enum 참조는 점선 · 연결선 양끝 <b>1·N</b>=카디널리티 ·
+  <b>구현 보조용 시각화</b>(LLD 아님)
+</footer>
+
+<script>
+/* ---------- 스키마 데이터 (erd-signup-er.mmd / .d2 기준) ---------- */
+const TABLES = [
+ {n:'users', log:'사용자(회원)', g:'core', cols:[
+   {c:'id',t:'uuid',k:'PK',d:'사용자 식별자'},
+   {c:'email',t:'citext',k:'UK',d:'이메일 · 로그인 ID(소문자 비교)'},
+   {c:'email_verified_at',t:'timestamptz',d:'이메일 검증 시각 · 검증 진실의 출처'},
+   {c:'status',t:'user_status',d:'계정 상태',ref:'user_status'},
+   {c:'display_name',t:'text',d:'표시 이름'},
+   {c:'created_at',t:'timestamptz',d:'생성 시각'},
+   {c:'updated_at',t:'timestamptz',d:'수정 시각'},
+   {c:'deleted_at',t:'timestamptz',d:'소프트 삭제 시각'},
+ ]},
+ {n:'user_profiles', log:'사용자 프로필', g:'core', cols:[
+   {c:'user_id',t:'uuid',k:'PK,FK',fk:'users.id',d:'사용자(1:1)'},
+   {c:'avatar_url',t:'text',d:'아바타 URL'},
+   {c:'bio',t:'text',d:'자기소개'},
+   {c:'locale',t:'text',d:'로케일 (ko, en…)'},
+   {c:'timezone',t:'text',d:'타임존'},
+   {c:'preferences',t:'jsonb',d:'사용자 설정 (확장 여지)'},
+   {c:'updated_at',t:'timestamptz',d:'수정 시각'},
+ ]},
+ {n:'auth_identities', log:'인증 수단(정체성)', g:'core', cols:[
+   {c:'id',t:'uuid',k:'PK',d:'식별자'},
+   {c:'user_id',t:'uuid',k:'FK',fk:'users.id',d:'사용자'},
+   {c:'provider',t:'auth_provider',d:'인증 공급자',ref:'auth_provider'},
+   {c:'provider_uid',t:'text',d:'소셜 고유 ID · UK(provider, uid)'},
+   {c:'password_hash',t:'text',d:'비밀번호 해시 (password일 때만)'},
+   {c:'last_used_at',t:'timestamptz',d:'최근 사용 시각'},
+   {c:'created_at',t:'timestamptz',d:'생성 시각'},
+ ]},
+ {n:'roles', log:'역할', g:'core', cols:[
+   {c:'id',t:'uuid',k:'PK',d:'식별자'},
+   {c:'name',t:'text',k:'UK',d:'역할명 (user, admin…)'},
+   {c:'description',t:'text',d:'설명'},
+ ]},
+ {n:'user_roles', log:'사용자-역할 매핑', g:'core', cols:[
+   {c:'user_id',t:'uuid',k:'PK,FK',fk:'users.id',d:'사용자'},
+   {c:'role_id',t:'uuid',k:'PK,FK',fk:'roles.id',d:'역할'},
+   {c:'granted_at',t:'timestamptz',d:'부여 시각'},
+ ]},
+ {n:'sessions', log:'세션', g:'edge', cols:[
+   {c:'id',t:'uuid',k:'PK',d:'식별자'},
+   {c:'user_id',t:'uuid',k:'FK',fk:'users.id',d:'사용자'},
+   {c:'refresh_token_hash',t:'text',k:'UK',d:'리프레시 토큰 해시 (원문 저장 금지)'},
+   {c:'user_agent',t:'text',d:'User-Agent'},
+   {c:'ip_address',t:'inet',d:'IP 주소'},
+   {c:'expires_at',t:'timestamptz',d:'만료 시각'},
+   {c:'revoked_at',t:'timestamptz',d:'폐기 시각'},
+   {c:'created_at',t:'timestamptz',d:'생성 시각'},
+ ]},
+ {n:'auth_tokens', log:'인증 토큰', g:'edge', cols:[
+   {c:'id',t:'uuid',k:'PK',d:'식별자'},
+   {c:'user_id',t:'uuid',k:'FK',fk:'users.id',d:'사용자'},
+   {c:'purpose',t:'token_purpose',d:'토큰 용도',ref:'token_purpose'},
+   {c:'token_hash',t:'text',k:'UK',d:'토큰 해시'},
+   {c:'expires_at',t:'timestamptz',d:'만료 시각'},
+   {c:'consumed_at',t:'timestamptz',d:'소비 시각 (1회용)'},
+   {c:'created_at',t:'timestamptz',d:'생성 시각'},
+ ]},
+ {n:'auth_events', log:'인증 이벤트(감사 로그)', g:'edge', cols:[
+   {c:'id',t:'uuid',k:'PK',d:'식별자'},
+   {c:'user_id',t:'uuid',k:'FK',fk:'users.id',d:'사용자 (nullable: 실패 로그인)'},
+   {c:'event_type',t:'auth_event_type',d:'이벤트 유형',ref:'auth_event_type'},
+   {c:'ip_address',t:'inet',d:'IP 주소'},
+   {c:'user_agent',t:'text',d:'User-Agent'},
+   {c:'metadata',t:'jsonb',d:'부가 데이터'},
+   {c:'created_at',t:'timestamptz',d:'생성 시각'},
+ ]},
+];
+const ENUMS = [
+ {n:'user_status', log:'사용자 상태', vals:['pending','active','suspended','deleted']},
+ {n:'auth_provider', log:'인증 공급자', vals:['password','google','apple','kakao']},
+ {n:'token_purpose', log:'토큰 용도', vals:['email_verify','password_reset','magic_link']},
+ {n:'auth_event_type', log:'인증 이벤트 유형', vals:['signup','login','login_failed','logout','pw_reset']},
+];
+
+/* ---------- 렌더 ---------- */
+const $ = s=>document.querySelector(s);
+const groups = $('#groups'), sel = $('#hl');
+const adj = {};                 // 인접: 테이블 → Set(연결 테이블)
+const edges = [];               // {from, col, to, kind}
+function link(a,b){ (adj[a]=adj[a]||new Set()).add(b); (adj[b]=adj[b]||new Set()).add(a); }
+
+function kbadge(k){ if(!k) return '';
+  return k.split(',').map(x=>`<span class="badge b-${x.toLowerCase()}">${x}</span>`).join(' '); }
+
+function tableHTML(tb){
+  const rows = tb.cols.map(col=>{
+    const isFk = col.k && col.k.includes('FK');
+    const fkTxt = col.fk?` <span class="arrow">→ ${col.fk}</span>`:'';
+    return `<tr class="${isFk?'fkrow':''}" id="row-${tb.n}-${col.c}">
+      <td class="c">${col.c}${fkTxt}</td>
+      <td class="t">${col.t}</td>
+      <td class="k">${kbadge(col.k||'')}</td>
+      <td class="d">${col.d||''}${col.ref?` <span class="ref">→ ${col.ref}</span>`:''}</td></tr>`;
+  }).join('');
+  return `<table class="tbl g-${tb.g}" id="tbl-${tb.n}" data-name="${tb.n}">
+    <thead>
+      <tr class="tname"><th colspan="4"><span class="phys">${tb.n}</span><span class="log">${tb.log}</span></th></tr>
+      <tr class="chead"><th>컬럼</th><th>타입</th><th>키</th><th>논리명 · 설명</th></tr>
+    </thead>
+    <tbody>${rows}</tbody></table>`;
+}
+function enumHTML(en){
+  const rows = en.vals.map(v=>`<tr><td class="c">${v}</td></tr>`).join('');
+  return `<table class="tbl g-enums" id="tbl-${en.n}" data-name="${en.n}">
+    <thead>
+      <tr class="tname"><th><span class="phys">${en.n}</span><span class="log">${en.log}</span></th></tr>
+      <tr class="chead"><th>값 (enum)</th></tr>
+    </thead><tbody>${rows}</tbody></table>`;
+}
+
+const colCore = TABLES.filter(t=>t.g==='core');
+const colEdge = TABLES.filter(t=>t.g==='edge');
+groups.innerHTML =
+  `<div class="col core"><h2 class="h-core">core</h2>${colCore.map(tableHTML).join('')}</div>`+
+  `<div class="col edge"><h2 class="h-edge">edge</h2>${colEdge.map(tableHTML).join('')}</div>`+
+  `<div class="col enums"><h2 class="h-enums">enum</h2>${ENUMS.map(enumHTML).join('')}</div>`;
+
+/* edges + 인접 + 드롭다운 */
+TABLES.forEach(tb=>tb.cols.forEach(col=>{
+  if(col.fk){ const to=col.fk.split('.')[0];
+    const pkN=tb.cols.filter(c=>(c.k||'').includes('PK')).length;
+    const one=(col.k||'').includes('PK') && pkN===1;            // FK가 단독 PK = 1:1, 아니면 1:N
+    edges.push({from:tb.n,col:col.c,to,kind:'fk',fc:one?'1':'N',tc:'1'}); link(tb.n,to); }
+  if(col.ref){ edges.push({from:tb.n,col:col.c,to:col.ref,kind:'enum',fc:'N',tc:'1'}); link(tb.n,col.ref); }
+}));
+[...TABLES,...ENUMS].forEach(t=>{
+  const o=document.createElement('option'); o.value=t.n; o.textContent=`${t.n} · ${t.log}`; sel.appendChild(o);
+});
+
+/* ---------- 연결선 그리기 (stage 좌표계, scale=1 기준) ---------- */
+const stage=$('#stage'), vp=$('#vp'), svg=$('#links'), hits=$('#hits');
+function pt(el, side){
+  const r=el.getBoundingClientRect(), s=stage.getBoundingClientRect();
+  const x = side==='r'? r.right : r.left;
+  return {x:(x-s.left)/scale, y:(r.top+r.height/2-s.top)/scale};
+}
+function drawLinks(){
+  svg.innerHTML=''; hits.innerHTML='';
+  const W=stage.offsetWidth, H=stage.offsetHeight;
+  svg.setAttribute('width', W); svg.setAttribute('height', H);
+  hits.setAttribute('width', W); hits.setAttribute('height', H);
+  edges.forEach((e,i)=>{
+    const src=document.getElementById('row-'+e.from+'-'+e.col);
+    const tgt=document.getElementById('tbl-'+e.to);
+    if(!src||!tgt) return;
+    const sr=src.getBoundingClientRect(), tr=tgt.getBoundingClientRect();
+    const srcLeftOfTgt = sr.left < tr.left;
+    const p1=pt(src, srcLeftOfTgt?'r':'l');
+    const p2=pt(tgt, srcLeftOfTgt?'l':'r');
+    const dx=Math.max(40, Math.abs(p2.x-p1.x)*0.45);
+    const c1x=srcLeftOfTgt? p1.x+dx : p1.x-dx;
+    const c2x=srcLeftOfTgt? p2.x-dx : p2.x+dx;
+    const NS='http://www.w3.org/2000/svg';
+    const dStr=`M ${p1.x} ${p1.y} C ${c1x} ${p1.y}, ${c2x} ${p2.y}, ${p2.x} ${p2.y}`;
+    const g=document.createElementNS(NS,'g'); g.setAttribute('class','elink');
+    g.dataset.from=e.from; g.dataset.to=e.to; g.dataset.col=e.col;
+    const path=document.createElementNS(NS,'path');
+    path.setAttribute('d',dStr);
+    if(e.kind==='enum') path.setAttribute('class','enum');
+    g.appendChild(path);
+    /* 카디널리티 라벨: 양 끝에서 살짝 안쪽 + 선 위로 올림 (from=자식측, to=부모측) */
+    const len=Math.hypot(p2.x-p1.x,p2.y-p1.y)||1, f=Math.min(0.5,22/len);
+    const lab=(a,b,fr,txt)=>{ const el=document.createElementNS(NS,'text'); el.setAttribute('class','card');
+      el.setAttribute('x',a.x+(b.x-a.x)*fr); el.setAttribute('y',a.y+(b.y-a.y)*fr-7); el.textContent=txt; g.appendChild(el); };
+    lab(p1,p2,f,e.fc); lab(p2,p1,f,e.tc);
+    svg.appendChild(g);
+    /* 클릭 히트영역: 테이블 위 레이어(#hits)에 투명 패스 → 선 전체 어디서든 클릭 */
+    const hp=document.createElementNS(NS,'path'); hp.setAttribute('d',dStr);
+    hp.dataset.from=e.from; hp.dataset.col=e.col; hp.dataset.to=e.to; hits.appendChild(hp);
+  });
+}
+
+/* ---------- 강조 ---------- */
+let current='', currentEdge='';
+function erdSelect(name){
+  current=name; currentEdge=''; sel.value=name;
+  const related=adj[name]||new Set();
+  stage.classList.add('has-sel');
+  document.querySelectorAll('table.tbl').forEach(t=>{
+    const n=t.dataset.name;
+    t.classList.toggle('sel', n===name);
+    t.classList.toggle('rel', related.has(n));
+  });
+  svg.querySelectorAll('g.elink').forEach(g=>{
+    const touches = g.dataset.from===name || g.dataset.to===name;
+    g.classList.toggle('on', touches);
+    g.classList.toggle('off', !touches);
+  });
+}
+function edgeKey(f,c,t){ return f+'|'+c+'|'+t; }
+/* 릴레이션 선 클릭 = 양 끝 테이블 + 그 선만 강조 */
+function erdSelectEdge(from,col,to){
+  current=''; currentEdge=edgeKey(from,col,to); sel.value='';
+  stage.classList.add('has-sel');
+  document.querySelectorAll('table.tbl').forEach(t=>{
+    const n=t.dataset.name, end=(n===from||n===to);
+    t.classList.toggle('sel', end); t.classList.remove('rel');
+  });
+  svg.querySelectorAll('g.elink').forEach(g=>{
+    const on=(g.dataset.from===from && g.dataset.col===col && g.dataset.to===to);
+    g.classList.toggle('on', on); g.classList.toggle('off', !on);
+  });
+}
+function erdClear(){
+  current=''; currentEdge=''; sel.value='';
+  stage.classList.remove('has-sel');
+  document.querySelectorAll('table.tbl').forEach(t=>t.classList.remove('sel','rel'));
+  svg.querySelectorAll('g.elink').forEach(g=>g.classList.remove('on','off'));
+}
+function reapply(){ if(currentEdge){ const a=currentEdge.split('|'); erdSelectEdge(a[0],a[1],a[2]); } else if(current){ erdSelect(current); } }
+sel.addEventListener('change',()=> sel.value? erdSelect(sel.value): erdClear());
+/* 선 클릭(=#hits 투명 히트 패스) 핸들러 + 팬/클리어 충돌 방지 */
+hits.addEventListener('pointerdown', e=>{ if(e.target.tagName==='path') e.stopPropagation(); });
+hits.addEventListener('click', e=>{ const p=e.target; if(p.tagName!=='path') return; e.stopPropagation();
+  const k=edgeKey(p.dataset.from,p.dataset.col,p.dataset.to);
+  (currentEdge===k)? erdClear() : erdSelectEdge(p.dataset.from,p.dataset.col,p.dataset.to); });
+
+/* ---------- 줌 / 팬 ---------- */
+let scale=1, tx=40, ty=40;
+function apply(){ stage.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`; }
+function fit(){
+  const w=stage.offsetWidth, h=stage.offsetHeight;
+  const r=vp.getBoundingClientRect();
+  scale=Math.min(r.width/(w+40), r.height/(h+40), 1.4);
+  if(!isFinite(scale)||scale<=0) scale=1;
+  tx=Math.max(20,(r.width-w*scale)/2); ty=20; apply();
+}
+function erdZoom(f){ const r=vp.getBoundingClientRect(); const cx=r.width/2,cy=r.height/2;
+  const nx=(cx-tx)/scale, ny=(cy-ty)/scale; scale=Math.min(3,Math.max(.1,scale*f));
+  tx=cx-nx*scale; ty=cy-ny*scale; apply(); }
+function erdReset(){ fit(); }
+function erdFull(){ const el=document.documentElement;
+  if(!document.fullscreenElement) (el.requestFullscreen||el.webkitRequestFullscreen).call(el);
+  else (document.exitFullscreen||document.webkitExitFullscreen).call(document);
+  setTimeout(fit,180); }
+let spd=0.7; $('#spd').addEventListener('input',e=>spd=+e.target.value);
+
+vp.addEventListener('wheel',e=>{ e.preventDefault();
+  const r=vp.getBoundingClientRect(); const mx=e.clientX-r.left, my=e.clientY-r.top;
+  const nx=(mx-tx)/scale, ny=(my-ty)/scale;
+  /* 휠 이동량(deltaY)에 비례하는 지수 줌 — 트랙패드 다발 이벤트에도 복리 폭주 안 함 */
+  const f=Math.exp(-e.deltaY*0.0012*spd);
+  scale=Math.min(3,Math.max(.1,scale*f)); tx=mx-nx*scale; ty=my-ny*scale; apply();
+},{passive:false});
+
+let drag=false,sx,sy,stx,sty,moved=0;
+vp.addEventListener('pointerdown',e=>{ if(e.target.closest('tr.tname')) return;
+  drag=true;moved=0;sx=e.clientX;sy=e.clientY;stx=tx;sty=ty;vp.classList.add('drag');vp.setPointerCapture(e.pointerId);});
+vp.addEventListener('pointermove',e=>{ if(!drag)return; const dx=e.clientX-sx,dy=e.clientY-sy;
+  moved+=Math.abs(dx)+Math.abs(dy); tx=stx+dx;ty=sty+dy;apply();});  /* 팬은 1:1 자연 이동(줌속도와 분리) */
+vp.addEventListener('pointerup',e=>{ if(drag&&moved<4&&!e.target.closest('table.tbl')) erdClear();
+  drag=false;vp.classList.remove('drag');});
+
+/* viewport 위치를 toolbar 아래로 정확히 맞춤 */
+function placeVp(){ const wrap=$('.erd-wrap'); const top=document.querySelector('.erd-toolbar').getBoundingClientRect().bottom;
+  wrap.style.top=top+'px'; }
+
+/* ---------- 테이블 드래그 이동 (연결선 자동 추적) ---------- */
+const initPos={}; let initW=0, initH=0, frozen=false, raf=0;
+function scheduleRedraw(){ if(raf) return; raf=requestAnimationFrame(()=>{ raf=0; drawLinks(); reapply(); }); }
+function growStage(){ let mr=0,mb=0;
+  groups.querySelectorAll('table.tbl').forEach(t=>{ mr=Math.max(mr,(parseFloat(t.style.left)||0)+t.offsetWidth);
+    mb=Math.max(mb,(parseFloat(t.style.top)||0)+t.offsetHeight); });
+  groups.style.width=Math.max(initW,mr+40)+'px'; groups.style.height=Math.max(initH,mb+40)+'px'; }
+function makeDraggable(tbl){
+  const cap=tbl.querySelector('tr.tname'); let sx,sy,ol,ot,mv,on=false;
+  cap.addEventListener('pointerdown',e=>{ e.stopPropagation(); on=true; mv=0;
+    sx=e.clientX; sy=e.clientY; ol=parseFloat(tbl.style.left)||0; ot=parseFloat(tbl.style.top)||0;
+    tbl.classList.add('dragging'); try{cap.setPointerCapture(e.pointerId);}catch(_){} });
+  cap.addEventListener('pointermove',e=>{ if(!on) return;
+    const dx=e.clientX-sx, dy=e.clientY-sy; mv=Math.max(mv,Math.abs(dx)+Math.abs(dy));
+    tbl.style.left=(ol+dx/scale)+'px'; tbl.style.top=(ot+dy/scale)+'px'; scheduleRedraw(); });
+  cap.addEventListener('pointerup',e=>{ if(!on) return; on=false; tbl.classList.remove('dragging');
+    try{cap.releasePointerCapture(e.pointerId);}catch(_){}
+    if(mv<4){ const n=tbl.dataset.name; current===n? erdClear(): erdSelect(n); }   // 안 움직였으면 클릭=강조 토글
+    else { growStage(); drawLinks(); reapply(); } });                                // 움직였으면 위치 확정
+}
+function freezeLayout(){ if(frozen) return;                                          // flex 배치 측정 후 absolute로 고정(1회)
+  const g=groups.getBoundingClientRect();
+  const pos=el=>{ const r=el.getBoundingClientRect(); return {x:(r.left-g.left)/scale, y:(r.top-g.top)/scale}; };
+  const tData=[...groups.querySelectorAll('table.tbl')].map(t=>({el:t,p:pos(t)}));
+  const hData=[...groups.querySelectorAll('.col h2')].map(h=>({el:h,p:pos(h)}));
+  initW=groups.scrollWidth; initH=groups.scrollHeight;
+  groups.style.display='block'; groups.style.position='relative';
+  groups.style.width=initW+'px'; groups.style.height=initH+'px';
+  hData.forEach(h=>{ const s=h.el.style; s.position='absolute'; s.left=h.p.x+'px'; s.top=h.p.y+'px'; s.margin='0'; groups.appendChild(h.el); });
+  tData.forEach(d=>{ const s=d.el.style; s.position='absolute'; s.left=d.p.x+'px'; s.top=d.p.y+'px'; s.margin='0';
+    initPos[d.el.dataset.name]={x:d.p.x,y:d.p.y}; groups.appendChild(d.el); makeDraggable(d.el); });
+  [...groups.querySelectorAll('.col')].forEach(c=>c.remove());
+  frozen=true;
+}
+function erdRelayout(){ for(const n in initPos){ const t=document.getElementById('tbl-'+n);
+    if(t){ t.style.left=initPos[n].x+'px'; t.style.top=initPos[n].y+'px'; } }
+  groups.style.width=initW+'px'; groups.style.height=initH+'px';
+  drawLinks(); reapply(); fit(); }
+
+function init(){ placeVp(); freezeLayout(); drawLinks(); fit(); }
+window.addEventListener('resize',()=>{ placeVp(); drawLinks(); reapply(); fit(); });
+/* 폰트/레이아웃 안정 후 1회 */
+requestAnimationFrame(()=>requestAnimationFrame(init));
+setTimeout(init,300);
+</script>
+</body>
+</html>

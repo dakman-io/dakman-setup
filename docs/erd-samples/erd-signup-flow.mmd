@@ -1,0 +1,28 @@
+sequenceDiagram
+    autonumber
+    actor C as 클라이언트
+    participant API as API 서버
+    participant U as users
+    participant AI as auth_identities
+    participant T as auth_tokens
+    participant S as sessions
+    participant EV as auth_events
+    participant M as 메일서비스
+
+    Note over C,EV: ① 가입 요청 (email + password)
+    C->>API: POST /signup
+    API->>U: INSERT status=pending [쓰기]
+    API->>AI: INSERT provider=password, password_hash [쓰기]
+    API->>T: INSERT purpose=email_verify, token_hash [쓰기]
+    API->>EV: INSERT signup [쓰기]
+    API->>M: 인증메일 발송 (verify token)
+    API-->>C: 201 가입됨, 인증 대기
+
+    Note over C,EV: ② 이메일 인증 → 계정 활성화
+    C->>API: GET /verify?token
+    API->>T: SELECT by token_hash [읽기] 만료/소비 검사
+    API->>T: UPDATE consumed_at [쓰기] 1회용 소진
+    API->>U: UPDATE email_verified_at, status pending→active [쓰기]
+    API->>EV: INSERT verify [쓰기]
+    API->>S: INSERT refresh_token_hash [쓰기] 자동 로그인
+    API-->>C: 200 세션 발급

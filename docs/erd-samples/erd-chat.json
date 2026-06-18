@@ -1,0 +1,74 @@
+{
+  "title": "채팅 스키마 ERD — 샘플",
+  "h1": "채팅·메시징 스키마 ERD",
+  "sub": "테이블 뷰 — core(대화·참여) / edge(메시지·첨부·반응·읽음) / 구현 보조용",
+  "groups": [
+    {"key": "core", "label": "core", "color": "#6ea8fe", "bg": "#16203a", "border": "#6f9ae6"},
+    {"key": "edge", "label": "edge", "color": "#f0a868", "bg": "#2a2113", "border": "#d59a5a"}
+  ],
+  "tables": [
+    {"n": "users", "log": "사용자(인증 스키마)", "g": "core", "cols": [
+      {"c": "id", "t": "uuid", "k": "PK", "d": "사용자 식별자 (auth.users 참조 앵커)"},
+      {"c": "display_name", "t": "text", "d": "표시 이름"},
+      {"c": "avatar_url", "t": "text", "d": "아바타 URL"}
+    ]},
+    {"n": "conversations", "log": "대화방", "g": "core", "cols": [
+      {"c": "id", "t": "uuid", "k": "PK", "d": "대화방 식별자"},
+      {"c": "type", "t": "conversation_type", "d": "대화 유형 (1:1/그룹/채널)", "ref": "conversation_type"},
+      {"c": "title", "t": "text", "d": "대화방 제목 (그룹·채널만)"},
+      {"c": "created_by", "t": "uuid", "k": "FK", "fk": "users.id", "d": "개설자"},
+      {"c": "last_message_id", "t": "uuid", "k": "FK", "fk": "messages.id", "d": "마지막 메시지 (역정규화·목록 정렬용)"},
+      {"c": "created_at", "t": "timestamptz", "d": "생성 시각"},
+      {"c": "updated_at", "t": "timestamptz", "d": "수정 시각"},
+      {"c": "deleted_at", "t": "timestamptz", "d": "소프트 삭제 시각"}
+    ]},
+    {"n": "conversation_members", "log": "대화 참여자", "g": "core", "cols": [
+      {"c": "conversation_id", "t": "uuid", "k": "PK,FK", "fk": "conversations.id", "d": "대화방"},
+      {"c": "user_id", "t": "uuid", "k": "PK,FK", "fk": "users.id", "d": "참여자"},
+      {"c": "role", "t": "member_role", "d": "참여자 역할", "ref": "member_role"},
+      {"c": "joined_at", "t": "timestamptz", "d": "참여 시각"},
+      {"c": "last_read_at", "t": "timestamptz", "d": "마지막 읽은 시각 (안 읽음 계산)"},
+      {"c": "muted_until", "t": "timestamptz", "d": "알림 끔 만료 시각"},
+      {"c": "left_at", "t": "timestamptz", "d": "퇴장 시각 (nullable)"}
+    ]},
+    {"n": "messages", "log": "메시지", "g": "edge", "cols": [
+      {"c": "id", "t": "uuid", "k": "PK", "d": "메시지 식별자"},
+      {"c": "conversation_id", "t": "uuid", "k": "FK", "fk": "conversations.id", "d": "소속 대화방"},
+      {"c": "sender_id", "t": "uuid", "k": "FK", "fk": "users.id", "d": "보낸 사람"},
+      {"c": "type", "t": "message_type", "d": "메시지 유형", "ref": "message_type"},
+      {"c": "content", "t": "text", "d": "본문 (system이면 메타)"},
+      {"c": "reply_to_id", "t": "uuid", "k": "FK", "fk": "messages.id", "d": "답장 대상 (스레드, 자기참조)"},
+      {"c": "created_at", "t": "timestamptz", "d": "전송 시각"},
+      {"c": "edited_at", "t": "timestamptz", "d": "수정 시각 (nullable)"},
+      {"c": "deleted_at", "t": "timestamptz", "d": "소프트 삭제 시각"}
+    ]},
+    {"n": "message_attachments", "log": "첨부 파일", "g": "edge", "cols": [
+      {"c": "id", "t": "uuid", "k": "PK", "d": "첨부 식별자"},
+      {"c": "message_id", "t": "uuid", "k": "FK", "fk": "messages.id", "d": "소속 메시지"},
+      {"c": "kind", "t": "attachment_kind", "d": "첨부 종류", "ref": "attachment_kind"},
+      {"c": "url", "t": "text", "d": "저장 URL"},
+      {"c": "mime_type", "t": "text", "d": "MIME 타입"},
+      {"c": "size_bytes", "t": "bigint", "d": "크기 (바이트)"},
+      {"c": "created_at", "t": "timestamptz", "d": "생성 시각"}
+    ]},
+    {"n": "message_reactions", "log": "메시지 반응", "g": "edge", "cols": [
+      {"c": "message_id", "t": "uuid", "k": "PK,FK", "fk": "messages.id", "d": "대상 메시지"},
+      {"c": "user_id", "t": "uuid", "k": "PK,FK", "fk": "users.id", "d": "반응한 사용자"},
+      {"c": "emoji", "t": "text", "k": "PK", "d": "이모지 (복합키 일부)"},
+      {"c": "created_at", "t": "timestamptz", "d": "반응 시각"}
+    ]},
+    {"n": "message_receipts", "log": "전달·읽음 영수증", "g": "edge", "cols": [
+      {"c": "message_id", "t": "uuid", "k": "PK,FK", "fk": "messages.id", "d": "대상 메시지"},
+      {"c": "user_id", "t": "uuid", "k": "PK,FK", "fk": "users.id", "d": "수신자"},
+      {"c": "status", "t": "receipt_status", "d": "전달/읽음 상태", "ref": "receipt_status"},
+      {"c": "updated_at", "t": "timestamptz", "d": "상태 갱신 시각"}
+    ]}
+  ],
+  "enums": [
+    {"n": "conversation_type", "log": "대화 유형", "vals": ["direct", "group", "channel"]},
+    {"n": "member_role", "log": "참여자 역할", "vals": ["owner", "admin", "member"]},
+    {"n": "message_type", "log": "메시지 유형", "vals": ["text", "image", "file", "system"]},
+    {"n": "attachment_kind", "log": "첨부 종류", "vals": ["image", "video", "audio", "file"]},
+    {"n": "receipt_status", "log": "영수증 상태", "vals": ["delivered", "read"]}
+  ]
+}

@@ -1,0 +1,82 @@
+erDiagram
+    users ||--o| user_profiles : "has 1:1"
+    users ||--o{ auth_identities : "authenticates via"
+    users ||--o{ user_roles : "assigned"
+    roles ||--o{ user_roles : "grants"
+    users ||--o{ sessions : "owns"
+    users ||--o{ auth_tokens : "issues"
+    users ||--o{ auth_events : "logs"
+
+    users["users · 사용자(회원)"] {
+        uuid id PK "사용자 식별자"
+        citext email UK "이메일·로그인ID, 소문자 비교"
+        timestamptz email_verified_at "이메일 검증 시각·진실의 출처"
+        user_status status "계정 상태: pending|active|suspended|deleted"
+        text display_name "표시 이름"
+        timestamptz created_at "생성 시각"
+        timestamptz updated_at "수정 시각"
+        timestamptz deleted_at "소프트 삭제 시각"
+    }
+
+    user_profiles["user_profiles · 사용자 프로필"] {
+        uuid user_id PK,FK "사용자(1:1)"
+        text avatar_url "아바타 URL"
+        text bio "자기소개"
+        text locale "로케일: ko, en…"
+        text timezone "타임존"
+        jsonb preferences "사용자 설정·확장 여지"
+        timestamptz updated_at "수정 시각"
+    }
+
+    auth_identities["auth_identities · 인증 수단"] {
+        uuid id PK "식별자"
+        uuid user_id FK "사용자"
+        auth_provider provider "인증 공급자: password|google|apple|kakao"
+        text provider_uid "소셜 고유ID·UK(provider,uid)"
+        text password_hash "비밀번호 해시·password일 때만"
+        timestamptz last_used_at "최근 사용 시각"
+        timestamptz created_at "생성 시각"
+    }
+
+    roles["roles · 역할"] {
+        uuid id PK "식별자"
+        text name UK "역할명: user|admin|…"
+        text description "설명"
+    }
+
+    user_roles["user_roles · 사용자-역할"] {
+        uuid user_id PK,FK "사용자"
+        uuid role_id PK,FK "역할"
+        timestamptz granted_at "부여 시각"
+    }
+
+    sessions["sessions · 세션"] {
+        uuid id PK "식별자"
+        uuid user_id FK "사용자"
+        text refresh_token_hash UK "리프레시 토큰 해시·원문 저장 금지"
+        text user_agent "User-Agent"
+        inet ip_address "IP 주소"
+        timestamptz expires_at "만료 시각"
+        timestamptz revoked_at "폐기 시각"
+        timestamptz created_at "생성 시각"
+    }
+
+    auth_tokens["auth_tokens · 인증 토큰"] {
+        uuid id PK "식별자"
+        uuid user_id FK "사용자"
+        token_purpose purpose "토큰 용도: email_verify|password_reset|magic_link"
+        text token_hash UK "토큰 해시"
+        timestamptz expires_at "만료 시각"
+        timestamptz consumed_at "소비 시각·1회용"
+        timestamptz created_at "생성 시각"
+    }
+
+    auth_events["auth_events · 인증 이벤트"] {
+        uuid id PK "식별자"
+        uuid user_id FK "사용자·nullable(실패 로그인)"
+        auth_event_type event_type "이벤트 유형: signup|login|login_failed|logout|pw_reset"
+        inet ip_address "IP 주소"
+        text user_agent "User-Agent"
+        jsonb metadata "부가 데이터"
+        timestamptz created_at "생성 시각"
+    }

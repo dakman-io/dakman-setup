@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>회원가입 스키마 ERD — D2</title>
+<style>
+  :root {
+    --bg: #0f1117; --card: #1a1d27; --line: #2a2f3d;
+    --ink: #e6e8ee; --muted: #9aa3b2; --core: #6ea8fe; --edge: #f0a868; --ok: #5fd38d;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.6 -apple-system, "Apple SD Gothic Neo", "Pretendard", system-ui, sans-serif;
+  }
+  header {
+    padding: 32px 40px 24px; border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, #161a24, #0f1117);
+  }
+  header h1 { margin: 0 0 6px; font-size: 22px; letter-spacing: -0.3px; }
+  header p { margin: 0; color: var(--muted); font-size: 14px; }
+  .badge {
+    display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px;
+    background: #233; color: var(--core); border: 1px solid #2c4a6e; margin-left: 8px; vertical-align: middle;
+  }
+  main { max-width: 1080px; margin: 0 auto; padding: 28px 40px 80px; }
+  .diagram {
+    background: #ffffff; border: 1px solid var(--line); border-radius: 14px;
+    padding: 24px; overflow-x: auto; margin-bottom: 28px; text-align: center;
+  }
+  .diagram svg { max-width: 100%; height: auto; display: inline-block; }
+  h2 { font-size: 16px; margin: 36px 0 14px; letter-spacing: -0.2px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+  .note {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .note h3 { margin: 0 0 6px; font-size: 14px; }
+  .note p { margin: 0; color: var(--muted); font-size: 13.5px; }
+  .note code { background: #11141c; padding: 1px 6px; border-radius: 5px; color: #cdd6e4; font-size: 12.5px; }
+  .legend { display: flex; gap: 20px; flex-wrap: wrap; margin: 0 0 24px; font-size: 13px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .dot { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+  .dot.core { background: var(--core); } .dot.edge { background: var(--edge); }
+  .tier { font-weight: 600; }
+  .tier.core { color: var(--core); } .tier.edge { color: var(--edge); }
+  .src { background: #11141c; border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; margin-top: 28px; }
+  .src summary { cursor: pointer; color: var(--core); font-size: 13.5px; font-weight: 600; }
+  .src pre { margin: 12px 0 0; overflow-x: auto; font-size: 12px; line-height: 1.5; color: #cdd6e4; }
+  footer { color: var(--muted); font-size: 12.5px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+
+  /* ===== ERD 확대 뷰 (풀블리드 + 줌/이동/전체화면) ===== */
+  .diagram { width: 100vw; position: relative; left: 50%; margin-left: -50vw;
+             padding: 0; background: transparent; border: none; border-radius: 0; overflow: visible; }
+  .erd-viewport { width: 100%; height: 72vh; overflow: hidden; background: #fff;
+                  border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); cursor: grab; }
+  .erd-viewport:active { cursor: grabbing; }
+  .erd-toolbar { position: absolute; top: 10px; right: 16px; display: flex; gap: 6px; z-index: 5; }
+  .erd-btn { background: #1a1d27; color: #e6e8ee; border: 1px solid #2a2f3d; border-radius: 8px;
+             padding: 6px 11px; font-size: 12.5px; cursor: pointer; }
+  .erd-btn:hover { background: #232838; }
+  .erd-stage { transform-origin: 0 0; }
+  .erd-stage svg { display: block; max-width: none; height: auto; }
+  .erd-speed { display:inline-flex; align-items:center; gap:6px; background:#1a1d27;
+               border:1px solid #2a2f3d; border-radius:8px; padding:4px 10px; font-size:12px; color:#9aa3b2; }
+  .erd-speed input { width:84px; accent-color:#6ea8fe; cursor:pointer; vertical-align:middle; }
+  #erdBox:fullscreen { background: #fff; width: 100vw; }
+  #erdBox:fullscreen .erd-viewport { height: 100vh; border: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>회원가입 · 인증 스키마 <span class="badge">D2 ERD</span></h1>
+  <p>렌더: D2 → <code>d2 --layout elk --direction right</code> → 오프라인 SVG 인라인 (외부 CDN 0개, 폰트 임베드). 출처는 <code style="color:var(--ok)">erd-signup.d2</code> 한 파일 = 단일 진실의 출처. <b>(DBML 대안 프로토타입)</b></p>
+</header>
+
+<main>
+  <div class="legend">
+    <span><i class="dot core"></i> <b class="tier core">Core</b> — 정체성·권한. 네가 설계·지킴. 정규화, 바꾸기 어려움</span>
+    <span><i class="dot edge"></i> <b class="tier edge">Edge</b> — 세션·토큰·로그. append-only/휘발성. AI 자유, 버려도 됨</span>
+  </div>
+
+  <div class="diagram" id="erdBox">
+    <div class="erd-toolbar">
+      <button class="erd-btn" onclick="erdZoom(1.25)" title="확대">＋</button>
+      <button class="erd-btn" onclick="erdZoom(0.8)" title="축소">－</button>
+      <button class="erd-btn" onclick="erdReset()" title="화면 맞춤">↺ 맞춤</button>
+      <label class="erd-speed">속도 <input id="erdSpeed" type="range" min="0.15" max="2.2" step="0.05" value="0.5"></label>
+      <button class="erd-btn" onclick="erdFull()" title="전체화면">⛶ 전체화면</button>
+    </div>
+    <div class="erd-viewport" id="erdViewport"><div class="erd-stage" id="erdStage"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" data-d2-version="0.7.1" preserveAspectRatio="xMinYMin meet" viewBox="0 0 2988 1386"><svg class="d2-793875464 d2-svg" width="2988" height="1386" viewBox="-89 -89 2988 1386"><rect x="-89.000000" y="-89.000000" width="2988.000000" height="1386.000000" rx="0.000000" fill="#FFFFFF" class=" fill-N7" stroke-width="0" /><style type="text/css"><![CDATA[
+.d2-793875464 .text {
+	font-family: "d2-793875464-font-regular";
+}
+@font-face {
+	font-family: d2-793875464-font-regular;
+	src: url("data:application/font-woff;base64,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");
+}
+.d2-793875464 .text-italic {
+	font-family: "d2-793875464-font-italic";
+}
+@font-face {
+	font-family: d2-793875464-font-italic;
+	src: url("data:application/font-woff;base64,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");
+}]]></style><style type="text/css"><![CDATA[.shape {
+  shape-rendering: geometricPrecision;
+  stroke-linejoin: round;
+}
+.connection {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.blend {
+  mix-blend-mode: multiply;
+  opacity: 0.5;
+}
+
+		.d2-793875464 .fill-N1{fill:#0A0F25;}
+		.d2-793875464 .fill-N2{fill:#676C7E;}
+		.d2-793875464 .fill-N3{fill:#9499AB;}
+		.d2-793875464 .fill-N4{fill:#CFD2DD;}
+		.d2-793875464 .fill-N5{fill:#DEE1EB;}
+		.d2-793875464 .fill-N6{fill:#EEF1F8;}
+		.d2-793875464 .fill-N7{fill:#FFFFFF;}
+		.d2-793875464 .fill-B1{fill:#0D32B2;}
+		.d2-793875464 .fill-B2{fill:#0D32B2;}
+		.d2-793875464 .fill-B3{fill:#E3E9FD;}
+		.d2-793875464 .fill-B4{fill:#E3E9FD;}
+		.d2-793875464 .fill-B5{fill:#EDF0FD;}
+		.d2-793875464 .fill-B6{fill:#F7F8FE;}
+		.d2-793875464 .fill-AA2{fill:#4A6FF3;}
+		.d2-793875464 .fill-AA4{fill:#EDF0FD;}
+		.d2-793875464 .fill-AA5{fill:#F7F8FE;}
+		.d2-793875464 .fill-AB4{fill:#EDF0FD;}
+		.d2-793875464 .fill-AB5{fill:#F7F8FE;}
+		.d2-793875464 .stroke-N1{stroke:#0A0F25;}
+		.d2-793875464 .stroke-N2{stroke:#676C7E;}
+		.d2-793875464 .stroke-N3{stroke:#9499AB;}
+		.d2-793875464 .stroke-N4{stroke:#CFD2DD;}
+		.d2-793875464 .stroke-N5{stroke:#DEE1EB;}
+		.d2-793875464 .stroke-N6{stroke:#EEF1F8;}
+		.d2-793875464 .stroke-N7{stroke:#FFFFFF;}
+		.d2-793875464 .stroke-B1{stroke:#0D32B2;}
+		.d2-793875464 .stroke-B2{stroke:#0D32B2;}
+		.d2-793875464 .stroke-B3{stroke:#E3E9FD;}
+		.d2-793875464 .stroke-B4{stroke:#E3E9FD;}
+		.d2-793875464 .stroke-B5{stroke:#EDF0FD;}
+		.d2-793875464 .stroke-B6{stroke:#F7F8FE;}
+		.d2-793875464 .stroke-AA2{stroke:#4A6FF3;}
+		.d2-793875464 .stroke-AA4{stroke:#EDF0FD;}
+		.d2-793875464 .stroke-AA5{stroke:#F7F8FE;}
+		.d2-793875464 .stroke-AB4{stroke:#EDF0FD;}
+		.d2-793875464 .stroke-AB5{stroke:#F7F8FE;}
+		.d2-793875464 .background-color-N1{background-color:#0A0F25;}
+		.d2-793875464 .background-color-N2{background-color:#676C7E;}
+		.d2-793875464 .background-color-N3{background-color:#9499AB;}
+		.d2-793875464 .background-color-N4{background-color:#CFD2DD;}
+		.d2-793875464 .background-color-N5{background-color:#DEE1EB;}
+		.d2-793875464 .background-color-N6{background-color:#EEF1F8;}
+		.d2-793875464 .background-color-N7{background-color:#FFFFFF;}
+		.d2-793875464 .background-color-B1{background-color:#0D32B2;}
+		.d2-793875464 .background-color-B2{background-color:#0D32B2;}
+		.d2-793875464 .background-color-B3{background-color:#E3E9FD;}
+		.d2-793875464 .background-color-B4{background-color:#E3E9FD;}
+		.d2-793875464 .background-color-B5{background-color:#EDF0FD;}
+		.d2-793875464 .background-color-B6{background-color:#F7F8FE;}
+		.d2-793875464 .background-color-AA2{background-color:#4A6FF3;}
+		.d2-793875464 .background-color-AA4{background-color:#EDF0FD;}
+		.d2-793875464 .background-color-AA5{background-color:#F7F8FE;}
+		.d2-793875464 .background-color-AB4{background-color:#EDF0FD;}
+		.d2-793875464 .background-color-AB5{background-color:#F7F8FE;}
+		.d2-793875464 .color-N1{color:#0A0F25;}
+		.d2-793875464 .color-N2{color:#676C7E;}
+		.d2-793875464 .color-N3{color:#9499AB;}
+		.d2-793875464 .color-N4{color:#CFD2DD;}
+		.d2-793875464 .color-N5{color:#DEE1EB;}
+		.d2-793875464 .color-N6{color:#EEF1F8;}
+		.d2-793875464 .color-N7{color:#FFFFFF;}
+		.d2-793875464 .color-B1{color:#0D32B2;}
+		.d2-793875464 .color-B2{color:#0D32B2;}
+		.d2-793875464 .color-B3{color:#E3E9FD;}
+		.d2-793875464 .color-B4{color:#E3E9FD;}
+		.d2-793875464 .color-B5{color:#EDF0FD;}
+		.d2-793875464 .color-B6{color:#F7F8FE;}
+		.d2-793875464 .color-AA2{color:#4A6FF3;}
+		.d2-793875464 .color-AA4{color:#EDF0FD;}
+		.d2-793875464 .color-AA5{color:#F7F8FE;}
+		.d2-793875464 .color-AB4{color:#EDF0FD;}
+		.d2-793875464 .color-AB5{color:#F7F8FE;}.appendix text.text{fill:#0A0F25}.md{--color-fg-default:#0A0F25;--color-fg-muted:#676C7E;--color-fg-subtle:#9499AB;--color-canvas-default:#FFFFFF;--color-canvas-subtle:#EEF1F8;--color-border-default:#0D32B2;--color-border-muted:#0D32B2;--color-neutral-muted:#EEF1F8;--color-accent-fg:#0D32B2;--color-accent-emphasis:#0D32B2;--color-attention-subtle:#676C7E;--color-danger-fg:red;}.sketch-overlay-B1{fill:url(#streaks-darker-d2-793875464);mix-blend-mode:lighten}.sketch-overlay-B2{fill:url(#streaks-darker-d2-793875464);mix-blend-mode:lighten}.sketch-overlay-B3{fill:url(#streaks-bright-d2-793875464);mix-blend-mode:darken}.sketch-overlay-B4{fill:url(#streaks-bright-d2-793875464);mix-blend-mode:darken}.sketch-overlay-B5{fill:url(#streaks-bright-d2-793875464);mix-blend-mode:darken}.sketch-overlay-B6{fill:url(#streaks-bright-d2-793875464);mix-blend-mode:darken}.sketch-overlay-AA2{fill:url(#streaks-dark-d2-793875464);mix-blend-mode:overlay}.sketch-overlay-AA4{fill:url(#streaks-bright-d2-793875464);mix-blend-mode:darken}.sketch-overlay-AA5{fill:url(#streaks-bright-d2-793875464);mix-blend-mode:darken}.sketch-overlay-AB4{fill:url(#streaks-bright-d2-793875464);mix-blend-mode:darken}.sketch-overlay-AB5{fill:url(#streaks-bright-d2-793875464);mix-blend-mode:darken}.sketch-overlay-N1{fill:url(#streaks-darker-d2-793875464);mix-blend-mode:lighten}.sketch-overlay-N2{fill:url(#streaks-dark-d2-793875464);mix-blend-mode:overlay}.sketch-overlay-N3{fill:url(#streaks-normal-d2-793875464);mix-blend-mode:color-burn}.sketch-overlay-N4{fill:url(#streaks-normal-d2-793875464);mix-blend-mode:color-burn}.sketch-overlay-N5{fill:url(#streaks-bright-d2-793875464);mix-blend-mode:darken}.sketch-overlay-N6{fill:url(#streaks-bright-d2-793875464);mix-blend-mode:darken}.sketch-overlay-N7{fill:url(#streaks-bright-d2-793875464);mix-blend-mode:darken}.light-code{display: block}.dark-code{display: none}]]></style><g class="Y29yZQ=="><g class="shape" ><rect x="632.000000" y="18.000000" width="1721.000000" height="720.000000" stroke="#6ea8fe" fill="#eef2ff" style="stroke-width:2;" /></g><text x="1492.500000" y="51.000000" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">core</text></g><g class="ZWRnZQ=="><g class="shape" ><rect x="12.000000" y="12.000000" width="480.000000" height="1040.000000" stroke="#f0a868" fill="#2d2417" style="stroke-width:2;" /></g><text x="252.000000" y="45.000000" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">edge</text></g><g class="ZW51bXM="><g class="shape" ><rect x="2493.000000" y="126.000000" width="305.000000" height="1070.000000" stroke="#9aa3b2" fill="#161a24" style="stroke-width:2;" /></g><text x="2645.500000" y="159.000000" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">enums</text></g><g class="Y29yZS51c2Vycw=="><g class="shape" ><rect x="1476.000000" y="151.000000" width="361.000000" height="324.000000" stroke="#0A0F25" fill="#FFFFFF" class="shape stroke-N1 fill-N7" style="stroke-width:2;" /><rect x="1476.000000" y="151.000000" width="361.000000" height="36.000000" fill="#0A0F25" class="class_header fill-N1" /><text x="1486.000000" y="176.750000" fill="#FFFFFF" class="text fill-N7" style="text-anchor:start;font-size:24px">users</text><text x="1486.000000" y="210.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">id</text><text x="1653.000000" y="210.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">uuid</text><text x="1827.000000" y="210.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px">PK</text><line x1="1476.000000" x2="1837.000000" y1="223.000000" y2="223.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="1486.000000" y="246.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">email</text><text x="1653.000000" y="246.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">citext</text><text x="1827.000000" y="246.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px">UNQ</text><line x1="1476.000000" x2="1837.000000" y1="259.000000" y2="259.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="1486.000000" y="282.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">email_verified_at</text><text x="1653.000000" y="282.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">timestamptz</text><text x="1827.000000" y="282.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="1476.000000" x2="1837.000000" y1="295.000000" y2="295.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="1486.000000" y="318.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">status</text><text x="1653.000000" y="318.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">user_status</text><text x="1827.000000" y="318.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="1476.000000" x2="1837.000000" y1="331.000000" y2="331.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="1486.000000" y="354.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">display_name</text><text x="1653.000000" y="354.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">text</text><text x="1827.000000" y="354.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="1476.000000" x2="1837.000000" y1="367.000000" y2="367.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="1486.000000" y="390.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">created_at</text><text x="1653.000000" y="390.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">timestamptz</text><text x="1827.000000" y="390.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="1476.000000" x2="1837.000000" y1="403.000000" y2="403.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="1486.000000" y="426.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">updated_at</text><text x="1653.000000" y="426.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">timestamptz</text><text x="1827.000000" y="426.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="1476.000000" x2="1837.000000" y1="439.000000" y2="439.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="1486.000000" y="462.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">deleted_at</text><text x="1653.000000" y="462.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">timestamptz</text><text x="1827.000000" y="462.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="1476.000000" x2="1837.000000" y1="475.000000" y2="475.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /></g></g><g class="Y29yZS51c2VyX3Byb2ZpbGVz"><g class="shape" ><rect x="2006.000000" y="68.000000" width="297.000000" height="288.000000" stroke="#0A0F25" fill="#FFFFFF" class="shape stroke-N1 fill-N7" style="stroke-width:2;" /><rect x="2006.000000" y="68.000000" width="297.000000" height="36.000000" fill="#0A0F25" class="class_header fill-N1" /><text x="2016.000000" y="93.750000" fill="#FFFFFF" class="text fill-N7" style="text-anchor:start;font-size:24px">user_profiles</text><text x="2016.000000" y="127.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">user_id</text><text x="2134.000000" y="127.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">uuid</text><text x="2293.000000" y="127.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px">PK</text><line x1="2006.000000" x2="2303.000000" y1="140.000000" y2="140.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="2016.000000" y="163.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">avatar_url</text><text x="2134.000000" y="163.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">text</text><text x="2293.000000" y="163.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="2006.000000" x2="2303.000000" y1="176.000000" y2="176.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="2016.000000" y="199.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">bio</text><text x="2134.000000" y="199.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">text</text><text x="2293.000000" y="199.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="2006.000000" x2="2303.000000" y1="212.000000" y2="212.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="2016.000000" y="235.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">locale</text><text x="2134.000000" y="235.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">text</text><text x="2293.000000" y="235.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="2006.000000" x2="2303.000000" y1="248.000000" y2="248.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="2016.000000" y="271.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">timezone</text><text x="2134.000000" y="271.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">text</text><text x="2293.000000" y="271.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="2006.000000" x2="2303.000000" y1="284.000000" y2="284.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="2016.000000" y="307.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">preferences</text><text x="2134.000000" y="307.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">jsonb</text><text x="2293.000000" y="307.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="2006.000000" x2="2303.000000" y1="320.000000" y2="320.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="2016.000000" y="343.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">updated_at</text><text x="2134.000000" y="343.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">timestamptz</text><text x="2293.000000" y="343.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="2006.000000" x2="2303.000000" y1="356.000000" y2="356.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /></g></g><g class="Y29yZS5hdXRoX2lkZW50aXRpZXM="><g class="shape" ><rect x="682.000000" y="399.000000" width="342.000000" height="288.000000" stroke="#0A0F25" fill="#FFFFFF" class="shape stroke-N1 fill-N7" style="stroke-width:2;" /><rect x="682.000000" y="399.000000" width="342.000000" height="36.000000" fill="#0A0F25" class="class_header fill-N1" /><text x="692.000000" y="424.750000" fill="#FFFFFF" class="text fill-N7" style="text-anchor:start;font-size:24px">auth_identities</text><text x="692.000000" y="458.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">id</text><text x="842.000000" y="458.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">uuid</text><text x="1014.000000" y="458.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px">PK</text><line x1="682.000000" x2="1024.000000" y1="471.000000" y2="471.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="692.000000" y="494.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">user_id</text><text x="842.000000" y="494.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">uuid</text><text x="1014.000000" y="494.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="682.000000" x2="1024.000000" y1="507.000000" y2="507.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="692.000000" y="530.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">provider</text><text x="842.000000" y="530.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">auth_provider</text><text x="1014.000000" y="530.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="682.000000" x2="1024.000000" y1="543.000000" y2="543.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="692.000000" y="566.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">provider_uid</text><text x="842.000000" y="566.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">text</text><text x="1014.000000" y="566.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="682.000000" x2="1024.000000" y1="579.000000" y2="579.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="692.000000" y="602.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">password_hash</text><text x="842.000000" y="602.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">text</text><text x="1014.000000" y="602.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="682.000000" x2="1024.000000" y1="615.000000" y2="615.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="692.000000" y="638.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">last_used_at</text><text x="842.000000" y="638.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">timestamptz</text><text x="1014.000000" y="638.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="682.000000" x2="1024.000000" y1="651.000000" y2="651.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="692.000000" y="674.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">created_at</text><text x="842.000000" y="674.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">timestamptz</text><text x="1014.000000" y="674.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="682.000000" x2="1024.000000" y1="687.000000" y2="687.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /></g></g><g class="Y29yZS5yb2xlcw=="><g class="shape" ><rect x="1476.000000" y="495.000000" width="238.000000" height="144.000000" stroke="#0A0F25" fill="#FFFFFF" class="shape stroke-N1 fill-N7" style="stroke-width:2;" /><rect x="1476.000000" y="495.000000" width="238.000000" height="36.000000" fill="#0A0F25" class="class_header fill-N1" /><text x="1486.000000" y="520.750000" fill="#FFFFFF" class="text fill-N7" style="text-anchor:start;font-size:24px">roles</text><text x="1486.000000" y="554.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">id</text><text x="1600.000000" y="554.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">uuid</text><text x="1704.000000" y="554.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px">PK</text><line x1="1476.000000" x2="1714.000000" y1="567.000000" y2="567.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="1486.000000" y="590.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">name</text><text x="1600.000000" y="590.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">text</text><text x="1704.000000" y="590.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px">UNQ</text><line x1="1476.000000" x2="1714.000000" y1="603.000000" y2="603.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="1486.000000" y="626.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">description</text><text x="1600.000000" y="626.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">text</text><text x="1704.000000" y="626.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="1476.000000" x2="1714.000000" y1="639.000000" y2="639.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /></g></g><g class="Y29yZS51c2VyX3JvbGVz"><g class="shape" ><rect x="1104.000000" y="459.000000" width="292.000000" height="144.000000" stroke="#0A0F25" fill="#FFFFFF" class="shape stroke-N1 fill-N7" style="stroke-width:2;" /><rect x="1104.000000" y="459.000000" width="292.000000" height="36.000000" fill="#0A0F25" class="class_header fill-N1" /><text x="1114.000000" y="484.750000" fill="#FFFFFF" class="text fill-N7" style="text-anchor:start;font-size:24px">user_roles</text><text x="1114.000000" y="518.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">user_id</text><text x="1227.000000" y="518.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">uuid</text><text x="1386.000000" y="518.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px">PK</text><line x1="1104.000000" x2="1396.000000" y1="531.000000" y2="531.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="1114.000000" y="554.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">role_id</text><text x="1227.000000" y="554.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">uuid</text><text x="1386.000000" y="554.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px">PK</text><line x1="1104.000000" x2="1396.000000" y1="567.000000" y2="567.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="1114.000000" y="590.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">granted_at</text><text x="1227.000000" y="590.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">timestamptz</text><text x="1386.000000" y="590.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="1104.000000" x2="1396.000000" y1="603.000000" y2="603.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /></g></g><g class="ZWRnZS5zZXNzaW9ucw=="><g class="shape" ><rect x="62.000000" y="62.000000" width="380.000000" height="324.000000" stroke="#0A0F25" fill="#FFFFFF" class="shape stroke-N1 fill-N7" style="stroke-width:2;" /><rect x="62.000000" y="62.000000" width="380.000000" height="36.000000" fill="#0A0F25" class="class_header fill-N1" /><text x="72.000000" y="87.750000" fill="#FFFFFF" class="text fill-N7" style="text-anchor:start;font-size:24px">sessions</text><text x="72.000000" y="121.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">id</text><text x="258.000000" y="121.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">uuid</text><text x="432.000000" y="121.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px">PK</text><line x1="62.000000" x2="442.000000" y1="134.000000" y2="134.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="72.000000" y="157.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">user_id</text><text x="258.000000" y="157.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">uuid</text><text x="432.000000" y="157.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="62.000000" x2="442.000000" y1="170.000000" y2="170.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="72.000000" y="193.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">refresh_token_hash</text><text x="258.000000" y="193.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">text</text><text x="432.000000" y="193.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px">UNQ</text><line x1="62.000000" x2="442.000000" y1="206.000000" y2="206.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="72.000000" y="229.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">user_agent</text><text x="258.000000" y="229.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">text</text><text x="432.000000" y="229.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="62.000000" x2="442.000000" y1="242.000000" y2="242.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="72.000000" y="265.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">ip_address</text><text x="258.000000" y="265.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">inet</text><text x="432.000000" y="265.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="62.000000" x2="442.000000" y1="278.000000" y2="278.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="72.000000" y="301.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">expires_at</text><text x="258.000000" y="301.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">timestamptz</text><text x="432.000000" y="301.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="62.000000" x2="442.000000" y1="314.000000" y2="314.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="72.000000" y="337.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">revoked_at</text><text x="258.000000" y="337.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">timestamptz</text><text x="432.000000" y="337.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="62.000000" x2="442.000000" y1="350.000000" y2="350.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="72.000000" y="373.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">created_at</text><text x="258.000000" y="373.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">timestamptz</text><text x="432.000000" y="373.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="62.000000" x2="442.000000" y1="386.000000" y2="386.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /></g></g><g class="ZWRnZS5hdXRoX3Rva2Vucw=="><g class="shape" ><rect x="91.000000" y="406.000000" width="351.000000" height="288.000000" stroke="#0A0F25" fill="#FFFFFF" class="shape stroke-N1 fill-N7" style="stroke-width:2;" /><rect x="91.000000" y="406.000000" width="351.000000" height="36.000000" fill="#0A0F25" class="class_header fill-N1" /><text x="101.000000" y="431.750000" fill="#FFFFFF" class="text fill-N7" style="text-anchor:start;font-size:24px">auth_tokens</text><text x="101.000000" y="465.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">id</text><text x="236.000000" y="465.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">uuid</text><text x="432.000000" y="465.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px">PK</text><line x1="91.000000" x2="442.000000" y1="478.000000" y2="478.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="101.000000" y="501.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">user_id</text><text x="236.000000" y="501.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">uuid</text><text x="432.000000" y="501.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="91.000000" x2="442.000000" y1="514.000000" y2="514.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="101.000000" y="537.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">purpose</text><text x="236.000000" y="537.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">token_purpose</text><text x="432.000000" y="537.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="91.000000" x2="442.000000" y1="550.000000" y2="550.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="101.000000" y="573.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">token_hash</text><text x="236.000000" y="573.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">text</text><text x="432.000000" y="573.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px">UNQ</text><line x1="91.000000" x2="442.000000" y1="586.000000" y2="586.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="101.000000" y="609.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">expires_at</text><text x="236.000000" y="609.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">timestamptz</text><text x="432.000000" y="609.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="91.000000" x2="442.000000" y1="622.000000" y2="622.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="101.000000" y="645.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">consumed_at</text><text x="236.000000" y="645.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">timestamptz</text><text x="432.000000" y="645.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="91.000000" x2="442.000000" y1="658.000000" y2="658.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="101.000000" y="681.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">created_at</text><text x="236.000000" y="681.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">timestamptz</text><text x="432.000000" y="681.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="91.000000" x2="442.000000" y1="694.000000" y2="694.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /></g></g><g class="ZWRnZS5hdXRoX2V2ZW50cw=="><g class="shape" ><rect x="112.000000" y="714.000000" width="330.000000" height="288.000000" stroke="#0A0F25" fill="#FFFFFF" class="shape stroke-N1 fill-N7" style="stroke-width:2;" /><rect x="112.000000" y="714.000000" width="330.000000" height="36.000000" fill="#0A0F25" class="class_header fill-N1" /><text x="122.000000" y="739.750000" fill="#FFFFFF" class="text fill-N7" style="text-anchor:start;font-size:24px">auth_events</text><text x="122.000000" y="773.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">id</text><text x="237.000000" y="773.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">uuid</text><text x="432.000000" y="773.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px">PK</text><line x1="112.000000" x2="442.000000" y1="786.000000" y2="786.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="122.000000" y="809.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">user_id</text><text x="237.000000" y="809.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">uuid</text><text x="432.000000" y="809.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="112.000000" x2="442.000000" y1="822.000000" y2="822.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="122.000000" y="845.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">event_type</text><text x="237.000000" y="845.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">auth_event_type</text><text x="432.000000" y="845.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="112.000000" x2="442.000000" y1="858.000000" y2="858.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="122.000000" y="881.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">ip_address</text><text x="237.000000" y="881.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">inet</text><text x="432.000000" y="881.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="112.000000" x2="442.000000" y1="894.000000" y2="894.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="122.000000" y="917.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">user_agent</text><text x="237.000000" y="917.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">text</text><text x="432.000000" y="917.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="112.000000" x2="442.000000" y1="930.000000" y2="930.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="122.000000" y="953.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">metadata</text><text x="237.000000" y="953.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">jsonb</text><text x="432.000000" y="953.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="112.000000" x2="442.000000" y1="966.000000" y2="966.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="122.000000" y="989.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">created_at</text><text x="237.000000" y="989.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px">timestamptz</text><text x="432.000000" y="989.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="112.000000" x2="442.000000" y1="1002.000000" y2="1002.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /></g></g><g class="ZW51bXMudXNlcl9zdGF0dXM="><g class="shape" ><rect x="2571.000000" y="176.000000" width="148.000000" height="180.000000" stroke="#0A0F25" fill="#FFFFFF" class="shape stroke-N1 fill-N7" style="stroke-width:2;" /><rect x="2571.000000" y="176.000000" width="148.000000" height="36.000000" fill="#0A0F25" class="class_header fill-N1" /><text x="2581.000000" y="201.750000" fill="#FFFFFF" class="text fill-N7" style="text-anchor:start;font-size:24px">user_status</text><text x="2581.000000" y="235.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">pending</text><text x="2692.000000" y="235.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px" /><text x="2709.000000" y="235.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="2571.000000" x2="2719.000000" y1="248.000000" y2="248.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="2581.000000" y="271.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">active</text><text x="2692.000000" y="271.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px" /><text x="2709.000000" y="271.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="2571.000000" x2="2719.000000" y1="284.000000" y2="284.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="2581.000000" y="307.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">suspended</text><text x="2692.000000" y="307.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px" /><text x="2709.000000" y="307.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="2571.000000" x2="2719.000000" y1="320.000000" y2="320.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="2581.000000" y="343.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">deleted</text><text x="2692.000000" y="343.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px" /><text x="2709.000000" y="343.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="2571.000000" x2="2719.000000" y1="356.000000" y2="356.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /></g></g><g class="ZW51bXMuYXV0aF9wcm92aWRlcg=="><g class="shape" ><rect x="2556.000000" y="436.000000" width="178.000000" height="180.000000" stroke="#0A0F25" fill="#FFFFFF" class="shape stroke-N1 fill-N7" style="stroke-width:2;" /><rect x="2556.000000" y="436.000000" width="178.000000" height="36.000000" fill="#0A0F25" class="class_header fill-N1" /><text x="2566.000000" y="461.750000" fill="#FFFFFF" class="text fill-N7" style="text-anchor:start;font-size:24px">auth_provider</text><text x="2566.000000" y="495.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">password</text><text x="2666.000000" y="495.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px" /><text x="2724.000000" y="495.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="2556.000000" x2="2734.000000" y1="508.000000" y2="508.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="2566.000000" y="531.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">google</text><text x="2666.000000" y="531.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px" /><text x="2724.000000" y="531.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="2556.000000" x2="2734.000000" y1="544.000000" y2="544.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="2566.000000" y="567.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">apple</text><text x="2666.000000" y="567.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px" /><text x="2724.000000" y="567.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="2556.000000" x2="2734.000000" y1="580.000000" y2="580.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="2566.000000" y="603.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">kakao</text><text x="2666.000000" y="603.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px" /><text x="2724.000000" y="603.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="2556.000000" x2="2734.000000" y1="616.000000" y2="616.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /></g></g><g class="ZW51bXMudG9rZW5fcHVycG9zZQ=="><g class="shape" ><rect x="2552.000000" y="696.000000" width="186.000000" height="144.000000" stroke="#0A0F25" fill="#FFFFFF" class="shape stroke-N1 fill-N7" style="stroke-width:2;" /><rect x="2552.000000" y="696.000000" width="186.000000" height="36.000000" fill="#0A0F25" class="class_header fill-N1" /><text x="2562.000000" y="721.750000" fill="#FFFFFF" class="text fill-N7" style="text-anchor:start;font-size:24px">token_purpose</text><text x="2562.000000" y="755.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">email_verify</text><text x="2715.000000" y="755.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px" /><text x="2728.000000" y="755.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="2552.000000" x2="2738.000000" y1="768.000000" y2="768.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="2562.000000" y="791.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">password_reset</text><text x="2715.000000" y="791.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px" /><text x="2728.000000" y="791.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="2552.000000" x2="2738.000000" y1="804.000000" y2="804.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="2562.000000" y="827.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">magic_link</text><text x="2715.000000" y="827.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px" /><text x="2728.000000" y="827.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="2552.000000" x2="2738.000000" y1="840.000000" y2="840.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /></g></g><g class="ZW51bXMuYXV0aF9ldmVudF90eXBl"><g class="shape" ><rect x="2543.000000" y="930.000000" width="205.000000" height="216.000000" stroke="#0A0F25" fill="#FFFFFF" class="shape stroke-N1 fill-N7" style="stroke-width:2;" /><rect x="2543.000000" y="930.000000" width="205.000000" height="36.000000" fill="#0A0F25" class="class_header fill-N1" /><text x="2553.000000" y="955.750000" fill="#FFFFFF" class="text fill-N7" style="text-anchor:start;font-size:24px">auth_event_type</text><text x="2553.000000" y="989.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">signup</text><text x="2670.000000" y="989.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px" /><text x="2738.000000" y="989.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="2543.000000" x2="2748.000000" y1="1002.000000" y2="1002.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="2553.000000" y="1025.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">login</text><text x="2670.000000" y="1025.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px" /><text x="2738.000000" y="1025.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="2543.000000" x2="2748.000000" y1="1038.000000" y2="1038.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="2553.000000" y="1061.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">login_failed</text><text x="2670.000000" y="1061.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px" /><text x="2738.000000" y="1061.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="2543.000000" x2="2748.000000" y1="1074.000000" y2="1074.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="2553.000000" y="1097.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">logout</text><text x="2670.000000" y="1097.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px" /><text x="2738.000000" y="1097.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="2543.000000" x2="2748.000000" y1="1110.000000" y2="1110.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /><text x="2553.000000" y="1133.000000" fill="#0D32B2" class="text fill-B2" style="text-anchor:start;font-size:20px">pw_reset</text><text x="2670.000000" y="1133.000000" fill="#676C7E" class="text fill-N2" style="text-anchor:start;font-size:20px" /><text x="2738.000000" y="1133.000000" fill="#4A6FF3" class="text fill-AA2" style="text-anchor:end;font-size:20px" /><line x1="2543.000000" x2="2748.000000" y1="1146.000000" y2="1146.000000" stroke="#0A0F25" class=" stroke-N1" style="stroke-width:2" /></g></g><g class="Y29yZS4odXNlcnMgJmx0Oy0mZ3Q7IHVzZXJfcHJvZmlsZXMpWzBd"><marker id="mk-d2-793875464-2451250203" markerWidth="10.000000" markerHeight="12.000000" refX="3.000000" refY="6.000000" viewBox="0.000000 0.000000 10.000000 12.000000" orient="auto" markerUnits="userSpaceOnUse"> <polygon points="10.000000,0.000000 0.000000,6.000000 10.000000,12.000000" fill="#0D32B2" class="connection fill-B1" stroke-width="2" /> </marker><marker id="mk-d2-793875464-3488378134" markerWidth="10.000000" markerHeight="12.000000" refX="7.000000" refY="6.000000" viewBox="0.000000 0.000000 10.000000 12.000000" orient="auto" markerUnits="userSpaceOnUse"> <polygon points="0.000000,0.000000 10.000000,6.000000 0.000000,12.000000" fill="#0D32B2" class="connection fill-B1" stroke-width="2" /> </marker><path d="M 1841.000000 205.000000 L 1867.000000 205.000000 S 1877.000000 205.000000 1877.000000 195.000000 L 1877.000000 132.000000 S 1877.000000 122.000000 1887.000000 122.000000 L 2002.000000 122.000000" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-start="url(#mk-d2-793875464-2451250203)" marker-end="url(#mk-d2-793875464-3488378134)" mask="url(#d2-793875464)" /><text x="1880.500000" y="128.000000" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">1:1</text><text x="1845.500000" y="192.000000" fill="#0A0F25" class="text-italic fill-N1" style="text-anchor:middle;font-size:16px">1</text><text x="1997.500000" y="109.000000" fill="#0A0F25" class="text-italic fill-N1" style="text-anchor:middle;font-size:16px">1</text></g><g class="Y29yZS4oYXV0aF9pZGVudGl0aWVzIC0mZ3Q7IHVzZXJzKVswXQ=="><path d="M 1026.000000 489.500000 L 1054.000000 489.500000 S 1064.000000 489.500000 1064.000000 479.500000 L 1064.000000 215.000000 S 1064.000000 205.000000 1074.000000 205.000000 L 1472.000000 205.000000" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-793875464-3488378134)" mask="url(#d2-793875464)" /><text x="1107.500000" y="211.000000" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">N:1</text></g><g class="Y29yZS4odXNlcl9yb2xlcyAtJmd0OyB1c2VycylbMF0="><path d="M 1398.000000 513.000000 L 1426.000000 513.000000 S 1436.000000 513.000000 1436.000000 503.000000 L 1436.000000 215.000000 S 1436.000000 205.000000 1446.000000 205.000000 L 1472.000000 205.000000" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-793875464-3488378134)" mask="url(#d2-793875464)" /></g><g class="Y29yZS4odXNlcl9yb2xlcyAtJmd0OyByb2xlcylbMF0="><path d="M 1398.000000 549.000000 L 1472.000000 549.000000" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-793875464-3488378134)" mask="url(#d2-793875464)" /></g><g class="KGVkZ2Uuc2Vzc2lvbnMgLSZndDsgY29yZS51c2VycylbMF0="><path d="M 444.000000 152.000000 L 1426.000000 152.000000 S 1436.000000 152.000000 1436.000000 162.000000 L 1436.000000 195.000000 S 1436.000000 205.000000 1446.000000 205.000000 L 1472.000000 205.000000" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-793875464-3488378134)" mask="url(#d2-793875464)" /></g><g class="KGVkZ2UuYXV0aF90b2tlbnMgLSZndDsgY29yZS51c2VycylbMF0="><path d="M 444.000000 496.000000 L 527.000000 496.000000 S 537.000000 496.000000 537.000000 486.000000 L 537.000000 162.000000 S 537.000000 152.000000 547.000000 152.000000 L 1426.000000 152.000000 S 1436.000000 152.000000 1436.000000 162.000000 L 1436.000000 195.000000 S 1436.000000 205.000000 1446.000000 205.000000 L 1472.000000 205.000000" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-793875464-3488378134)" mask="url(#d2-793875464)" /></g><g class="KGVkZ2UuYXV0aF9ldmVudHMgLSZndDsgY29yZS51c2VycylbMF0="><path d="M 444.000000 804.000000 L 527.000000 804.000000 S 537.000000 804.000000 537.000000 794.000000 L 537.000000 162.000000 S 537.000000 152.000000 547.000000 152.000000 L 1426.000000 152.000000 S 1436.000000 152.000000 1436.000000 162.000000 L 1436.000000 195.000000 S 1436.000000 205.000000 1446.000000 205.000000 L 1472.000000 205.000000" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-793875464-3488378134)" mask="url(#d2-793875464)" /></g><g class="KGNvcmUudXNlcnMgLSZndDsgZW51bXMudXNlcl9zdGF0dXMpWzBd"><path d="M 1839.000000 313.000000 L 1867.000000 313.000000 S 1877.000000 313.000000 1877.000000 323.000000 L 1877.000000 386.000000 S 1877.000000 396.000000 1887.000000 396.000000 L 2635.500000 396.000000 S 2645.500000 396.000000 2645.500000 386.000000 L 2645.500000 360.000000" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-793875464-3488378134)" mask="url(#d2-793875464)" /></g><g class="KGNvcmUuYXV0aF9pZGVudGl0aWVzIC0mZ3Q7IGVudW1zLmF1dGhfcHJvdmlkZXIpWzBd"><path d="M 1026.000000 525.500000 L 1054.000000 525.500000 S 1064.000000 525.500000 1064.000000 535.500000 L 1064.000000 669.000000 S 1064.000000 679.000000 1074.000000 679.000000 L 2388.000000 679.000000 S 2398.000000 679.000000 2398.000000 669.000000 L 2398.000000 666.000000 S 2398.000000 656.000000 2408.000000 656.000000 L 2635.500000 656.000000 S 2645.500000 656.000000 2645.500000 646.000000 L 2645.500000 620.000000" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-793875464-3488378134)" mask="url(#d2-793875464)" /></g><g class="KGVkZ2UuYXV0aF90b2tlbnMgLSZndDsgZW51bXMudG9rZW5fcHVycG9zZSlbMF0="><path d="M 444.000000 532.000000 L 577.000000 532.000000 S 587.000000 532.000000 587.000000 542.000000 L 587.000000 818.250000 S 587.000000 828.250000 597.000000 828.250000 L 2438.000000 828.250000 S 2448.000000 828.250000 2448.000000 838.250000 L 2448.000000 870.000000 S 2448.000000 880.000000 2458.000000 880.000000 L 2635.500000 880.000000 S 2645.500000 880.000000 2645.500000 870.000000 L 2645.500000 844.000000" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-793875464-3488378134)" mask="url(#d2-793875464)" /></g><g class="KGVkZ2UuYXV0aF9ldmVudHMgLSZndDsgZW51bXMuYXV0aF9ldmVudF90eXBlKVswXQ=="><path d="M 444.000000 840.000000 L 527.000000 840.000000 S 537.000000 840.000000 537.000000 850.000000 L 537.000000 892.000000 S 537.000000 902.000000 547.000000 902.000000 L 2392.000000 902.000000 C 2404.000000 902.000000 2392.000000 890.000000 2404.000000 890.000000 L 2635.500000 890.000000 S 2645.500000 890.000000 2645.500000 900.000000 L 2645.500000 926.000000" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-793875464-3488378134)" mask="url(#d2-793875464)" /></g><mask id="d2-793875464" maskUnits="userSpaceOnUse" x="-89" y="-89" width="2988" height="1386">
+<rect x="-89" y="-89" width="2988" height="1386" fill="white"></rect>
+<rect x="1869.000000" y="112.000000" width="23" height="21" fill="black"></rect>
+<rect x="1095.000000" y="195.000000" width="25" height="21" fill="black"></rect>
+</mask></svg>
+
+</div></div>
+  </div>
+
+  <h2>이 스키마가 박고 있는 설계 결정</h2>
+  <div class="grid">
+    <div class="note">
+      <h3>① 정체성 ≠ 인증수단</h3>
+      <p><code>users</code>는 "누구인가"만. "어떻게 로그인하나"는 <code>auth_identities</code>로 분리. 한 유저가 비밀번호+구글+애플 동시 보유, 소셜전용(비번 없는) 유저도 자연스러움.</p>
+    </div>
+    <div class="note">
+      <h3>② status = 상태기계</h3>
+      <p><code>pending → active → suspended → deleted</code>. 기능마다 status를 자유롭게 찌르지 말고 허용된 전이만. 가입 = 엔티티 생애주기 시작 = 불변식의 핵심.</p>
+    </div>
+    <div class="note">
+      <h3>③ core vs edge</h3>
+      <p><b class="tier core">Core</b>(users·identities·roles)는 정규화·신중. <b class="tier edge">Edge</b>(sessions·tokens·events)는 휘발성/append-only라 AI 자유. 같은 엄격함을 둘에 다 쓰지 않는 게 속도의 비결.</p>
+    </div>
+    <div class="note">
+      <h3>④ 단일 진실의 출처</h3>
+      <p>"이메일 검증됨"의 진실은 <code>users.email_verified_at</code> 한 곳. <code>auth_tokens</code>는 *절차*일 뿐 상태가 아님. 검증 상태가 두 곳에 살면 드리프트 = 사고.</p>
+    </div>
+    <div class="note">
+      <h3>⑤ 제약 = AI가 못 깨는 가드레일</h3>
+      <p><code>email UNIQUE</code>, <code>(provider, provider_uid) UNIQUE</code>, 전 FK에 <code>ON DELETE CASCADE</code>(events만 SET NULL). 기능 코드가 틀려도 DB가 막음.</p>
+    </div>
+    <div class="note">
+      <h3>⑥ soft delete = 가역성</h3>
+      <p>탈퇴는 행 삭제가 아니라 <code>status=deleted</code> + <code>deleted_at</code>. 실수·복구·법적 보관 대응. 비가역(진짜 DELETE)을 가역으로 바꾸는 1원칙의 실제 적용.</p>
+    </div>
+    <div class="note">
+      <h3>⑦ 토큰은 해시만, 원문 금지</h3>
+      <p><code>sessions.refresh_token_hash</code>·<code>auth_tokens.token_hash</code> — 평문 저장 X. DB 유출돼도 토큰 재사용 불가. 글로벌 B2C 기본값.</p>
+    </div>
+    <div class="note">
+      <h3>⑧ auth_events = 감사 로그</h3>
+      <p>append-only edge 테이블. 가입·로그인·실패 기록 → 이상탐지·디버깅·컴플라이언스. core를 더럽히지 않고 관측성 확보.</p>
+    </div>
+  </div>
+
+  <details class="src">
+  <summary>erd-signup.d2 — D2 소스 (단일 진실의 출처)</summary>
+  <pre># 회원가입·인증 스키마 — D2 (DBML 대안 프로토타입)
+# 원리: 정체성≠인증수단 / core·edge 분리 / 상태기계 / 단일 진실의 출처
+# 렌더: d2 --layout elk --direction right erd-signup.d2 erd-signup-d2.svg
+# DBML 대비 강점 = 컨테이너로 core/edge 그룹 유지 + ELK 레이아웃 엔진으로 가로 배치 제어
+
+direction: right
+
+# ===================== CORE =====================
+core: core {
+  style.fill: &quot;#eef2ff&quot;
+  style.stroke: &quot;#6ea8fe&quot;
+
+  users: {
+    shape: sql_table
+    id: uuid {constraint: primary_key}
+    email: citext {constraint: unique}
+    email_verified_at: timestamptz
+    status: user_status
+    display_name: text
+    created_at: timestamptz
+    updated_at: timestamptz
+    deleted_at: timestamptz
+  }
+  user_profiles: {
+    shape: sql_table
+    user_id: uuid {constraint: primary_key}
+    avatar_url: text
+    bio: text
+    locale: text
+    timezone: text
+    preferences: jsonb
+    updated_at: timestamptz
+  }
+  auth_identities: {
+    shape: sql_table
+    id: uuid {constraint: primary_key}
+    user_id: uuid
+    provider: auth_provider
+    provider_uid: text
+    password_hash: text
+    last_used_at: timestamptz
+    created_at: timestamptz
+  }
+  roles: {
+    shape: sql_table
+    id: uuid {constraint: primary_key}
+    name: text {constraint: unique}
+    description: text
+  }
+  user_roles: {
+    shape: sql_table
+    user_id: uuid {constraint: primary_key}
+    role_id: uuid {constraint: primary_key}
+    granted_at: timestamptz
+  }
+}
+
+# ===================== EDGE =====================
+edge: edge {
+  style.fill: &quot;#2d2417&quot;
+  style.stroke: &quot;#f0a868&quot;
+
+  sessions: {
+    shape: sql_table
+    id: uuid {constraint: primary_key}
+    user_id: uuid
+    refresh_token_hash: text {constraint: unique}
+    user_agent: text
+    ip_address: inet
+    expires_at: timestamptz
+    revoked_at: timestamptz
+    created_at: timestamptz
+  }
+  auth_tokens: {
+    shape: sql_table
+    id: uuid {constraint: primary_key}
+    user_id: uuid
+    purpose: token_purpose
+    token_hash: text {constraint: unique}
+    expires_at: timestamptz
+    consumed_at: timestamptz
+    created_at: timestamptz
+  }
+  auth_events: {
+    shape: sql_table
+    id: uuid {constraint: primary_key}
+    user_id: uuid
+    event_type: auth_event_type
+    ip_address: inet
+    user_agent: text
+    metadata: jsonb
+    created_at: timestamptz
+  }
+}
+
+# ===================== ENUMS =====================
+enums: enums {
+  style.fill: &quot;#161a24&quot;
+  style.stroke: &quot;#9aa3b2&quot;
+
+  user_status: {
+    shape: sql_table
+    pending
+    active
+    suspended
+    deleted
+  }
+  auth_provider: {
+    shape: sql_table
+    password
+    google
+    apple
+    kakao
+  }
+  token_purpose: {
+    shape: sql_table
+    email_verify
+    password_reset
+    magic_link
+  }
+  auth_event_type: {
+    shape: sql_table
+    signup
+    login
+    login_failed
+    logout
+    pw_reset
+  }
+}
+
+# ===================== RELATIONSHIPS =====================
+core.users.id &lt;-&gt; core.user_profiles.user_id: 1:1 {
+  source-arrowhead: 1
+  target-arrowhead: 1
+}
+core.auth_identities.user_id -&gt; core.users.id: N:1
+core.user_roles.user_id -&gt; core.users.id
+core.user_roles.role_id -&gt; core.roles.id
+edge.sessions.user_id -&gt; core.users.id
+edge.auth_tokens.user_id -&gt; core.users.id
+edge.auth_events.user_id -&gt; core.users.id
+
+# enum 사용 (컬럼 → enum 정의)
+core.users.status -&gt; enums.user_status
+core.auth_identities.provider -&gt; enums.auth_provider
+edge.auth_tokens.purpose -&gt; enums.token_purpose
+edge.auth_events.event_type -&gt; enums.auth_event_type
+</pre>
+</details>
+
+  <footer>
+    파이프라인: <code>erd-signup.d2</code> → <code>d2 --layout elk --direction right</code> → 오프라인 SVG 인라인(폰트 임베드, CDN 0). 타입(<code>citext</code>·<code>inet</code>·<code>jsonb</code>·enum)은 PostgreSQL 기준.<br>
+    DBML 대안 프로토타입 — D2의 장점: 컨테이너로 core/edge/enums 그룹 유지 + <b>ELK 레이아웃 엔진</b>으로 가로 배치(2988×1386). 동일 스키마 DBML 버전은 <code>erd-signup-dbml.html</code>. dakman-brain · business 방법론 샘플 · 2026-06-17
+  </footer>
+</main>
+<script>
+(function(){
+  var vp=document.getElementById('erdViewport'), stage=document.getElementById('erdStage'),
+      box=document.getElementById('erdBox'), svg=stage.querySelector('svg');
+  var scale=1, tx=0, ty=0;
+  function apply(){ stage.style.transform='translate('+tx+'px,'+ty+'px) scale('+scale+')'; }
+  function size(){
+    var w=parseFloat(svg.getAttribute('width'))||(svg.viewBox&&svg.viewBox.baseVal.width)||1000;
+    var h=parseFloat(svg.getAttribute('height'))||(svg.viewBox&&svg.viewBox.baseVal.height)||700;
+    return {w:w,h:h};
+  }
+  window.erdReset=function(){
+    var s=size(), bs=Math.min(vp.clientWidth/s.w, vp.clientHeight/s.h);
+    if(!isFinite(bs)||bs<=0) bs=1;
+    scale=bs; tx=(vp.clientWidth-s.w*scale)/2; ty=(vp.clientHeight-s.h*scale)/2; apply();
+  };
+  function zoomAt(mx,my,f){
+    var ns=Math.max(0.1,Math.min(8,scale*f));
+    tx=mx-(mx-tx)*(ns/scale); ty=my-(my-ty)*(ns/scale); scale=ns; apply();
+  }
+  window.erdZoom=function(f){ zoomAt(vp.clientWidth/2, vp.clientHeight/2, f); };
+  window.erdFull=function(){
+    if(document.fullscreenElement) document.exitFullscreen();
+    else (box.requestFullscreen||box.webkitRequestFullscreen).call(box);
+  };
+  var drag=false, sx, sy;
+  vp.addEventListener('mousedown', function(e){ drag=true; sx=e.clientX-tx; sy=e.clientY-ty; });
+  window.addEventListener('mousemove', function(e){ if(!drag)return; tx=e.clientX-sx; ty=e.clientY-sy; apply(); });
+  window.addEventListener('mouseup', function(){ drag=false; });
+  var speedEl=document.getElementById('erdSpeed');
+  function spd(){ return speedEl ? parseFloat(speedEl.value) : 0.5; }
+  vp.addEventListener('wheel', function(e){
+    e.preventDefault();
+    var r=vp.getBoundingClientRect();
+    var f=Math.exp(-e.deltaY * 0.0016 * spd());   // deltaY 크기 비례 + 슬라이더 감도
+    zoomAt(e.clientX-r.left, e.clientY-r.top, f);
+  }, {passive:false});
+  document.addEventListener('fullscreenchange', function(){ setTimeout(erdReset,60); });
+  window.addEventListener('resize', function(){ setTimeout(erdReset,60); });
+  setTimeout(erdReset,30);
+})();
+</script>
+</body>
+</html>

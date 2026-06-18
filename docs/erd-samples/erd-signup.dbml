@@ -1,0 +1,134 @@
+// 회원가입·인증 스키마 — dakman 글로벌 B2C 샘플
+// 원리: 정체성≠인증수단 / core·edge 분리 / 상태기계 / 단일 진실의 출처 / 제약=가드레일
+// 이 .dbml 한 파일이 "다이어그램 + 스키마 스펙" = 단일 진실의 출처
+
+Enum user_status {
+  pending
+  active
+  suspended
+  deleted
+}
+
+Enum auth_provider {
+  password
+  google
+  apple
+  kakao
+}
+
+Enum token_purpose {
+  email_verify
+  password_reset
+  magic_link
+}
+
+Enum auth_event_type {
+  signup
+  login
+  login_failed
+  logout
+  pw_reset
+}
+
+// ===================== CORE =====================
+Table users {
+  id uuid [pk]
+  email citext [unique, not null, note: '로그인 ID, 소문자 비교']
+  email_verified_at timestamptz [note: '검증 진실의 출처']
+  status user_status [not null, default: 'pending', note: '상태기계']
+  display_name text
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz [note: 'soft delete=가역성']
+}
+
+Table user_profiles {
+  user_id uuid [pk, note: 'users 1:1 확장']
+  avatar_url text
+  bio text
+  locale text
+  timezone text
+  preferences jsonb [note: '확장 여지']
+  updated_at timestamptz
+}
+
+Table auth_identities {
+  id uuid [pk]
+  user_id uuid [not null]
+  provider auth_provider [not null]
+  provider_uid text [note: '소셜 고유 ID']
+  password_hash text [note: 'password일 때만']
+  last_used_at timestamptz
+  created_at timestamptz [not null]
+  indexes {
+    (provider, provider_uid) [unique]
+  }
+}
+
+Table roles {
+  id uuid [pk]
+  name text [unique, not null, note: 'user|admin|...']
+  description text
+}
+
+Table user_roles {
+  user_id uuid [pk]
+  role_id uuid [pk]
+  granted_at timestamptz [not null]
+}
+
+// ===================== EDGE =====================
+Table sessions {
+  id uuid [pk]
+  user_id uuid [not null]
+  refresh_token_hash text [unique, not null, note: '원문 저장 금지']
+  user_agent text
+  ip_address inet
+  expires_at timestamptz [not null]
+  revoked_at timestamptz
+  created_at timestamptz [not null]
+}
+
+Table auth_tokens {
+  id uuid [pk]
+  user_id uuid [not null]
+  purpose token_purpose [not null]
+  token_hash text [unique, not null]
+  expires_at timestamptz [not null]
+  consumed_at timestamptz [note: '1회용 소비 표시']
+  created_at timestamptz [not null]
+}
+
+Table auth_events {
+  id uuid [pk]
+  user_id uuid [note: 'nullable: 실패 로그인']
+  event_type auth_event_type [not null]
+  ip_address inet
+  user_agent text
+  metadata jsonb
+  created_at timestamptz [not null]
+}
+
+// ===================== RELATIONSHIPS =====================
+Ref: users.id - user_profiles.user_id [delete: cascade]   // 1:1 (FK는 자식 user_profiles에)
+Ref: auth_identities.user_id > users.id [delete: cascade]  // N:1
+Ref: user_roles.user_id > users.id [delete: cascade]
+Ref: user_roles.role_id > roles.id [delete: cascade]
+Ref: sessions.user_id > users.id [delete: cascade]
+Ref: auth_tokens.user_id > users.id [delete: cascade]
+Ref: auth_events.user_id > users.id [delete: set null]
+
+// ===================== GROUPS =====================
+TableGroup core {
+  users
+  user_profiles
+  auth_identities
+  roles
+  user_roles
+}
+
+TableGroup edge {
+  sessions
+  auth_tokens
+  auth_events
+}

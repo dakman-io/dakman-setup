@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>회원가입 스키마 ERD — DBML</title>
+<style>
+  :root {
+    --bg: #0f1117; --card: #1a1d27; --line: #2a2f3d;
+    --ink: #e6e8ee; --muted: #9aa3b2; --core: #6ea8fe; --edge: #f0a868; --ok: #5fd38d;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.6 -apple-system, "Apple SD Gothic Neo", "Pretendard", system-ui, sans-serif;
+  }
+  header {
+    padding: 32px 40px 24px; border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, #161a24, #0f1117);
+  }
+  header h1 { margin: 0 0 6px; font-size: 22px; letter-spacing: -0.3px; }
+  header p { margin: 0; color: var(--muted); font-size: 14px; }
+  .badge {
+    display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px;
+    background: #233; color: var(--core); border: 1px solid #2c4a6e; margin-left: 8px; vertical-align: middle;
+  }
+  main { max-width: 1080px; margin: 0 auto; padding: 28px 40px 80px; }
+  .diagram {
+    background: #ffffff; border: 1px solid var(--line); border-radius: 14px;
+    padding: 24px; overflow-x: auto; margin-bottom: 28px; text-align: center;
+  }
+  .diagram svg { max-width: 100%; height: auto; display: inline-block; }
+  h2 { font-size: 16px; margin: 36px 0 14px; letter-spacing: -0.2px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+  .note {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .note h3 { margin: 0 0 6px; font-size: 14px; }
+  .note p { margin: 0; color: var(--muted); font-size: 13.5px; }
+  .note code { background: #11141c; padding: 1px 6px; border-radius: 5px; color: #cdd6e4; font-size: 12.5px; }
+  .legend { display: flex; gap: 20px; flex-wrap: wrap; margin: 0 0 24px; font-size: 13px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .dot { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+  .dot.core { background: var(--core); } .dot.edge { background: var(--edge); }
+  .tier { font-weight: 600; }
+  .tier.core { color: var(--core); } .tier.edge { color: var(--edge); }
+  .src { background: #11141c; border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; margin-top: 28px; }
+  .src summary { cursor: pointer; color: var(--core); font-size: 13.5px; font-weight: 600; }
+  .src pre { margin: 12px 0 0; overflow-x: auto; font-size: 12px; line-height: 1.5; color: #cdd6e4; }
+  footer { color: var(--muted); font-size: 12.5px; margin-top: 40px; border-top: 1px solid var(--line); padding-top: 16px; }
+
+  /* ===== ERD 확대 뷰 (풀블리드 + 줌/이동/전체화면) ===== */
+  .diagram { width: 100vw; position: relative; left: 50%; margin-left: -50vw;
+             padding: 0; background: transparent; border: none; border-radius: 0; overflow: visible; }
+  .erd-viewport { width: 100%; height: 72vh; overflow: hidden; background: #fff;
+                  border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); cursor: grab; }
+  .erd-viewport:active { cursor: grabbing; }
+  .erd-toolbar { position: absolute; top: 10px; right: 16px; display: flex; gap: 6px; z-index: 5; }
+  .erd-btn { background: #1a1d27; color: #e6e8ee; border: 1px solid #2a2f3d; border-radius: 8px;
+             padding: 6px 11px; font-size: 12.5px; cursor: pointer; }
+  .erd-btn:hover { background: #232838; }
+  .erd-stage { transform-origin: 0 0; }
+  .erd-stage svg { display: block; max-width: none; height: auto; }
+  .erd-speed { display:inline-flex; align-items:center; gap:6px; background:#1a1d27;
+               border:1px solid #2a2f3d; border-radius:8px; padding:4px 10px; font-size:12px; color:#9aa3b2; }
+  .erd-speed input { width:84px; accent-color:#6ea8fe; cursor:pointer; vertical-align:middle; }
+  #erdBox:fullscreen { background: #fff; width: 100vw; }
+  #erdBox:fullscreen .erd-viewport { height: 100vh; border: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>회원가입 · 인증 스키마 <span class="badge">DBML ERD</span></h1>
+  <p>렌더: DBML → dbml-renderer → 오프라인 SVG 인라인 (외부 CDN 0개). 이 그림의 출처는 <code style="color:var(--ok)">erd-signup.dbml</code> 한 파일 = 단일 진실의 출처.</p>
+</header>
+
+<main>
+  <div class="legend">
+    <span><i class="dot core"></i> <b class="tier core">Core</b> — 정체성·권한. 네가 설계·지킴. 정규화, 바꾸기 어려움</span>
+    <span><i class="dot edge"></i> <b class="tier edge">Edge</b> — 세션·토큰·로그. append-only/휘발성. AI 자유, 버려도 됨</span>
+  </div>
+
+  <div class="diagram" id="erdBox">
+    <div class="erd-toolbar">
+      <button class="erd-btn" onclick="erdZoom(1.25)" title="확대">＋</button>
+      <button class="erd-btn" onclick="erdZoom(0.8)" title="축소">－</button>
+      <button class="erd-btn" onclick="erdReset()" title="화면 맞춤">↺ 맞춤</button>
+      <label class="erd-speed">속도 <input id="erdSpeed" type="range" min="0.15" max="2.2" step="0.05" value="0.5"></label>
+      <button class="erd-btn" onclick="erdFull()" title="전체화면">⛶ 전체화면</button>
+    </div>
+    <div class="erd-viewport" id="erdViewport"><div class="erd-stage" id="erdStage"><svg width="3612pt" height="2092pt"
+ viewBox="0.00 0.00 3612.00 2092.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 2087.72)">
+<title>dbml</title>
+<!-- user_status -->
+<g id="user_status" class="node">
+<title>user_status</title>
+<ellipse fill="none" stroke="black" stroke-width="0" cx="2094.23" cy="-309.71" rx="235.29" ry="194.63"/>
+<polygon fill="#29235c" stroke="none" points="1929.86,-391.09 1929.86,-445.34 2258.61,-445.34 2258.61,-391.09 1929.86,-391.09"/>
+<polygon fill="none" stroke="#29235c" points="1929.86,-391.09 1929.86,-445.34 2258.61,-445.34 2258.61,-391.09 1929.86,-391.09"/>
+<text xml:space="preserve" text-anchor="start" x="1940.86" y="-404.94" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#ffffff"> &#160;&#160;&#160;&#160;&#160;&#160;user_status &#160;&#160;&#160;&#160;&#160;&#160;</text>
+<polygon fill="#e7e2dd" stroke="none" points="1929.86,-336.84 1929.86,-391.09 2258.61,-391.09 2258.61,-336.84 1929.86,-336.84"/>
+<polygon fill="none" stroke="#29235c" points="1929.86,-336.84 1929.86,-391.09 2258.61,-391.09 2258.61,-336.84 1929.86,-336.84"/>
+<text xml:space="preserve" text-anchor="start" x="2000.86" y="-350.69" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#1d71b8"> &#160;&#160;&#160;pending &#160;&#160;&#160;</text>
+<polygon fill="#e7e2dd" stroke="none" points="1929.86,-282.59 1929.86,-336.84 2258.61,-336.84 2258.61,-282.59 1929.86,-282.59"/>
+<polygon fill="none" stroke="#29235c" points="1929.86,-282.59 1929.86,-336.84 2258.61,-336.84 2258.61,-282.59 1929.86,-282.59"/>
+<text xml:space="preserve" text-anchor="start" x="2016.61" y="-296.44" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#1d71b8"> &#160;&#160;&#160;active &#160;&#160;&#160;</text>
+<polygon fill="#e7e2dd" stroke="none" points="1929.86,-228.34 1929.86,-282.59 2258.61,-282.59 2258.61,-228.34 1929.86,-228.34"/>
+<polygon fill="none" stroke="#29235c" points="1929.86,-228.34 1929.86,-282.59 2258.61,-282.59 2258.61,-228.34 1929.86,-228.34"/>
+<text xml:space="preserve" text-anchor="start" x="1979.48" y="-242.19" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#1d71b8"> &#160;&#160;&#160;suspended &#160;&#160;&#160;</text>
+<polygon fill="#e7e2dd" stroke="none" points="1929.86,-174.09 1929.86,-228.34 2258.61,-228.34 2258.61,-174.09 1929.86,-174.09"/>
+<polygon fill="none" stroke="#29235c" points="1929.86,-174.09 1929.86,-228.34 2258.61,-228.34 2258.61,-174.09 1929.86,-174.09"/>
+<text xml:space="preserve" text-anchor="start" x="2005.36" y="-187.94" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#1d71b8"> &#160;&#160;&#160;deleted &#160;&#160;&#160;</text>
+<polygon fill="none" stroke="#29235c" stroke-width="2" points="1928.86,-173.09 1928.86,-446.34 2259.61,-446.34 2259.61,-173.09 1928.86,-173.09"/>
+</g>
+<!-- auth_provider -->
+<g id="auth_provider" class="node">
+<title>auth_provider</title>
+<ellipse fill="none" stroke="black" stroke-width="0" cx="945.23" cy="-1003.5" rx="259.15" ry="194.63"/>
+<polygon fill="#29235c" stroke="none" points="763.98,-1084.87 763.98,-1139.12 1126.48,-1139.12 1126.48,-1084.87 763.98,-1084.87"/>
+<polygon fill="none" stroke="#29235c" points="763.98,-1084.87 763.98,-1139.12 1126.48,-1139.12 1126.48,-1084.87 763.98,-1084.87"/>
+<text xml:space="preserve" text-anchor="start" x="774.98" y="-1098.72" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#ffffff"> &#160;&#160;&#160;&#160;&#160;&#160;auth_provider &#160;&#160;&#160;&#160;&#160;&#160;</text>
+<polygon fill="#e7e2dd" stroke="none" points="763.98,-1030.62 763.98,-1084.87 1126.48,-1084.87 1126.48,-1030.62 763.98,-1030.62"/>
+<polygon fill="none" stroke="#29235c" points="763.98,-1030.62 763.98,-1084.87 1126.48,-1084.87 1126.48,-1030.62 763.98,-1030.62"/>
+<text xml:space="preserve" text-anchor="start" x="840.61" y="-1044.47" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#1d71b8"> &#160;&#160;&#160;password &#160;&#160;&#160;</text>
+<polygon fill="#e7e2dd" stroke="none" points="763.98,-976.37 763.98,-1030.62 1126.48,-1030.62 1126.48,-976.37 763.98,-976.37"/>
+<polygon fill="none" stroke="#29235c" points="763.98,-976.37 763.98,-1030.62 1126.48,-1030.62 1126.48,-976.37 763.98,-976.37"/>
+<text xml:space="preserve" text-anchor="start" x="860.86" y="-990.22" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#1d71b8"> &#160;&#160;&#160;google &#160;&#160;&#160;</text>
+<polygon fill="#e7e2dd" stroke="none" points="763.98,-922.12 763.98,-976.37 1126.48,-976.37 1126.48,-922.12 763.98,-922.12"/>
+<polygon fill="none" stroke="#29235c" points="763.98,-922.12 763.98,-976.37 1126.48,-976.37 1126.48,-922.12 763.98,-922.12"/>
+<text xml:space="preserve" text-anchor="start" x="869.86" y="-935.97" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#1d71b8"> &#160;&#160;&#160;apple &#160;&#160;&#160;</text>
+<polygon fill="#e7e2dd" stroke="none" points="763.98,-867.87 763.98,-922.12 1126.48,-922.12 1126.48,-867.87 763.98,-867.87"/>
+<polygon fill="none" stroke="#29235c" points="763.98,-867.87 763.98,-922.12 1126.48,-922.12 1126.48,-867.87 763.98,-867.87"/>
+<text xml:space="preserve" text-anchor="start" x="866.48" y="-881.72" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#1d71b8"> &#160;&#160;&#160;kakao &#160;&#160;&#160;</text>
+<polygon fill="none" stroke="#29235c" stroke-width="2" points="762.98,-866.87 762.98,-1140.12 1127.48,-1140.12 1127.48,-866.87 762.98,-866.87"/>
+</g>
+<!-- token_purpose -->
+<g id="token_purpose" class="node">
+<title>token_purpose</title>
+<ellipse fill="none" stroke="black" stroke-width="0" cx="2596.23" cy="-1003.5" rx="270.29" ry="156.27"/>
+<polygon fill="#29235c" stroke="none" points="2407.11,-1057.75 2407.11,-1112 2785.36,-1112 2785.36,-1057.75 2407.11,-1057.75"/>
+<polygon fill="none" stroke="#29235c" points="2407.11,-1057.75 2407.11,-1112 2785.36,-1112 2785.36,-1057.75 2407.11,-1057.75"/>
+<text xml:space="preserve" text-anchor="start" x="2418.11" y="-1071.6" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#ffffff"> &#160;&#160;&#160;&#160;&#160;&#160;token_purpose &#160;&#160;&#160;&#160;&#160;&#160;</text>
+<polygon fill="#e7e2dd" stroke="none" points="2407.11,-1003.5 2407.11,-1057.75 2785.36,-1057.75 2785.36,-1003.5 2407.11,-1003.5"/>
+<polygon fill="none" stroke="#29235c" points="2407.11,-1003.5 2407.11,-1057.75 2785.36,-1057.75 2785.36,-1003.5 2407.11,-1003.5"/>
+<text xml:space="preserve" text-anchor="start" x="2475.11" y="-1017.35" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#1d71b8"> &#160;&#160;&#160;email_verify &#160;&#160;&#160;</text>
+<polygon fill="#e7e2dd" stroke="none" points="2407.11,-949.25 2407.11,-1003.5 2785.36,-1003.5 2785.36,-949.25 2407.11,-949.25"/>
+<polygon fill="none" stroke="#29235c" points="2407.11,-949.25 2407.11,-1003.5 2785.36,-1003.5 2785.36,-949.25 2407.11,-949.25"/>
+<text xml:space="preserve" text-anchor="start" x="2446.98" y="-963.1" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#1d71b8"> &#160;&#160;&#160;password_reset &#160;&#160;&#160;</text>
+<polygon fill="#e7e2dd" stroke="none" points="2407.11,-895 2407.11,-949.25 2785.36,-949.25 2785.36,-895 2407.11,-895"/>
+<polygon fill="none" stroke="#29235c" points="2407.11,-895 2407.11,-949.25 2785.36,-949.25 2785.36,-895 2407.11,-895"/>
+<text xml:space="preserve" text-anchor="start" x="2484.86" y="-908.85" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#1d71b8"> &#160;&#160;&#160;magic_link &#160;&#160;&#160;</text>
+<polygon fill="none" stroke="#29235c" stroke-width="2" points="2406.11,-894 2406.11,-1113 2786.36,-1113 2786.36,-894 2406.11,-894"/>
+</g>
+<!-- auth_event_type -->
+<g id="auth_event_type" class="node">
+<title>auth_event_type</title>
+<ellipse fill="none" stroke="black" stroke-width="0" cx="3317.23" cy="-1003.5" rx="286.73" ry="232.99"/>
+<polygon fill="#29235c" stroke="none" points="3116.48,-1112 3116.48,-1166.25 3517.98,-1166.25 3517.98,-1112 3116.48,-1112"/>
+<polygon fill="none" stroke="#29235c" points="3116.48,-1112 3116.48,-1166.25 3517.98,-1166.25 3517.98,-1112 3116.48,-1112"/>
+<text xml:space="preserve" text-anchor="start" x="3127.48" y="-1125.85" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#ffffff"> &#160;&#160;&#160;&#160;&#160;&#160;auth_event_type &#160;&#160;&#160;&#160;&#160;&#160;</text>
+<polygon fill="#e7e2dd" stroke="none" points="3116.48,-1057.75 3116.48,-1112 3517.98,-1112 3517.98,-1057.75 3116.48,-1057.75"/>
+<polygon fill="none" stroke="#29235c" points="3116.48,-1057.75 3116.48,-1112 3517.98,-1112 3517.98,-1057.75 3116.48,-1057.75"/>
+<text xml:space="preserve" text-anchor="start" x="3233.98" y="-1071.6" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#1d71b8"> &#160;&#160;&#160;signup &#160;&#160;&#160;</text>
+<polygon fill="#e7e2dd" stroke="none" points="3116.48,-1003.5 3116.48,-1057.75 3517.98,-1057.75 3517.98,-1003.5 3116.48,-1003.5"/>
+<polygon fill="none" stroke="#29235c" points="3116.48,-1003.5 3116.48,-1057.75 3517.98,-1057.75 3517.98,-1003.5 3116.48,-1003.5"/>
+<text xml:space="preserve" text-anchor="start" x="3247.48" y="-1017.35" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#1d71b8"> &#160;&#160;&#160;login &#160;&#160;&#160;</text>
+<polygon fill="#e7e2dd" stroke="none" points="3116.48,-949.25 3116.48,-1003.5 3517.98,-1003.5 3517.98,-949.25 3116.48,-949.25"/>
+<polygon fill="none" stroke="#29235c" points="3116.48,-949.25 3116.48,-1003.5 3517.98,-1003.5 3517.98,-949.25 3116.48,-949.25"/>
+<text xml:space="preserve" text-anchor="start" x="3200.23" y="-963.1" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#1d71b8"> &#160;&#160;&#160;login_failed &#160;&#160;&#160;</text>
+<polygon fill="#e7e2dd" stroke="none" points="3116.48,-895 3116.48,-949.25 3517.98,-949.25 3517.98,-895 3116.48,-895"/>
+<polygon fill="none" stroke="#29235c" points="3116.48,-895 3116.48,-949.25 3517.98,-949.25 3517.98,-895 3116.48,-895"/>
+<text xml:space="preserve" text-anchor="start" x="3237.36" y="-908.85" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#1d71b8"> &#160;&#160;&#160;logout &#160;&#160;&#160;</text>
+<polygon fill="#e7e2dd" stroke="none" points="3116.48,-840.75 3116.48,-895 3517.98,-895 3517.98,-840.75 3116.48,-840.75"/>
+<polygon fill="none" stroke="#29235c" points="3116.48,-840.75 3116.48,-895 3517.98,-895 3517.98,-840.75 3116.48,-840.75"/>
+<text xml:space="preserve" text-anchor="start" x="3215.98" y="-854.6" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#1d71b8"> &#160;&#160;&#160;pw_reset &#160;&#160;&#160;</text>
+<polygon fill="none" stroke="#29235c" stroke-width="2" points="3115.48,-839.75 3115.48,-1167.25 3518.98,-1167.25 3518.98,-839.75 3115.48,-839.75"/>
+</g>
+<!-- users -->
+<g id="users" class="node">
+<title>users</title>
+<ellipse fill="none" stroke="black" stroke-width="0" cx="1560.23" cy="-1003.5" rx="337.64" ry="348.07"/>
+<polygon fill="#1d71b8" stroke="none" points="1323.48,-1193.37 1323.48,-1247.62 1796.98,-1247.62 1796.98,-1193.37 1323.48,-1193.37"/>
+<polygon fill="none" stroke="#29235c" points="1323.48,-1193.37 1323.48,-1247.62 1796.98,-1247.62 1796.98,-1193.37 1323.48,-1193.37"/>
+<text xml:space="preserve" text-anchor="start" x="1454.11" y="-1207.22" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#ffffff"> &#160;&#160;&#160;&#160;&#160;&#160;users &#160;&#160;&#160;&#160;&#160;&#160;</text>
+<polygon fill="#e7e2dd" stroke="none" points="1323.48,-1139.12 1323.48,-1193.37 1796.98,-1193.37 1796.98,-1139.12 1323.48,-1139.12"/>
+<polygon fill="none" stroke="#29235c" points="1323.48,-1139.12 1323.48,-1193.37 1796.98,-1193.37 1796.98,-1139.12 1323.48,-1139.12"/>
+<text xml:space="preserve" text-anchor="start" x="1334.48" y="-1152.97" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">id</text>
+<text xml:space="preserve" text-anchor="start" x="1362.98" y="-1152.97" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="1725.23" y="-1152.97" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">uuid</text>
+<polygon fill="#e7e2dd" stroke="none" points="1323.48,-1084.87 1323.48,-1139.12 1796.98,-1139.12 1796.98,-1084.87 1323.48,-1084.87"/>
+<polygon fill="none" stroke="#29235c" points="1323.48,-1084.87 1323.48,-1139.12 1796.98,-1139.12 1796.98,-1084.87 1323.48,-1084.87"/>
+<text xml:space="preserve" text-anchor="start" x="1334.48" y="-1103.37" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">email &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="1671.23" y="-1098.72" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">citext</text>
+<text xml:space="preserve" text-anchor="start" x="1745.48" y="-1098.72" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> </text>
+<text xml:space="preserve" text-anchor="start" x="1754.48" y="-1098.72" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">(!)</text>
+<polygon fill="#e7e2dd" stroke="none" points="1323.48,-1030.62 1323.48,-1084.87 1796.98,-1084.87 1796.98,-1030.62 1323.48,-1030.62"/>
+<polygon fill="none" stroke="#29235c" points="1323.48,-1030.62 1323.48,-1084.87 1796.98,-1084.87 1796.98,-1030.62 1323.48,-1030.62"/>
+<text xml:space="preserve" text-anchor="start" x="1334.48" y="-1049.12" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">email_verified_at &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="1612.73" y="-1044.47" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">timestamptz</text>
+<polygon fill="#e7e2dd" stroke="none" points="1323.48,-976.37 1323.48,-1030.62 1796.98,-1030.62 1796.98,-976.37 1323.48,-976.37"/>
+<polygon fill="none" stroke="#29235c" points="1323.48,-976.37 1323.48,-1030.62 1796.98,-1030.62 1796.98,-976.37 1323.48,-976.37"/>
+<text xml:space="preserve" text-anchor="start" x="1334.48" y="-994.87" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">status &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="1579.73" y="-990.22" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">user_status</text>
+<text xml:space="preserve" text-anchor="start" x="1745.48" y="-990.22" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> </text>
+<text xml:space="preserve" text-anchor="start" x="1754.48" y="-990.22" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">(!)</text>
+<polygon fill="#e7e2dd" stroke="none" points="1323.48,-922.12 1323.48,-976.37 1796.98,-976.37 1796.98,-922.12 1323.48,-922.12"/>
+<polygon fill="none" stroke="#29235c" points="1323.48,-922.12 1323.48,-976.37 1796.98,-976.37 1796.98,-922.12 1323.48,-922.12"/>
+<text xml:space="preserve" text-anchor="start" x="1334.48" y="-940.62" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">display_name &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="1734.23" y="-935.97" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">text</text>
+<polygon fill="#e7e2dd" stroke="none" points="1323.48,-867.87 1323.48,-922.12 1796.98,-922.12 1796.98,-867.87 1323.48,-867.87"/>
+<polygon fill="none" stroke="#29235c" points="1323.48,-867.87 1323.48,-922.12 1796.98,-922.12 1796.98,-867.87 1323.48,-867.87"/>
+<text xml:space="preserve" text-anchor="start" x="1334.48" y="-886.37" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">created_at &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="1572.23" y="-881.72" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">timestamptz</text>
+<text xml:space="preserve" text-anchor="start" x="1745.48" y="-881.72" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> </text>
+<text xml:space="preserve" text-anchor="start" x="1754.48" y="-881.72" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">(!)</text>
+<polygon fill="#e7e2dd" stroke="none" points="1323.48,-813.62 1323.48,-867.87 1796.98,-867.87 1796.98,-813.62 1323.48,-813.62"/>
+<polygon fill="none" stroke="#29235c" points="1323.48,-813.62 1323.48,-867.87 1796.98,-867.87 1796.98,-813.62 1323.48,-813.62"/>
+<text xml:space="preserve" text-anchor="start" x="1334.48" y="-832.12" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">updated_at &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="1572.23" y="-827.47" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">timestamptz</text>
+<text xml:space="preserve" text-anchor="start" x="1745.48" y="-827.47" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> </text>
+<text xml:space="preserve" text-anchor="start" x="1754.48" y="-827.47" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">(!)</text>
+<polygon fill="#e7e2dd" stroke="none" points="1323.48,-759.37 1323.48,-813.62 1796.98,-813.62 1796.98,-759.37 1323.48,-759.37"/>
+<polygon fill="none" stroke="#29235c" points="1323.48,-759.37 1323.48,-813.62 1796.98,-813.62 1796.98,-759.37 1323.48,-759.37"/>
+<text xml:space="preserve" text-anchor="start" x="1334.48" y="-777.87" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">deleted_at &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="1612.73" y="-773.22" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">timestamptz</text>
+<polygon fill="none" stroke="#29235c" stroke-width="2" points="1322.48,-758.37 1322.48,-1248.62 1797.98,-1248.62 1797.98,-758.37 1322.48,-758.37"/>
+</g>
+<!-- users&#45;&gt;user_status -->
+<g id="edge15" class="edge">
+<title>users:e&#45;&gt;user_status:w</title>
+<path fill="none" stroke="#29235c" stroke-width="3" d="M1797.98,-1003.5C1931.26,-1003.5 1795.58,-418.21 1928.86,-418.21"/>
+</g>
+<!-- user_profiles -->
+<g id="user_profiles" class="node">
+<title>user_profiles</title>
+<ellipse fill="none" stroke="black" stroke-width="0" cx="1560.23" cy="-309.71" rx="280.9" ry="309.71"/>
+<polygon fill="#1d71b8" stroke="none" points="1363.61,-472.46 1363.61,-526.71 1756.86,-526.71 1756.86,-472.46 1363.61,-472.46"/>
+<polygon fill="none" stroke="#29235c" points="1363.61,-472.46 1363.61,-526.71 1756.86,-526.71 1756.86,-472.46 1363.61,-472.46"/>
+<text xml:space="preserve" text-anchor="start" x="1395.98" y="-486.31" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#ffffff"> &#160;&#160;&#160;&#160;&#160;&#160;user_profiles &#160;&#160;&#160;&#160;&#160;&#160;</text>
+<polygon fill="#e7e2dd" stroke="none" points="1363.61,-418.21 1363.61,-472.46 1756.86,-472.46 1756.86,-418.21 1363.61,-418.21"/>
+<polygon fill="none" stroke="#29235c" points="1363.61,-418.21 1363.61,-472.46 1756.86,-472.46 1756.86,-418.21 1363.61,-418.21"/>
+<text xml:space="preserve" text-anchor="start" x="1374.61" y="-432.06" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">user_id</text>
+<text xml:space="preserve" text-anchor="start" x="1489.36" y="-432.06" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="1685.11" y="-432.06" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">uuid</text>
+<polygon fill="#e7e2dd" stroke="none" points="1363.61,-363.96 1363.61,-418.21 1756.86,-418.21 1756.86,-363.96 1363.61,-363.96"/>
+<polygon fill="none" stroke="#29235c" points="1363.61,-363.96 1363.61,-418.21 1756.86,-418.21 1756.86,-363.96 1363.61,-363.96"/>
+<text xml:space="preserve" text-anchor="start" x="1374.61" y="-382.46" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">avatar_url &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="1694.11" y="-377.81" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">text</text>
+<polygon fill="#e7e2dd" stroke="none" points="1363.61,-309.71 1363.61,-363.96 1756.86,-363.96 1756.86,-309.71 1363.61,-309.71"/>
+<polygon fill="none" stroke="#29235c" points="1363.61,-309.71 1363.61,-363.96 1756.86,-363.96 1756.86,-309.71 1363.61,-309.71"/>
+<text xml:space="preserve" text-anchor="start" x="1374.61" y="-328.21" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">bio &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="1694.11" y="-323.56" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">text</text>
+<polygon fill="#e7e2dd" stroke="none" points="1363.61,-255.46 1363.61,-309.71 1756.86,-309.71 1756.86,-255.46 1363.61,-255.46"/>
+<polygon fill="none" stroke="#29235c" points="1363.61,-255.46 1363.61,-309.71 1756.86,-309.71 1756.86,-255.46 1363.61,-255.46"/>
+<text xml:space="preserve" text-anchor="start" x="1374.61" y="-273.96" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">locale &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="1694.11" y="-269.31" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">text</text>
+<polygon fill="#e7e2dd" stroke="none" points="1363.61,-201.21 1363.61,-255.46 1756.86,-255.46 1756.86,-201.21 1363.61,-201.21"/>
+<polygon fill="none" stroke="#29235c" points="1363.61,-201.21 1363.61,-255.46 1756.86,-255.46 1756.86,-201.21 1363.61,-201.21"/>
+<text xml:space="preserve" text-anchor="start" x="1374.61" y="-219.71" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">timezone &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="1694.11" y="-215.06" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">text</text>
+<polygon fill="#e7e2dd" stroke="none" points="1363.61,-146.96 1363.61,-201.21 1756.86,-201.21 1756.86,-146.96 1363.61,-146.96"/>
+<polygon fill="none" stroke="#29235c" points="1363.61,-146.96 1363.61,-201.21 1756.86,-201.21 1756.86,-146.96 1363.61,-146.96"/>
+<text xml:space="preserve" text-anchor="start" x="1374.61" y="-165.46" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">preferences &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="1669.36" y="-160.81" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">jsonb</text>
+<polygon fill="#e7e2dd" stroke="none" points="1363.61,-92.71 1363.61,-146.96 1756.86,-146.96 1756.86,-92.71 1363.61,-92.71"/>
+<polygon fill="none" stroke="#29235c" points="1363.61,-92.71 1363.61,-146.96 1756.86,-146.96 1756.86,-92.71 1363.61,-92.71"/>
+<text xml:space="preserve" text-anchor="start" x="1374.61" y="-111.21" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">updated_at &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="1572.61" y="-106.56" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">timestamptz</text>
+<polygon fill="none" stroke="#29235c" stroke-width="2" points="1362.61,-91.71 1362.61,-527.71 1757.86,-527.71 1757.86,-91.71 1362.61,-91.71"/>
+</g>
+<!-- users&#45;&gt;user_profiles -->
+<!-- users&#45;&gt;user_profiles -->
+<g id="edge2" class="edge">
+<title>users:e&#45;&gt;user_profiles:w</title>
+<path fill="none" stroke="#29235c" stroke-width="3" d="M1797.98,-1166.25C2025.02,-1166.25 1950.89,-822.32 1796.98,-655.43 1731.47,-584.38 1429.25,-690.34 1363.61,-619.43 1314.64,-566.53 1288.89,-461.09 1348.16,-446.93"/>
+<polygon fill="#29235c" stroke="#29235c" stroke-width="3" points="1348.54,-450.41 1358.09,-445.83 1347.77,-443.45 1348.54,-450.41"/>
+<text xml:space="preserve" text-anchor="middle" x="1353.61" y="-414.94" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">1</text>
+<text xml:space="preserve" text-anchor="middle" x="1788.98" y="-1168.1" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">1</text>
+</g>
+<!-- auth_identities -->
+<g id="auth_identities" class="node">
+<title>auth_identities</title>
+<ellipse fill="none" stroke="black" stroke-width="0" cx="929.23" cy="-1735.65" rx="302.64" ry="309.71"/>
+<polygon fill="#1d71b8" stroke="none" points="717.23,-1898.4 717.23,-1952.65 1141.23,-1952.65 1141.23,-1898.4 717.23,-1898.4"/>
+<polygon fill="none" stroke="#29235c" points="717.23,-1898.4 717.23,-1952.65 1141.23,-1952.65 1141.23,-1898.4 717.23,-1898.4"/>
+<text xml:space="preserve" text-anchor="start" x="752.98" y="-1912.25" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#ffffff"> &#160;&#160;&#160;&#160;&#160;&#160;auth_identities &#160;&#160;&#160;&#160;&#160;&#160;</text>
+<polygon fill="#e7e2dd" stroke="none" points="717.23,-1844.15 717.23,-1898.4 1141.23,-1898.4 1141.23,-1844.15 717.23,-1844.15"/>
+<polygon fill="none" stroke="#29235c" points="717.23,-1844.15 717.23,-1898.4 1141.23,-1898.4 1141.23,-1844.15 717.23,-1844.15"/>
+<text xml:space="preserve" text-anchor="start" x="728.23" y="-1858" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">id</text>
+<text xml:space="preserve" text-anchor="start" x="756.73" y="-1858" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="1069.48" y="-1858" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">uuid</text>
+<polygon fill="#e7e2dd" stroke="none" points="717.23,-1789.9 717.23,-1844.15 1141.23,-1844.15 1141.23,-1789.9 717.23,-1789.9"/>
+<polygon fill="none" stroke="#29235c" points="717.23,-1789.9 717.23,-1844.15 1141.23,-1844.15 1141.23,-1789.9 717.23,-1789.9"/>
+<text xml:space="preserve" text-anchor="start" x="728.23" y="-1808.4" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">user_id &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="1028.98" y="-1803.75" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">uuid</text>
+<text xml:space="preserve" text-anchor="start" x="1089.73" y="-1803.75" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> </text>
+<text xml:space="preserve" text-anchor="start" x="1098.73" y="-1803.75" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">(!)</text>
+<polygon fill="#e7e2dd" stroke="none" points="717.23,-1735.65 717.23,-1789.9 1141.23,-1789.9 1141.23,-1735.65 717.23,-1735.65"/>
+<polygon fill="none" stroke="#29235c" points="717.23,-1735.65 717.23,-1789.9 1141.23,-1789.9 1141.23,-1735.65 717.23,-1735.65"/>
+<text xml:space="preserve" text-anchor="start" x="728.23" y="-1754.15" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">provider &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="893.23" y="-1749.5" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">auth_provider</text>
+<text xml:space="preserve" text-anchor="start" x="1089.73" y="-1749.5" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> </text>
+<text xml:space="preserve" text-anchor="start" x="1098.73" y="-1749.5" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">(!)</text>
+<polygon fill="#e7e2dd" stroke="none" points="717.23,-1681.4 717.23,-1735.65 1141.23,-1735.65 1141.23,-1681.4 717.23,-1681.4"/>
+<polygon fill="none" stroke="#29235c" points="717.23,-1681.4 717.23,-1735.65 1141.23,-1735.65 1141.23,-1681.4 717.23,-1681.4"/>
+<text xml:space="preserve" text-anchor="start" x="728.23" y="-1699.9" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">provider_uid &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="1078.48" y="-1695.25" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">text</text>
+<polygon fill="#e7e2dd" stroke="none" points="717.23,-1627.15 717.23,-1681.4 1141.23,-1681.4 1141.23,-1627.15 717.23,-1627.15"/>
+<polygon fill="none" stroke="#29235c" points="717.23,-1627.15 717.23,-1681.4 1141.23,-1681.4 1141.23,-1627.15 717.23,-1627.15"/>
+<text xml:space="preserve" text-anchor="start" x="728.23" y="-1645.65" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">password_hash &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="1078.48" y="-1641" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">text</text>
+<polygon fill="#e7e2dd" stroke="none" points="717.23,-1572.9 717.23,-1627.15 1141.23,-1627.15 1141.23,-1572.9 717.23,-1572.9"/>
+<polygon fill="none" stroke="#29235c" points="717.23,-1572.9 717.23,-1627.15 1141.23,-1627.15 1141.23,-1572.9 717.23,-1572.9"/>
+<text xml:space="preserve" text-anchor="start" x="728.23" y="-1591.4" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">last_used_at &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="956.98" y="-1586.75" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">timestamptz</text>
+<polygon fill="#e7e2dd" stroke="none" points="717.23,-1518.65 717.23,-1572.9 1141.23,-1572.9 1141.23,-1518.65 717.23,-1518.65"/>
+<polygon fill="none" stroke="#29235c" points="717.23,-1518.65 717.23,-1572.9 1141.23,-1572.9 1141.23,-1518.65 717.23,-1518.65"/>
+<text xml:space="preserve" text-anchor="start" x="728.23" y="-1537.15" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">created_at &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="916.48" y="-1532.5" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">timestamptz</text>
+<text xml:space="preserve" text-anchor="start" x="1089.73" y="-1532.5" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> </text>
+<text xml:space="preserve" text-anchor="start" x="1098.73" y="-1532.5" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">(!)</text>
+<polygon fill="none" stroke="#29235c" stroke-width="2" points="716.23,-1517.65 716.23,-1953.65 1142.23,-1953.65 1142.23,-1517.65 716.23,-1517.65"/>
+</g>
+<!-- auth_identities&#45;&gt;auth_provider -->
+<g id="edge16" class="edge">
+<title>auth_identities:e&#45;&gt;auth_provider:w</title>
+<path fill="none" stroke="#29235c" stroke-width="3" d="M1142.23,-1762.77C1291.94,-1762.77 1215,-1556.2 1141.23,-1425.93 1044.72,-1255.5 861.23,-1368.15 763.98,-1198.13 744.97,-1164.9 724.7,-1112 762.98,-1112"/>
+</g>
+<!-- auth_identities&#45;&gt;users -->
+<!-- auth_identities&#45;&gt;users -->
+<g id="edge4" class="edge">
+<title>auth_identities:e&#45;&gt;users:w</title>
+<path fill="none" stroke="#29235c" stroke-width="3" d="M1142.23,-1817.02C1287.31,-1817.02 1180.08,-1208.75 1308.41,-1168.35"/>
+<polygon fill="#29235c" stroke="#29235c" stroke-width="3" points="1308.62,-1171.86 1317.99,-1166.92 1307.58,-1164.94 1308.62,-1171.86"/>
+<text xml:space="preserve" text-anchor="middle" x="1313.48" y="-1168.1" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">1</text>
+<text xml:space="preserve" text-anchor="middle" x="1142.23" y="-1786.62" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">*</text>
+</g>
+<!-- roles -->
+<g id="roles" class="node">
+<title>roles</title>
+<ellipse fill="none" stroke="black" stroke-width="0" cx="304.23" cy="-1003.5" rx="189.68" ry="156.27"/>
+<polygon fill="#1d71b8" stroke="none" points="172.11,-1057.75 172.11,-1112 436.36,-1112 436.36,-1057.75 172.11,-1057.75"/>
+<polygon fill="none" stroke="#29235c" points="172.11,-1057.75 172.11,-1112 436.36,-1112 436.36,-1057.75 172.11,-1057.75"/>
+<text xml:space="preserve" text-anchor="start" x="202.61" y="-1071.6" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#ffffff"> &#160;&#160;&#160;&#160;&#160;&#160;roles &#160;&#160;&#160;&#160;&#160;&#160;</text>
+<polygon fill="#e7e2dd" stroke="none" points="172.11,-1003.5 172.11,-1057.75 436.36,-1057.75 436.36,-1003.5 172.11,-1003.5"/>
+<polygon fill="none" stroke="#29235c" points="172.11,-1003.5 172.11,-1057.75 436.36,-1057.75 436.36,-1003.5 172.11,-1003.5"/>
+<text xml:space="preserve" text-anchor="start" x="183.11" y="-1017.35" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">id</text>
+<text xml:space="preserve" text-anchor="start" x="211.61" y="-1017.35" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="364.61" y="-1017.35" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">uuid</text>
+<polygon fill="#e7e2dd" stroke="none" points="172.11,-949.25 172.11,-1003.5 436.36,-1003.5 436.36,-949.25 172.11,-949.25"/>
+<polygon fill="none" stroke="#29235c" points="172.11,-949.25 172.11,-1003.5 436.36,-1003.5 436.36,-949.25 172.11,-949.25"/>
+<text xml:space="preserve" text-anchor="start" x="183.11" y="-967.75" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">name &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="333.11" y="-963.1" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">text</text>
+<text xml:space="preserve" text-anchor="start" x="384.86" y="-963.1" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> </text>
+<text xml:space="preserve" text-anchor="start" x="393.86" y="-963.1" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">(!)</text>
+<polygon fill="#e7e2dd" stroke="none" points="172.11,-895 172.11,-949.25 436.36,-949.25 436.36,-895 172.11,-895"/>
+<polygon fill="none" stroke="#29235c" points="172.11,-895 172.11,-949.25 436.36,-949.25 436.36,-895 172.11,-895"/>
+<text xml:space="preserve" text-anchor="start" x="183.11" y="-913.5" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">description &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="373.61" y="-908.85" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">text</text>
+<polygon fill="none" stroke="#29235c" stroke-width="2" points="171.11,-894 171.11,-1113 437.36,-1113 437.36,-894 171.11,-894"/>
+</g>
+<!-- user_roles -->
+<g id="user_roles" class="node">
+<title>user_roles</title>
+<ellipse fill="none" stroke="black" stroke-width="0" cx="304.23" cy="-1735.65" rx="304.23" ry="156.27"/>
+<polygon fill="#1d71b8" stroke="none" points="91.11,-1789.9 91.11,-1844.15 517.36,-1844.15 517.36,-1789.9 91.11,-1789.9"/>
+<polygon fill="none" stroke="#29235c" points="91.11,-1789.9 91.11,-1844.15 517.36,-1844.15 517.36,-1789.9 91.11,-1789.9"/>
+<text xml:space="preserve" text-anchor="start" x="159.48" y="-1803.75" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#ffffff"> &#160;&#160;&#160;&#160;&#160;&#160;user_roles &#160;&#160;&#160;&#160;&#160;&#160;</text>
+<polygon fill="#e7e2dd" stroke="none" points="91.11,-1735.65 91.11,-1789.9 517.36,-1789.9 517.36,-1735.65 91.11,-1735.65"/>
+<polygon fill="none" stroke="#29235c" points="91.11,-1735.65 91.11,-1789.9 517.36,-1789.9 517.36,-1735.65 91.11,-1735.65"/>
+<text xml:space="preserve" text-anchor="start" x="102.11" y="-1749.5" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">user_id</text>
+<text xml:space="preserve" text-anchor="start" x="216.86" y="-1749.5" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="445.61" y="-1749.5" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">uuid</text>
+<polygon fill="#e7e2dd" stroke="none" points="91.11,-1681.4 91.11,-1735.65 517.36,-1735.65 517.36,-1681.4 91.11,-1681.4"/>
+<polygon fill="none" stroke="#29235c" points="91.11,-1681.4 91.11,-1735.65 517.36,-1735.65 517.36,-1681.4 91.11,-1681.4"/>
+<text xml:space="preserve" text-anchor="start" x="102.11" y="-1695.25" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">role_id</text>
+<text xml:space="preserve" text-anchor="start" x="207.86" y="-1695.25" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="445.61" y="-1695.25" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">uuid</text>
+<polygon fill="#e7e2dd" stroke="none" points="91.11,-1627.15 91.11,-1681.4 517.36,-1681.4 517.36,-1627.15 91.11,-1627.15"/>
+<polygon fill="none" stroke="#29235c" points="91.11,-1627.15 91.11,-1681.4 517.36,-1681.4 517.36,-1627.15 91.11,-1627.15"/>
+<text xml:space="preserve" text-anchor="start" x="102.11" y="-1645.65" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">granted_at &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="292.61" y="-1641" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">timestamptz</text>
+<text xml:space="preserve" text-anchor="start" x="465.86" y="-1641" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> </text>
+<text xml:space="preserve" text-anchor="start" x="474.86" y="-1641" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">(!)</text>
+<polygon fill="none" stroke="#29235c" stroke-width="2" points="90.11,-1626.15 90.11,-1845.15 518.36,-1845.15 518.36,-1626.15 90.11,-1626.15"/>
+</g>
+<!-- user_roles&#45;&gt;users -->
+<!-- user_roles&#45;&gt;users -->
+<g id="edge6" class="edge">
+<title>user_roles:e&#45;&gt;users:w</title>
+<path fill="none" stroke="#29235c" stroke-width="3" d="M518.36,-1762.77C690.81,-1762.77 483.87,-1496.91 617.23,-1387.57 719.84,-1303.45 1100.06,-1420.84 1213.23,-1351.57 1290.32,-1304.39 1233.85,-1180.8 1308.21,-1167.43"/>
+<polygon fill="#29235c" stroke="#29235c" stroke-width="3" points="1308.28,-1170.93 1317.96,-1166.62 1307.7,-1163.96 1308.28,-1170.93"/>
+<text xml:space="preserve" text-anchor="middle" x="1313.48" y="-1135.85" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">1</text>
+<text xml:space="preserve" text-anchor="middle" x="515.17" y="-1732.37" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">*</text>
+</g>
+<!-- user_roles&#45;&gt;roles -->
+<!-- user_roles&#45;&gt;roles -->
+<g id="edge8" class="edge">
+<title>user_roles:e&#45;&gt;roles:w</title>
+<path fill="none" stroke="#29235c" stroke-width="3" d="M518.36,-1708.52C851.75,-1708.52 -136.71,-1050.99 156.66,-1031.09"/>
+<polygon fill="#29235c" stroke="#29235c" stroke-width="3" points="156.69,-1034.59 166.57,-1030.77 156.46,-1027.59 156.69,-1034.59"/>
+<text xml:space="preserve" text-anchor="middle" x="162.11" y="-1032.47" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">1</text>
+<text xml:space="preserve" text-anchor="middle" x="515.17" y="-1678.12" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">*</text>
+</g>
+<!-- sessions -->
+<g id="sessions" class="node">
+<title>sessions</title>
+<ellipse fill="none" stroke="black" stroke-width="0" cx="1560.23" cy="-1735.65" rx="310.07" ry="348.07"/>
+<polygon fill="#1d71b8" stroke="none" points="1342.98,-1925.52 1342.98,-1979.77 1777.48,-1979.77 1777.48,-1925.52 1342.98,-1925.52"/>
+<polygon fill="none" stroke="#29235c" points="1342.98,-1925.52 1342.98,-1979.77 1777.48,-1979.77 1777.48,-1925.52 1342.98,-1925.52"/>
+<text xml:space="preserve" text-anchor="start" x="1428.23" y="-1939.37" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#ffffff"> &#160;&#160;&#160;&#160;&#160;&#160;sessions &#160;&#160;&#160;&#160;&#160;&#160;</text>
+<polygon fill="#e7e2dd" stroke="none" points="1342.98,-1871.27 1342.98,-1925.52 1777.48,-1925.52 1777.48,-1871.27 1342.98,-1871.27"/>
+<polygon fill="none" stroke="#29235c" points="1342.98,-1871.27 1342.98,-1925.52 1777.48,-1925.52 1777.48,-1871.27 1342.98,-1871.27"/>
+<text xml:space="preserve" text-anchor="start" x="1353.98" y="-1885.12" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">id</text>
+<text xml:space="preserve" text-anchor="start" x="1382.48" y="-1885.12" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="1705.73" y="-1885.12" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">uuid</text>
+<polygon fill="#e7e2dd" stroke="none" points="1342.98,-1817.02 1342.98,-1871.27 1777.48,-1871.27 1777.48,-1817.02 1342.98,-1817.02"/>
+<polygon fill="none" stroke="#29235c" points="1342.98,-1817.02 1342.98,-1871.27 1777.48,-1871.27 1777.48,-1817.02 1342.98,-1817.02"/>
+<text xml:space="preserve" text-anchor="start" x="1353.98" y="-1835.52" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">user_id &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="1665.23" y="-1830.87" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">uuid</text>
+<text xml:space="preserve" text-anchor="start" x="1725.98" y="-1830.87" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> </text>
+<text xml:space="preserve" text-anchor="start" x="1734.98" y="-1830.87" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">(!)</text>
+<polygon fill="#e7e2dd" stroke="none" points="1342.98,-1762.77 1342.98,-1817.02 1777.48,-1817.02 1777.48,-1762.77 1342.98,-1762.77"/>
+<polygon fill="none" stroke="#29235c" points="1342.98,-1762.77 1342.98,-1817.02 1777.48,-1817.02 1777.48,-1762.77 1342.98,-1762.77"/>
+<text xml:space="preserve" text-anchor="start" x="1353.98" y="-1781.27" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">refresh_token_hash &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="1674.23" y="-1776.62" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">text</text>
+<text xml:space="preserve" text-anchor="start" x="1725.98" y="-1776.62" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> </text>
+<text xml:space="preserve" text-anchor="start" x="1734.98" y="-1776.62" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">(!)</text>
+<polygon fill="#e7e2dd" stroke="none" points="1342.98,-1708.52 1342.98,-1762.77 1777.48,-1762.77 1777.48,-1708.52 1342.98,-1708.52"/>
+<polygon fill="none" stroke="#29235c" points="1342.98,-1708.52 1342.98,-1762.77 1777.48,-1762.77 1777.48,-1708.52 1342.98,-1708.52"/>
+<text xml:space="preserve" text-anchor="start" x="1353.98" y="-1727.02" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">user_agent &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="1714.73" y="-1722.37" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">text</text>
+<polygon fill="#e7e2dd" stroke="none" points="1342.98,-1654.27 1342.98,-1708.52 1777.48,-1708.52 1777.48,-1654.27 1342.98,-1654.27"/>
+<polygon fill="none" stroke="#29235c" points="1342.98,-1654.27 1342.98,-1708.52 1777.48,-1708.52 1777.48,-1654.27 1342.98,-1654.27"/>
+<text xml:space="preserve" text-anchor="start" x="1353.98" y="-1672.77" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">ip_address &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="1714.73" y="-1668.12" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">inet</text>
+<polygon fill="#e7e2dd" stroke="none" points="1342.98,-1600.02 1342.98,-1654.27 1777.48,-1654.27 1777.48,-1600.02 1342.98,-1600.02"/>
+<polygon fill="none" stroke="#29235c" points="1342.98,-1600.02 1342.98,-1654.27 1777.48,-1654.27 1777.48,-1600.02 1342.98,-1600.02"/>
+<text xml:space="preserve" text-anchor="start" x="1353.98" y="-1618.52" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">expires_at &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="1552.73" y="-1613.87" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">timestamptz</text>
+<text xml:space="preserve" text-anchor="start" x="1725.98" y="-1613.87" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> </text>
+<text xml:space="preserve" text-anchor="start" x="1734.98" y="-1613.87" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">(!)</text>
+<polygon fill="#e7e2dd" stroke="none" points="1342.98,-1545.77 1342.98,-1600.02 1777.48,-1600.02 1777.48,-1545.77 1342.98,-1545.77"/>
+<polygon fill="none" stroke="#29235c" points="1342.98,-1545.77 1342.98,-1600.02 1777.48,-1600.02 1777.48,-1545.77 1342.98,-1545.77"/>
+<text xml:space="preserve" text-anchor="start" x="1353.98" y="-1564.27" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">revoked_at &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="1593.23" y="-1559.62" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">timestamptz</text>
+<polygon fill="#e7e2dd" stroke="none" points="1342.98,-1491.52 1342.98,-1545.77 1777.48,-1545.77 1777.48,-1491.52 1342.98,-1491.52"/>
+<polygon fill="none" stroke="#29235c" points="1342.98,-1491.52 1342.98,-1545.77 1777.48,-1545.77 1777.48,-1491.52 1342.98,-1491.52"/>
+<text xml:space="preserve" text-anchor="start" x="1353.98" y="-1510.02" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">created_at &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="1552.73" y="-1505.37" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">timestamptz</text>
+<text xml:space="preserve" text-anchor="start" x="1725.98" y="-1505.37" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> </text>
+<text xml:space="preserve" text-anchor="start" x="1734.98" y="-1505.37" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">(!)</text>
+<polygon fill="none" stroke="#29235c" stroke-width="2" points="1341.98,-1490.52 1341.98,-1980.77 1778.48,-1980.77 1778.48,-1490.52 1341.98,-1490.52"/>
+</g>
+<!-- sessions&#45;&gt;users -->
+<!-- sessions&#45;&gt;users -->
+<g id="edge10" class="edge">
+<title>sessions:e&#45;&gt;users:w</title>
+<path fill="none" stroke="#29235c" stroke-width="3" d="M1778.48,-1844.15C1879.94,-1844.15 1846.41,-1462.02 1777.48,-1387.57 1708.72,-1313.31 1392.36,-1425.72 1323.48,-1351.57 1270.93,-1294.99 1243.64,-1181.62 1308.3,-1167.67"/>
+<polygon fill="#29235c" stroke="#29235c" stroke-width="3" points="1308.36,-1171.18 1317.96,-1166.7 1307.67,-1164.21 1308.36,-1171.18"/>
+<text xml:space="preserve" text-anchor="middle" x="1331.48" y="-1168.1" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">1</text>
+<text xml:space="preserve" text-anchor="middle" x="1772.11" y="-1846" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">*</text>
+</g>
+<!-- auth_tokens -->
+<g id="auth_tokens" class="node">
+<title>auth_tokens</title>
+<ellipse fill="none" stroke="black" stroke-width="0" cx="2193.23" cy="-1735.65" rx="305.29" ry="309.71"/>
+<polygon fill="#1d71b8" stroke="none" points="1979.36,-1898.4 1979.36,-1952.65 2407.11,-1952.65 2407.11,-1898.4 1979.36,-1898.4"/>
+<polygon fill="none" stroke="#29235c" points="1979.36,-1898.4 1979.36,-1952.65 2407.11,-1952.65 2407.11,-1898.4 1979.36,-1898.4"/>
+<text xml:space="preserve" text-anchor="start" x="2035.73" y="-1912.25" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#ffffff"> &#160;&#160;&#160;&#160;&#160;&#160;auth_tokens &#160;&#160;&#160;&#160;&#160;&#160;</text>
+<polygon fill="#e7e2dd" stroke="none" points="1979.36,-1844.15 1979.36,-1898.4 2407.11,-1898.4 2407.11,-1844.15 1979.36,-1844.15"/>
+<polygon fill="none" stroke="#29235c" points="1979.36,-1844.15 1979.36,-1898.4 2407.11,-1898.4 2407.11,-1844.15 1979.36,-1844.15"/>
+<text xml:space="preserve" text-anchor="start" x="1990.36" y="-1858" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">id</text>
+<text xml:space="preserve" text-anchor="start" x="2018.86" y="-1858" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="2335.36" y="-1858" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">uuid</text>
+<polygon fill="#e7e2dd" stroke="none" points="1979.36,-1789.9 1979.36,-1844.15 2407.11,-1844.15 2407.11,-1789.9 1979.36,-1789.9"/>
+<polygon fill="none" stroke="#29235c" points="1979.36,-1789.9 1979.36,-1844.15 2407.11,-1844.15 2407.11,-1789.9 1979.36,-1789.9"/>
+<text xml:space="preserve" text-anchor="start" x="1990.36" y="-1808.4" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">user_id &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="2294.86" y="-1803.75" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">uuid</text>
+<text xml:space="preserve" text-anchor="start" x="2355.61" y="-1803.75" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> </text>
+<text xml:space="preserve" text-anchor="start" x="2364.61" y="-1803.75" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">(!)</text>
+<polygon fill="#e7e2dd" stroke="none" points="1979.36,-1735.65 1979.36,-1789.9 2407.11,-1789.9 2407.11,-1735.65 1979.36,-1735.65"/>
+<polygon fill="none" stroke="#29235c" points="1979.36,-1735.65 1979.36,-1789.9 2407.11,-1789.9 2407.11,-1735.65 1979.36,-1735.65"/>
+<text xml:space="preserve" text-anchor="start" x="1990.36" y="-1754.15" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">purpose &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="2142.61" y="-1749.5" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">token_purpose</text>
+<text xml:space="preserve" text-anchor="start" x="2355.61" y="-1749.5" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> </text>
+<text xml:space="preserve" text-anchor="start" x="2364.61" y="-1749.5" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">(!)</text>
+<polygon fill="#e7e2dd" stroke="none" points="1979.36,-1681.4 1979.36,-1735.65 2407.11,-1735.65 2407.11,-1681.4 1979.36,-1681.4"/>
+<polygon fill="none" stroke="#29235c" points="1979.36,-1681.4 1979.36,-1735.65 2407.11,-1735.65 2407.11,-1681.4 1979.36,-1681.4"/>
+<text xml:space="preserve" text-anchor="start" x="1990.36" y="-1699.9" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">token_hash &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="2303.86" y="-1695.25" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">text</text>
+<text xml:space="preserve" text-anchor="start" x="2355.61" y="-1695.25" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> </text>
+<text xml:space="preserve" text-anchor="start" x="2364.61" y="-1695.25" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">(!)</text>
+<polygon fill="#e7e2dd" stroke="none" points="1979.36,-1627.15 1979.36,-1681.4 2407.11,-1681.4 2407.11,-1627.15 1979.36,-1627.15"/>
+<polygon fill="none" stroke="#29235c" points="1979.36,-1627.15 1979.36,-1681.4 2407.11,-1681.4 2407.11,-1627.15 1979.36,-1627.15"/>
+<text xml:space="preserve" text-anchor="start" x="1990.36" y="-1645.65" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">expires_at &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="2182.36" y="-1641" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">timestamptz</text>
+<text xml:space="preserve" text-anchor="start" x="2355.61" y="-1641" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> </text>
+<text xml:space="preserve" text-anchor="start" x="2364.61" y="-1641" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">(!)</text>
+<polygon fill="#e7e2dd" stroke="none" points="1979.36,-1572.9 1979.36,-1627.15 2407.11,-1627.15 2407.11,-1572.9 1979.36,-1572.9"/>
+<polygon fill="none" stroke="#29235c" points="1979.36,-1572.9 1979.36,-1627.15 2407.11,-1627.15 2407.11,-1572.9 1979.36,-1572.9"/>
+<text xml:space="preserve" text-anchor="start" x="1990.36" y="-1591.4" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">consumed_at &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="2222.86" y="-1586.75" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">timestamptz</text>
+<polygon fill="#e7e2dd" stroke="none" points="1979.36,-1518.65 1979.36,-1572.9 2407.11,-1572.9 2407.11,-1518.65 1979.36,-1518.65"/>
+<polygon fill="none" stroke="#29235c" points="1979.36,-1518.65 1979.36,-1572.9 2407.11,-1572.9 2407.11,-1518.65 1979.36,-1518.65"/>
+<text xml:space="preserve" text-anchor="start" x="1990.36" y="-1537.15" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">created_at &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="2182.36" y="-1532.5" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">timestamptz</text>
+<text xml:space="preserve" text-anchor="start" x="2355.61" y="-1532.5" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> </text>
+<text xml:space="preserve" text-anchor="start" x="2364.61" y="-1532.5" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">(!)</text>
+<polygon fill="none" stroke="#29235c" stroke-width="2" points="1978.36,-1517.65 1978.36,-1953.65 2408.11,-1953.65 2408.11,-1517.65 1978.36,-1517.65"/>
+</g>
+<!-- auth_tokens&#45;&gt;token_purpose -->
+<g id="edge17" class="edge">
+<title>auth_tokens:e&#45;&gt;token_purpose:w</title>
+<path fill="none" stroke="#29235c" stroke-width="3" d="M2408.11,-1762.77C2709.4,-1762.77 2104.82,-1084.87 2406.11,-1084.87"/>
+</g>
+<!-- auth_tokens&#45;&gt;users -->
+<!-- auth_tokens&#45;&gt;users -->
+<g id="edge12" class="edge">
+<title>auth_tokens:e&#45;&gt;users:w</title>
+<path fill="none" stroke="#29235c" stroke-width="3" d="M2408.11,-1817.02C2495.02,-1817.02 2466.37,-1489.5 2407.11,-1425.93 2326.9,-1339.91 1996.57,-1395.64 1879.23,-1387.57 1817.5,-1383.33 1365.92,-1396.61 1323.48,-1351.57 1270.52,-1295.38 1243.59,-1181.67 1308.3,-1167.67"/>
+<polygon fill="#29235c" stroke="#29235c" stroke-width="3" points="1308.36,-1171.18 1317.96,-1166.7 1307.67,-1164.22 1308.36,-1171.18"/>
+<text xml:space="preserve" text-anchor="middle" x="1331.48" y="-1135.85" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">1</text>
+<text xml:space="preserve" text-anchor="middle" x="2411.3" y="-1786.62" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">*</text>
+</g>
+<!-- auth_events -->
+<g id="auth_events" class="node">
+<title>auth_events</title>
+<ellipse fill="none" stroke="black" stroke-width="0" cx="2869.23" cy="-1735.65" rx="352.49" ry="309.71"/>
+<polygon fill="#1d71b8" stroke="none" points="2621.98,-1898.4 2621.98,-1952.65 3116.48,-1952.65 3116.48,-1898.4 2621.98,-1898.4"/>
+<polygon fill="none" stroke="#29235c" points="2621.98,-1898.4 2621.98,-1952.65 3116.48,-1952.65 3116.48,-1898.4 2621.98,-1898.4"/>
+<text xml:space="preserve" text-anchor="start" x="2712.48" y="-1912.25" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#ffffff"> &#160;&#160;&#160;&#160;&#160;&#160;auth_events &#160;&#160;&#160;&#160;&#160;&#160;</text>
+<polygon fill="#e7e2dd" stroke="none" points="2621.98,-1844.15 2621.98,-1898.4 3116.48,-1898.4 3116.48,-1844.15 2621.98,-1844.15"/>
+<polygon fill="none" stroke="#29235c" points="2621.98,-1844.15 2621.98,-1898.4 3116.48,-1898.4 3116.48,-1844.15 2621.98,-1844.15"/>
+<text xml:space="preserve" text-anchor="start" x="2632.98" y="-1858" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">id</text>
+<text xml:space="preserve" text-anchor="start" x="2661.48" y="-1858" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="3044.73" y="-1858" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">uuid</text>
+<polygon fill="#e7e2dd" stroke="none" points="2621.98,-1789.9 2621.98,-1844.15 3116.48,-1844.15 3116.48,-1789.9 2621.98,-1789.9"/>
+<polygon fill="none" stroke="#29235c" points="2621.98,-1789.9 2621.98,-1844.15 3116.48,-1844.15 3116.48,-1789.9 2621.98,-1789.9"/>
+<text xml:space="preserve" text-anchor="start" x="2632.98" y="-1808.4" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">user_id &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="3044.73" y="-1803.75" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">uuid</text>
+<polygon fill="#e7e2dd" stroke="none" points="2621.98,-1735.65 2621.98,-1789.9 3116.48,-1789.9 3116.48,-1735.65 2621.98,-1735.65"/>
+<polygon fill="none" stroke="#29235c" points="2621.98,-1735.65 2621.98,-1789.9 3116.48,-1789.9 3116.48,-1735.65 2621.98,-1735.65"/>
+<text xml:space="preserve" text-anchor="start" x="2632.98" y="-1754.15" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">event_type &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="2826.48" y="-1749.5" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">auth_event_type</text>
+<text xml:space="preserve" text-anchor="start" x="3064.98" y="-1749.5" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> </text>
+<text xml:space="preserve" text-anchor="start" x="3073.98" y="-1749.5" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">(!)</text>
+<polygon fill="#e7e2dd" stroke="none" points="2621.98,-1681.4 2621.98,-1735.65 3116.48,-1735.65 3116.48,-1681.4 2621.98,-1681.4"/>
+<polygon fill="none" stroke="#29235c" points="2621.98,-1681.4 2621.98,-1735.65 3116.48,-1735.65 3116.48,-1681.4 2621.98,-1681.4"/>
+<text xml:space="preserve" text-anchor="start" x="2632.98" y="-1699.9" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">ip_address &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="3053.73" y="-1695.25" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">inet</text>
+<polygon fill="#e7e2dd" stroke="none" points="2621.98,-1627.15 2621.98,-1681.4 3116.48,-1681.4 3116.48,-1627.15 2621.98,-1627.15"/>
+<polygon fill="none" stroke="#29235c" points="2621.98,-1627.15 2621.98,-1681.4 3116.48,-1681.4 3116.48,-1627.15 2621.98,-1627.15"/>
+<text xml:space="preserve" text-anchor="start" x="2632.98" y="-1645.65" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">user_agent &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="3053.73" y="-1641" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">text</text>
+<polygon fill="#e7e2dd" stroke="none" points="2621.98,-1572.9 2621.98,-1627.15 3116.48,-1627.15 3116.48,-1572.9 2621.98,-1572.9"/>
+<polygon fill="none" stroke="#29235c" points="2621.98,-1572.9 2621.98,-1627.15 3116.48,-1627.15 3116.48,-1572.9 2621.98,-1572.9"/>
+<text xml:space="preserve" text-anchor="start" x="2632.98" y="-1591.4" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">metadata &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="3028.98" y="-1586.75" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">jsonb</text>
+<polygon fill="#e7e2dd" stroke="none" points="2621.98,-1518.65 2621.98,-1572.9 3116.48,-1572.9 3116.48,-1518.65 2621.98,-1518.65"/>
+<polygon fill="none" stroke="#29235c" points="2621.98,-1518.65 2621.98,-1572.9 3116.48,-1572.9 3116.48,-1518.65 2621.98,-1518.65"/>
+<text xml:space="preserve" text-anchor="start" x="2632.98" y="-1537.15" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">created_at &#160;&#160;&#160;</text>
+<text xml:space="preserve" text-anchor="start" x="2891.73" y="-1532.5" font-family="Helvetica,sans-Serif" font-style="italic" font-size="32.00" fill="#29235c">timestamptz</text>
+<text xml:space="preserve" text-anchor="start" x="3064.98" y="-1532.5" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c"> </text>
+<text xml:space="preserve" text-anchor="start" x="3073.98" y="-1532.5" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="32.00" fill="#29235c">(!)</text>
+<polygon fill="none" stroke="#29235c" stroke-width="2" points="2620.98,-1517.65 2620.98,-1953.65 3117.48,-1953.65 3117.48,-1517.65 2620.98,-1517.65"/>
+</g>
+<!-- auth_events&#45;&gt;auth_event_type -->
+<g id="edge18" class="edge">
+<title>auth_events:e&#45;&gt;auth_event_type:w</title>
+<path fill="none" stroke="#29235c" stroke-width="3" d="M3117.48,-1762.77C3267.19,-1762.77 3116.97,-1575.64 3116.48,-1425.93 3116.07,-1298.46 2988.01,-1139.12 3115.48,-1139.12"/>
+</g>
+<!-- auth_events&#45;&gt;users -->
+<!-- auth_events&#45;&gt;users -->
+<g id="edge14" class="edge">
+<title>auth_events:e&#45;&gt;users:w</title>
+<path fill="none" stroke="#29235c" stroke-width="3" d="M3117.48,-1817.02C3291.3,-1817.02 3235.63,-1552.49 3116.48,-1425.93 3023.5,-1327.16 2642.74,-1393.9 2507.23,-1387.57 2441.51,-1384.5 1369.42,-1398.67 1323.48,-1351.57 1269.57,-1296.29 1243.47,-1181.78 1308.29,-1167.68"/>
+<polygon fill="#29235c" stroke="#29235c" stroke-width="3" points="1308.37,-1171.19 1317.97,-1166.71 1307.66,-1164.23 1308.37,-1171.19"/>
+<text xml:space="preserve" text-anchor="middle" x="1313.48" y="-1168.1" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">1</text>
+<text xml:space="preserve" text-anchor="middle" x="3111.11" y="-1818.87" font-family="Helvetica,sans-Serif" font-size="32.00" fill="#29235c">*</text>
+</g>
+</g>
+</svg>
+
+</div></div>
+  </div>
+
+  <h2>이 스키마가 박고 있는 설계 결정</h2>
+  <div class="grid">
+    <div class="note">
+      <h3>① 정체성 ≠ 인증수단</h3>
+      <p><code>users</code>는 "누구인가"만. "어떻게 로그인하나"는 <code>auth_identities</code>로 분리. 한 유저가 비밀번호+구글+애플 동시 보유, 소셜전용(비번 없는) 유저도 자연스러움.</p>
+    </div>
+    <div class="note">
+      <h3>② status = 상태기계</h3>
+      <p><code>pending → active → suspended → deleted</code>. 기능마다 status를 자유롭게 찌르지 말고 허용된 전이만. 가입 = 엔티티 생애주기 시작 = 불변식의 핵심.</p>
+    </div>
+    <div class="note">
+      <h3>③ core vs edge</h3>
+      <p><b class="tier core">Core</b>(users·identities·roles)는 정규화·신중. <b class="tier edge">Edge</b>(sessions·tokens·events)는 휘발성/append-only라 AI 자유. 같은 엄격함을 둘에 다 쓰지 않는 게 속도의 비결.</p>
+    </div>
+    <div class="note">
+      <h3>④ 단일 진실의 출처</h3>
+      <p>"이메일 검증됨"의 진실은 <code>users.email_verified_at</code> 한 곳. <code>auth_tokens</code>는 *절차*일 뿐 상태가 아님. 검증 상태가 두 곳에 살면 드리프트 = 사고.</p>
+    </div>
+    <div class="note">
+      <h3>⑤ 제약 = AI가 못 깨는 가드레일</h3>
+      <p><code>email UNIQUE</code>, <code>(provider, provider_uid) UNIQUE</code>, 전 FK에 <code>ON DELETE CASCADE</code>(events만 SET NULL). 기능 코드가 틀려도 DB가 막음.</p>
+    </div>
+    <div class="note">
+      <h3>⑥ soft delete = 가역성</h3>
+      <p>탈퇴는 행 삭제가 아니라 <code>status=deleted</code> + <code>deleted_at</code>. 실수·복구·법적 보관 대응. 비가역(진짜 DELETE)을 가역으로 바꾸는 1원칙의 실제 적용.</p>
+    </div>
+    <div class="note">
+      <h3>⑦ 토큰은 해시만, 원문 금지</h3>
+      <p><code>sessions.refresh_token_hash</code>·<code>auth_tokens.token_hash</code> — 평문 저장 X. DB 유출돼도 토큰 재사용 불가. 글로벌 B2C 기본값.</p>
+    </div>
+    <div class="note">
+      <h3>⑧ auth_events = 감사 로그</h3>
+      <p>append-only edge 테이블. 가입·로그인·실패 기록 → 이상탐지·디버깅·컴플라이언스. core를 더럽히지 않고 관측성 확보.</p>
+    </div>
+  </div>
+
+  <details class="src">
+    <summary>DBML 소스 보기 — 이게 단일 진실의 출처 (다이어그램은 여기서 파생)</summary>
+    <pre>// 회원가입·인증 스키마 — dakman 글로벌 B2C 샘플
+// 원리: 정체성≠인증수단 / core·edge 분리 / 상태기계 / 단일 진실의 출처 / 제약=가드레일
+// 이 .dbml 한 파일이 &quot;다이어그램 + 스키마 스펙&quot; = 단일 진실의 출처
+
+Enum user_status {
+  pending
+  active
+  suspended
+  deleted
+}
+
+Enum auth_provider {
+  password
+  google
+  apple
+  kakao
+}
+
+Enum token_purpose {
+  email_verify
+  password_reset
+  magic_link
+}
+
+Enum auth_event_type {
+  signup
+  login
+  login_failed
+  logout
+  pw_reset
+}
+
+// ===================== CORE =====================
+Table users {
+  id uuid [pk]
+  email citext [unique, not null, note: &#x27;로그인 ID, 소문자 비교&#x27;]
+  email_verified_at timestamptz [note: &#x27;검증 진실의 출처&#x27;]
+  status user_status [not null, default: &#x27;pending&#x27;, note: &#x27;상태기계&#x27;]
+  display_name text
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  deleted_at timestamptz [note: &#x27;soft delete=가역성&#x27;]
+}
+
+Table user_profiles {
+  user_id uuid [pk, note: &#x27;users 1:1 확장&#x27;]
+  avatar_url text
+  bio text
+  locale text
+  timezone text
+  preferences jsonb [note: &#x27;확장 여지&#x27;]
+  updated_at timestamptz
+}
+
+Table auth_identities {
+  id uuid [pk]
+  user_id uuid [not null]
+  provider auth_provider [not null]
+  provider_uid text [note: &#x27;소셜 고유 ID&#x27;]
+  password_hash text [note: &#x27;password일 때만&#x27;]
+  last_used_at timestamptz
+  created_at timestamptz [not null]
+  indexes {
+    (provider, provider_uid) [unique]
+  }
+}
+
+Table roles {
+  id uuid [pk]
+  name text [unique, not null, note: &#x27;user|admin|...&#x27;]
+  description text
+}
+
+Table user_roles {
+  user_id uuid [pk]
+  role_id uuid [pk]
+  granted_at timestamptz [not null]
+}
+
+// ===================== EDGE =====================
+Table sessions {
+  id uuid [pk]
+  user_id uuid [not null]
+  refresh_token_hash text [unique, not null, note: &#x27;원문 저장 금지&#x27;]
+  user_agent text
+  ip_address inet
+  expires_at timestamptz [not null]
+  revoked_at timestamptz
+  created_at timestamptz [not null]
+}
+
+Table auth_tokens {
+  id uuid [pk]
+  user_id uuid [not null]
+  purpose token_purpose [not null]
+  token_hash text [unique, not null]
+  expires_at timestamptz [not null]
+  consumed_at timestamptz [note: &#x27;1회용 소비 표시&#x27;]
+  created_at timestamptz [not null]
+}
+
+Table auth_events {
+  id uuid [pk]
+  user_id uuid [note: &#x27;nullable: 실패 로그인&#x27;]
+  event_type auth_event_type [not null]
+  ip_address inet
+  user_agent text
+  metadata jsonb
+  created_at timestamptz [not null]
+}
+
+// ===================== RELATIONSHIPS =====================
+Ref: users.id - user_profiles.user_id [delete: cascade]   // 1:1 (FK는 자식 user_profiles에)
+Ref: auth_identities.user_id &gt; users.id [delete: cascade]  // N:1
+Ref: user_roles.user_id &gt; users.id [delete: cascade]
+Ref: user_roles.role_id &gt; roles.id [delete: cascade]
+Ref: sessions.user_id &gt; users.id [delete: cascade]
+Ref: auth_tokens.user_id &gt; users.id [delete: cascade]
+Ref: auth_events.user_id &gt; users.id [delete: set null]
+
+// ===================== GROUPS =====================
+TableGroup core {
+  users
+  user_profiles
+  auth_identities
+  roles
+  user_roles
+}
+
+TableGroup edge {
+  sessions
+  auth_tokens
+  auth_events
+}
+</pre>
+  </details>
+
+  <footer>
+    파이프라인: <code>erd-signup.dbml</code> → <code>npx @softwaretechnik/dbml-renderer</code> → SVG 인라인. 타입(<code>citext</code>·<code>inet</code>·<code>jsonb</code>·enum)은 PostgreSQL 기준.<br>
+    DBML은 SQL/마이그레이션으로 변환 가능 — 다이어그램과 스키마 스펙이 한 파일. dakman-brain · business 방법론 샘플 · 2026-06-16
+  </footer>
+</main>
+<script>
+(function(){
+  var vp=document.getElementById('erdViewport'), stage=document.getElementById('erdStage'),
+      box=document.getElementById('erdBox'), svg=stage.querySelector('svg');
+  var scale=1, tx=0, ty=0;
+  function apply(){ stage.style.transform='translate('+tx+'px,'+ty+'px) scale('+scale+')'; }
+  function size(){
+    var w=parseFloat(svg.getAttribute('width'))||(svg.viewBox&&svg.viewBox.baseVal.width)||1000;
+    var h=parseFloat(svg.getAttribute('height'))||(svg.viewBox&&svg.viewBox.baseVal.height)||700;
+    return {w:w,h:h};
+  }
+  window.erdReset=function(){
+    var s=size(), bs=Math.min(vp.clientWidth/s.w, vp.clientHeight/s.h);
+    if(!isFinite(bs)||bs<=0) bs=1;
+    scale=bs; tx=(vp.clientWidth-s.w*scale)/2; ty=(vp.clientHeight-s.h*scale)/2; apply();
+  };
+  function zoomAt(mx,my,f){
+    var ns=Math.max(0.1,Math.min(8,scale*f));
+    tx=mx-(mx-tx)*(ns/scale); ty=my-(my-ty)*(ns/scale); scale=ns; apply();
+  }
+  window.erdZoom=function(f){ zoomAt(vp.clientWidth/2, vp.clientHeight/2, f); };
+  window.erdFull=function(){
+    if(document.fullscreenElement) document.exitFullscreen();
+    else (box.requestFullscreen||box.webkitRequestFullscreen).call(box);
+  };
+  var drag=false, sx, sy;
+  vp.addEventListener('mousedown', function(e){ drag=true; sx=e.clientX-tx; sy=e.clientY-ty; });
+  window.addEventListener('mousemove', function(e){ if(!drag)return; tx=e.clientX-sx; ty=e.clientY-sy; apply(); });
+  window.addEventListener('mouseup', function(){ drag=false; });
+  var speedEl=document.getElementById('erdSpeed');
+  function spd(){ return speedEl ? parseFloat(speedEl.value) : 0.5; }
+  vp.addEventListener('wheel', function(e){
+    e.preventDefault();
+    var r=vp.getBoundingClientRect();
+    var f=Math.exp(-e.deltaY * 0.0016 * spd());   // deltaY 크기 비례 + 슬라이더 감도
+    zoomAt(e.clientX-r.left, e.clientY-r.top, f);
+  }, {passive:false});
+  document.addEventListener('fullscreenchange', function(){ setTimeout(erdReset,60); });
+  window.addEventListener('resize', function(){ setTimeout(erdReset,60); });
+  setTimeout(erdReset,30);
+})();
+</script>
+</body>
+</html>

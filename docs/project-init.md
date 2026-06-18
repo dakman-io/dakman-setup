@@ -18,6 +18,7 @@
 - [ ] 6. 첫 커밋 (HEAD 생성)
 - [ ] 7. 브랜치 전략 (로컬 생성 → 원격 push·보호·main 삭제)
 - [ ] 8. skill / agent 구성 (워크플로우 지점 바인딩)
+- [ ] 9. LLM 위키 연동 (지식 축적 — 무설정 자동 + 마커 규약)
 
 ---
 
@@ -67,6 +68,9 @@ OS 잡파일·환경 변수·AI 도구 임시 산출물이 (첫 커밋부터) �
 
 # playwright MCP 임시 산출물 (스냅샷·콘솔 로그·스크린샷)
 .playwright-mcp/
+
+# LLM 위키 자동 ingest 큐 (로컬 상태 — 머신 전역 훅이 사용)
+.wiki-ingest/
 
 # drawio 백업/잠금 파일
 .$*.bkp
@@ -265,3 +269,40 @@ gh api repos/<owner>/<repo>/branches \
   - designer ↔ design-reviewer
   - developer ↔ code-reviewer
 - 발동 지점이 workflow.md에 없는 agent는 만들지 않는다 (원칙 11 — 지점 바인딩).
+
+## 9. LLM 위키 연동 (지식 축적)
+
+이 프로젝트에서 나오는 지식(리서치·의사결정·방법론)은 부문별 **중앙 LLM 위키**(dakman/chagok/emotion vault)로 모은다. Karpathy "LLM wiki" 패턴 — 매 질의마다 재발견하는 RAG와 달리 **한 번 컴파일해 최신 유지**, 소스를 더할수록 복리로 풍부해진다.
+
+**무설정 자동 연결.** 위키 자동 ingest는 **머신 전역 Claude 유저 훅**(`~/.claude/settings.json` PostToolUse → `~/.claude/hooks/`)으로 동작한다 — **per-repo 훅·설정이 필요 없다.** 새 프로젝트는 만들자마자 자동 커버된다. 운영 스킬(`wiki-ingest`·`wiki-organize`)과 온보딩(`wiki-onboarding`)도 글로벌 단일 정본(`~/.claude/skills/`)이므로 **리포에 사본을 두지 않는다**(드리프트 방지).
+
+**셋업에서 할 일은 두 가지뿐:**
+
+1. **`.gitignore`에 `.wiki-ingest/` 추가** (§3에 포함) — repo별 ingest 큐(로컬 상태).
+2. **위키로 보낼 문서에 마커 달기** — *vault 밖* 소스 문서의 frontmatter에 `wiki-ingest` 객체(Option B 라이프사이클):
+   ```yaml
+   ---
+   wiki-ingest:
+     status: pending      # pending | done | skip | sync
+     note: notes/x.md     # done 후 스킬이 기록
+     at: 2026-06-16
+     by: auto             # auto | manual
+     hash: a1b2c3d4e5f6   # 본문 sha256[:12] — sync 변경 감지
+   title: ...
+   ---
+   ```
+
+   | status | 동작 |
+   |--------|------|
+   | `pending` | develop 머지 시 훅이 큐에 적재 |
+   | `done` | 완료 — 재큐 안 함 (수동 처리도 `done` + `by: manual`) |
+   | `skip` | 대상 아님 |
+   | `sync` | 본문이 바뀌면 재ingest (living doc) |
+
+   > **vault 내부 노트·README·CLAUDE.md엔 달지 않는다.** 마커는 vault 밖 소스 문서에만. 옛 스칼라 `wiki-ingest: true`는 `pending`으로 해석(하위호환).
+
+**흐름**: 마커(`pending`) 단 문서를 develop에 머지 → 훅이 `.wiki-ingest/queue.txt`에 적재 + 알림 → "위키에 정리해줘"로 `wiki-ingest` 실행(현재 경로로 부문 vault 자동 라우팅) → 노트 생성·검증 요청, 스킬이 소스 마커를 `done`으로 갱신.
+
+**온보딩**: 위키 운영법은 프로젝트마다 문서를 두지 말고 **`/wiki-onboarding` 스킬**을 호출한다 — vault 라우팅·거버넌스·검증 2축·마커 규약이 전부 내장돼 있다.
+
+> 상세 정본: `wiki-onboarding` 스킬 §8(자동 ingest 마커) · 판정/해시 정본은 `~/.claude/hooks/wiki-ingest-marker.py`.

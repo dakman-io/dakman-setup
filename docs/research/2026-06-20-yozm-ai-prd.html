@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI PRD는 무엇이 달라야 하는가 — 분석</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700;900&family=Noto+Sans+KR:wght@300;400;500;700&family=Spline+Sans+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#13140f; --bg2:#1b1d15; --card:#1f2219; --fg:#ece6d6; --muted:#9c9784;
+    --gold:#e0ad34; --gold-soft:rgba(224,173,52,.14);
+    --teal:#74b8a6; --teal-soft:rgba(116,184,166,.14);
+    --terra:#db8158; --terra-soft:rgba(219,129,88,.13);
+    --line:rgba(236,230,214,.13); --line2:rgba(236,230,214,.07);
+    --serif:"Noto Serif KR",serif; --sans:"Noto Sans KR",sans-serif; --mono:"Spline Sans Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--fg); font-family:var(--sans); font-weight:400;
+    line-height:1.7; letter-spacing:-.01em; -webkit-font-smoothing:antialiased;
+    background-image:
+      radial-gradient(900px 500px at 88% -8%, rgba(224,173,52,.07), transparent 60%),
+      radial-gradient(700px 500px at -5% 12%, rgba(116,184,166,.05), transparent 55%);
+    background-attachment:fixed;
+  }
+  /* grain */
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.04;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+  .wrap{max-width:920px;margin:0 auto;padding:0 24px;position:relative;z-index:2}
+
+  /* ── header ── */
+  header{padding:72px 0 36px;border-bottom:1px solid var(--line)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .kicker .dot{width:5px;height:5px;border-radius:50%;background:var(--gold)}
+  h1{font-family:var(--serif);font-weight:900;font-size:clamp(2.1rem,6vw,3.5rem);line-height:1.12;margin:.5em 0 .35em;letter-spacing:-.02em}
+  h1 em{font-style:normal;color:var(--gold)}
+  .byline{font-size:15px;color:var(--muted)}
+  .byline b{color:var(--fg);font-weight:500}
+  .metastrip{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px;font-family:var(--mono);font-size:11.5px}
+  .metastrip span{border:1px solid var(--line);border-radius:999px;padding:5px 12px;color:var(--muted)}
+  .metastrip a{color:var(--teal);text-decoration:none}
+  .metastrip .ok{color:var(--teal);border-color:rgba(116,184,166,.4)}
+
+  /* ── sections ── */
+  section{padding:48px 0;border-bottom:1px solid var(--line2)}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:18px;display:flex;align-items:center;gap:10px}
+  .eyebrow::before{content:"";width:26px;height:1px;background:var(--gold)}
+  h2{font-family:var(--serif);font-weight:700;font-size:clamp(1.5rem,3.4vw,2rem);margin:0 0 22px;letter-spacing:-.01em}
+  strong,b{color:#fff;font-weight:700}
+  em{color:var(--gold);font-style:italic}
+
+  /* ── TL;DR hero ── */
+  .tldr{background:linear-gradient(180deg,var(--bg2),var(--card));border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:14px;padding:30px 32px;font-size:1.08rem;line-height:1.8}
+  .tldr .lead{font-family:var(--serif);font-size:1.35rem;line-height:1.55;color:#fff;font-weight:500;margin:0 0 16px}
+  .tldr .lead .hl{color:var(--gold)}
+
+  /* ── 8 PRD spec grid ── */
+  .specgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  .spec{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;position:relative;overflow:hidden;transition:border-color .25s,transform .25s}
+  .spec:hover{border-color:rgba(224,173,52,.45);transform:translateY(-2px)}
+  .spec .no{font-family:var(--mono);font-size:13px;color:var(--gold);font-weight:600}
+  .spec h3{font-family:var(--sans);font-size:1.06rem;font-weight:700;color:#fff;margin:6px 0 7px}
+  .spec p{margin:0;font-size:.95rem;color:var(--muted);line-height:1.6}
+  .spec p b{color:var(--teal);font-weight:500}
+
+  /* ── eval tiers ── */
+  .tiers{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  .tier{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column}
+  .tier .lvl{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--teal);text-transform:uppercase}
+  .tier h3{font-size:1.1rem;margin:8px 0 10px;color:#fff;font-weight:700}
+  .tier .use{font-size:.92rem;color:var(--fg);margin:0 0 14px;flex:1}
+  .tier .trade{font-size:.84rem;color:var(--muted);border-top:1px solid var(--line2);padding-top:10px;font-family:var(--mono)}
+  .tier .trade .up{color:var(--teal)} .tier .trade .dn{color:var(--terra)}
+  .tier:nth-child(1){border-bottom:3px solid rgba(116,184,166,.6)}
+  .tier:nth-child(2){border-bottom:3px solid rgba(224,173,52,.6)}
+  .tier:nth-child(3){border-bottom:3px solid rgba(219,129,88,.6)}
+
+  /* ── concept panels ── */
+  .concept{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:22px 24px;margin-bottom:14px}
+  .concept .tag{font-family:var(--mono);font-size:12px;color:var(--gold);letter-spacing:.04em}
+  .concept.warn .tag{color:var(--terra)}
+  .concept h3{font-family:var(--serif);font-size:1.2rem;margin:6px 0 10px;color:#fff;font-weight:700}
+  .concept p{margin:0;color:var(--fg);font-size:.97rem}
+  .concept.warn{border-left:3px solid var(--terra)}
+
+  /* pricing table */
+  table{width:100%;border-collapse:collapse;margin-top:14px;font-size:.92rem}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line2);vertical-align:top}
+  th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500}
+  td b{color:var(--gold)}
+
+  /* quotes */
+  .quotes{display:flex;flex-direction:column;gap:16px}
+  blockquote{margin:0;font-family:var(--serif);font-size:1.18rem;line-height:1.55;color:#fff;padding:6px 0 6px 24px;border-left:3px solid var(--gold);font-weight:500}
+  blockquote span{color:var(--gold)}
+
+  /* apply panel */
+  .apply{background:linear-gradient(135deg,var(--teal-soft),transparent 70%);border:1px solid rgba(116,184,166,.3);border-radius:14px;padding:26px 28px}
+  .apply h2{margin-top:0}
+  .apply ul{margin:0;padding-left:0;list-style:none}
+  .apply li{padding:12px 0;border-bottom:1px solid var(--line2);font-size:1rem}
+  .apply li:last-child{border:0}
+  .apply li::before{content:"▸ ";color:var(--teal);font-weight:700}
+  .apply code{font-family:var(--mono);font-size:.85em;background:rgba(236,230,214,.08);padding:2px 6px;border-radius:4px;color:var(--teal)}
+
+  /* series */
+  .series{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+  .series .ep{display:flex;gap:14px;align-items:baseline;padding:9px 14px;border:1px solid var(--line2);border-radius:9px;font-size:.95rem;color:var(--muted)}
+  .series .ep .n{font-family:var(--mono);color:var(--muted)}
+  .series .ep.cur{border-color:var(--gold);background:var(--gold-soft);color:var(--fg)}
+  .series .ep.cur .n{color:var(--gold)}
+  .series .ep.cur b{color:#fff}
+
+  /* limits + legend */
+  .limit{border:1px dashed rgba(219,129,88,.55);background:var(--terra-soft);border-radius:12px;padding:22px 24px;color:var(--fg)}
+  .limit .badge{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--terra);border:1px solid rgba(219,129,88,.5);border-radius:999px;padding:3px 11px;margin-bottom:12px}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:20px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .legend i{font-style:normal;display:inline-flex;align-items:center;gap:7px}
+  .legend .sw{width:24px;height:12px;border-radius:3px;display:inline-block}
+  .sw.v{background:#5fb98a} .sw.a{background:var(--gold)} .sw.d{border:1px dashed var(--terra);background:var(--terra-soft)}
+
+  footer{padding:40px 0 70px;color:var(--muted);font-family:var(--mono);font-size:12px;line-height:1.8}
+  footer a{color:var(--teal);text-decoration:none}
+
+  .reveal{opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease}
+  .reveal.in{opacity:1;transform:none}
+  @media print{.reveal{opacity:1!important;transform:none!important;transition:none!important}}
+  @media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+
+  @media (max-width:780px){
+    .specgrid,.tiers{grid-template-columns:1fr}
+    header{padding:48px 0 28px}
+    section{padding:36px 0}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="reveal">
+    <div class="kicker"><span>WEB ANALYSIS</span><span class="dot"></span><span>요즘IT 매거진</span><span class="dot"></span><span>제품 방법론</span></div>
+    <h1>AI PRD는<br>무엇이 <em>달라야</em> 하는가</h1>
+    <div class="byline">김영욱 · <b>AI Product Management</b> 시리즈 4부 · 요즘IT</div>
+    <div class="metastrip">
+      <span><a href="https://yozm.wishket.com/magazine/detail/3809/">yozm.wishket.com/magazine/detail/3809</a></span>
+      <span>분석 2026-06-20 21:33</span>
+      <span class="ok">fetch: webfetch ✓ (차단 0)</span>
+      <span>10분 분량</span>
+    </div>
+  </header>
+
+  <section class="reveal">
+    <div class="eyebrow">요지 · TL;DR</div>
+    <div class="tldr">
+      <p class="lead">AI 기능은 <span class="hl">비결정론적</span>이라, "단일 행동"을 정의하던 기존 PRD로는 부족하다.</p>
+      AI PRD는 <strong>"허용 가능한 답변의 범위 + 판단 기준"</strong>을 명시해야 하고, 그 중심에 <strong>Eval Plan</strong>(성공을 느낌이 아니라 측정 가능한 기준으로 바꾸는 장치)이 있다. PM의 역할도 "기능 정의"에서 <em>"행동 범위·판단 기준 정의"</em>로 이동한다.
+    </div>
+  </section>
+
+  <section class="reveal">
+    <div class="eyebrow">설계도 · AI PRD 필수 8항목</div>
+    <h2>레시피처럼 정밀하게 — 8개 항목</h2>
+    <div class="specgrid">
+      <div class="spec"><div class="no">01</div><h3>기능 개요</h3><p>풀 사용자 문제 + <b>AI를 쓰는 이유</b> 명시</p></div>
+      <div class="spec"><div class="no">02</div><h3>입출력 명세</h3><p>입력 형태·길이·<b>언어</b>, 출력 포맷·범위 사전 규정</p></div>
+      <div class="spec"><div class="no">03</div><h3>시스템 프롬프트 초안</h3><p>역할·톤·참고정보·<b>금지사항</b>·예외 처리</p></div>
+      <div class="spec"><div class="no">04</div><h3>품질 기준</h3><p>정확도·톤·길이의 명시적 <b>"합격선"</b></p></div>
+      <div class="spec"><div class="no">05</div><h3>실패 정의</h3><p>환각·정책위반·위험조언 등 <b>불허 시나리오</b></p></div>
+      <div class="spec"><div class="no">06</div><h3>평가 계획</h3><p>Eval 셋 관리·3단계 평가·<b>회귀테스트</b></p></div>
+      <div class="spec"><div class="no">07</div><h3>모니터링 계획</h3><p>대시보드 지표·알람 조건·재평가 주기</p></div>
+      <div class="spec"><div class="no">08</div><h3>리스크·제한</h3><p>도메인 한계·비용 폭발·규제 위험</p></div>
+    </div>
+  </section>
+
+  <section class="reveal">
+    <div class="eyebrow">측정 장치 · Eval 3단계 피라미드</div>
+    <h2>"잘 동작한다"를 숫자로 — 3단계</h2>
+    <div class="tiers">
+      <div class="tier">
+        <div class="lvl">Tier 1 · 자동</div><h3>규칙 기반</h3>
+        <p class="use">단어 포함 / 길이 / 기밀 미포함 등 명확한 규칙 자동 채점</p>
+        <div class="trade"><span class="up">▲ 싸고 빠름</span> · <span class="dn">▼ 미묘한 품질 불가</span></div>
+      </div>
+      <div class="tier">
+        <div class="lvl">Tier 2 · 준자동</div><h3>LLM-as-a-Judge</h3>
+        <p class="use">다른 LLM이 적절성 판단 (사람의 100배 속도)</p>
+        <div class="trade"><span class="up">▲ 저렴·빠름</span> · <span class="dn">▼ 판사 LLM 편향·환각</span></div>
+      </div>
+      <div class="tier">
+        <div class="lvl">Tier 3 · 수동</div><h3>사람 평가</h3>
+        <p class="use">까다로운 케이스·새 실패패턴·회귀 기준점 (선별 적용)</p>
+        <div class="trade"><span class="up">▲ 정확</span> · <span class="dn">▼ 느리고 비쌈</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="reveal">
+    <div class="eyebrow">핵심 개념</div>
+    <h2>네 가지 렌즈</h2>
+    <div class="concept">
+      <div class="tag">METAPHOR · 요리노트 vs 미슐랭 레시피</div>
+      <h3>감각 의존 → 정밀 설계도</h3>
+      <p>기존 PRD = <strong>이미 할 줄 아는 사람</strong>용(손끝 감각 의존) / AI PRD = <strong>처음 보는 사람도 같은 결과</strong>를 보장하는 설계도. 결정론 SW는 행동 정의로 충분했지만, 확률적 AI는 <em>범위 + 기준</em>까지 필요하다.</p>
+    </div>
+    <div class="concept warn">
+      <div class="tag">ANTI-PATTERN · 프롬프트 수렁</div>
+      <h3>A 고치면 B 깨지는 무한 루프</h3>
+      <p>근본원인은 <strong>회귀테스트 부재</strong> — 프롬프트 수정 때마다 기존 기능 파괴를 검증하지 않는 것. 해결은 <strong>Eval 셋 전체 재실행</strong>으로 점수 하락 케이스를 추적하는 것.</p>
+    </div>
+    <div class="concept warn">
+      <div class="tag">CASE · 실패 정의의 중요성</div>
+      <h3>에어캐나다 챗봇 사고</h3>
+      <p>"무엇을 답하지 <em>말아야</em> 하는가"가 PRD에 정의되지 않았던 것이 사고 원인. 경계 케이스(예: <strong>사별할인 신청</strong>)를 출시 전 Eval에 넣었다면 방지 가능했다.</p>
+    </div>
+    <div class="concept">
+      <div class="tag">BUSINESS · 가격모델 ⊥ 제품설계</div>
+      <h3>가격과 성공지표가 어긋나면 팀이 길을 잃는다</h3>
+      <p>가격모델과 성공지표가 불일치하면 팀은 <strong>"뭘 최적화할지 모르는 상태"</strong>로 출발한다 — 정합 사례 <strong>Salesforce</strong> vs 불일치 사례 <strong>Adobe</strong>.</p>
+      <table>
+        <tr><th>모델</th><th>정의</th><th>설계 영향</th></tr>
+        <tr><td><b>사용량 기반</b></td><td>토큰·API 호출당 과금</td><td>토큰 효율 최적화 강제</td></tr>
+        <tr><td><b>성과 기반</b></td><td>해결된 케이스당 과금</td><td>"해결"을 Eval에 먼저 정의해야 함</td></tr>
+        <tr><td><b>하이브리드</b></td><td>기본료 + 추가 사용량</td><td>비용 폭발 방지 · 실무 최다 채택</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section class="reveal">
+    <div class="eyebrow">기억할 인용</div>
+    <div class="quotes">
+      <blockquote>기존 PRD가 '단일 행동'을 정의했다면, AI PRD는 <span>'허용 가능한 답변의 범위'</span>를 정의한다.</blockquote>
+      <blockquote>Eval = '잘 동작한다'를 <span>느낌이 아니라 측정 가능한 기준</span>으로 바꿔주는 장치.</blockquote>
+      <blockquote>AI 시대 PM = 기능을 정의하는 사람이 아니라 <span>행동 범위·판단 기준을 함께 정의</span>하는 사람.</blockquote>
+    </div>
+  </section>
+
+  <section class="reveal">
+    <div class="apply">
+      <div class="eyebrow">우리(dakman) 활용 관점</div>
+      <h2>지식 → 실전 적용</h2>
+      <ul>
+        <li>dakman은 AI 앱 빌더 → <strong>8항목 + Eval Plan을 AIDD 워크플로우의 "AI 기능 스펙" 템플릿</strong>으로 (dakman-setup <code>artifacts/planning/</code>). 예전 ERD·데이터흐름 스펙의 <em>기능·품질</em> 짝.</li>
+        <li>위키 <code>business</code>+<code>evals</code> 토픽에 방법론 노트화 가치 높음 — <code>idea-pipeline-principle</code>과 peer 연결.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="reveal">
+    <div class="eyebrow">메타데이터 · 출처</div>
+    <h2>시리즈 & 저자</h2>
+    <div class="series">
+      <div class="ep"><span class="n">①</span> AI는 왜 자꾸 틀리는가</div>
+      <div class="ep"><span class="n">②</span> PM은 LLM을 어디까지 이해해야 할까?</div>
+      <div class="ep"><span class="n">③</span> AI 기능은 프롬프트가 아니라 시스템으로 만든다</div>
+      <div class="ep cur"><span class="n">④</span> <b>AI PRD는 무엇이 달라야 하는가</b> &nbsp;← 본문</div>
+    </div>
+    <p style="color:var(--muted);font-size:.93rem;margin-top:16px">저자 <b style="color:var(--fg)">김영욱</b> · 미출간 예정 도서 <em>「AI Product Management(가제)」</em> 기반 · 요즘IT 발행</p>
+  </section>
+
+  <section class="reveal" style="border-bottom:0">
+    <div class="eyebrow">한계 · 신뢰도</div>
+    <div class="limit">
+      <span class="badge">SOURCE_TIER: secondary · summarized 상한</span>
+      <p><strong>단일 secondary 출처</strong> — 오피니언/교육 콘텐츠(미출간 도서 발췌). 사례(에어캐나다·Salesforce/Adobe)는 일반에 알려진 것이나 글 자체가 1차 검증원은 아니다. 위키 ingest 시 <strong>verified 금지</strong>, <code style="font-family:var(--mono);color:var(--terra)">summarized·secondary</code> 상한. 8항목·Eval 3단계는 업계 통용 패턴이라 신뢰도는 양호하나 <em>"저자 프레임"</em>임을 표기한다.</p>
+      <div class="legend">
+        <i><span class="sw v"></span> verified (1차/교차)</i>
+        <i><span class="sw a"></span> secondary (평판 2차)</i>
+        <i><span class="sw d"></span> 본 문서 = 한계·미검증 프레임</i>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    web-analyze 산출물 · 스테이징(.web-analysis/) · 승격 전 비추적<br>
+    원본: <a href="https://yozm.wishket.com/magazine/detail/3809/">https://yozm.wishket.com/magazine/detail/3809/</a>
+  </footer>
+
+</div>
+<script>
+  const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+  setTimeout(()=>document.querySelectorAll('.reveal:not(.in)').forEach(el=>el.classList.add('in')),4000);
+</script>
+</body>
+</html>

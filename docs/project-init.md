@@ -78,8 +78,8 @@ OS 잡파일·환경 변수·AI 도구 임시 산출물이 (첫 커밋부터) �
 # playwright MCP 임시 산출물 (스냅샷·콘솔 로그·스크린샷)
 .playwright-mcp/
 
-# web-analyze 렌더·추출 임시 산출물
-.web-analysis/
+# web-research 렌더·추출 임시 산출물
+.web-research/
 
 # LLM 위키 자동 ingest 큐 (로컬 상태 — 머신 전역 훅이 사용)
 .wiki-ingest/

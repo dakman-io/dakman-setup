@@ -136,7 +136,7 @@ flowchart LR
 
 R2 초과 시 **Context Hygiene** — 세션을 새로 열고 핵심 스펙만 Read하여 컨텍스트 정화.
 
-**리뷰 파일**: `artifacts/review/{type}-{scope}-review[-{reviewer}]-round{N}.md` (type: us/design/code/e2e, reviewer: claude/codex/gemini).
+**리뷰 파일**: `artifacts/review/{type}-{scope}-review[-{reviewer}]-round{N}.md` (type: us/design/code/e2e/content, reviewer: claude/codex/gemini).
 
 **판정 주체**: 라운드 중 통합·중재는 **Orchestrator (Claude 메인 세션)**. 별도 "기획 판단 에이전트" 없음.
 
@@ -368,6 +368,46 @@ T1 = 브리핑 → 구현 → 형상관리 → 완료(§10.1 기록 1줄)의 단
 - **maker-checker 쌍 필수**: 생성형 agent(planner, designer, developer 등)는 대응하는 검사 agent(us-reviewer, design-reviewer, code-reviewer 등)와 **쌍으로만** 도입한다. 검사자는 작성에 참여하지 않은 노드여야 한다 (원칙 7 리뷰-수정 분리와 연결).
 - **배치 맵 = §3 단계 표의 "담당" 열**: agent를 추가·변경하면 §3 표를 같이 갱신한다 — 표에 없는 agent는 워크플로우에 없는 것이다.
 
+### 에이전트 중심 실행 패턴 (스킬 실행 주체 = maker 에이전트 — 원칙 12의 구조적 강제)
+
+**문제 신호.** 스킬(playbook)을 **메인(Orchestrator)이 직접 실행**하면 *만든 주체 = 검수 주체*가 되어 self-approval이 생긴다(원칙 12·§4 held-out 위반). 저위험에선 무해하지만, **공개·비가역·고위험 산출물**(외부 발행 콘텐츠·코드·마이그레이션)에선 독립 검수가 빠진 채 발행되는 구멍이 된다.
+
+**3노드 + 오케스트레이터.** 해당 산출물을 만드는 스킬은 메인이 직접 실행하지 않고 다음으로 실행한다:
+
+| 노드 | 역할 | 컨텍스트 | 도구 | self-approve |
+|------|------|---------|------|:---:|
+| `<x>-writer` (maker 에이전트) | 스킬을 *실행*해 초안 생성 | 서브에이전트(격리) | Skill + 작성 도구 | ❌ 자기 완료 선언 금지 |
+| `<x>-write` (action 스킬) | 산출 행위 자체 (기계적) | maker 안에서 실행 | Write·Read·Edit·Bash | n/a |
+| `<x>-reviewer` (checker 에이전트) | 독립 검수·게이트 | 서브에이전트(컨텍스트 격리) | source **read-only** + 리뷰 파일만 write | ❌ 게이트만·소스 수정 금지 |
+| Orchestrator (메인) | Tier 분류·라우팅·디스패치·통합·판정 *요청·기록* | 메인 | 전체 | ❌ 스스로 종결 선언 금지(§4) |
+
+> ⚠️ **"격리 ≠ 탈상관"(거버넌스 환상 주의).** 서브에이전트는 *컨텍스트*만 격리될 뿐 **모델 계열은 메인과 동일**하다(correlated errors). 따라서 same-model `<x>-reviewer`는 **§4 held-out이 아니다** — 앵커링은 줄여도 모델 편향은 그대로다. 진짜 탈상관(held-out) 종결은 **§6 교차모델 3인 또는 fresh 세션**에서만 나온다. Orchestrator도 메인이라 **자기 종결 선언을 하지 않는다**(§4): 라우팅·통합·판정 *요청·기록*까지만, 최종 "Critical+Major 0건" 선언은 비작성 노드가 한다.
+
+**제어 흐름.**
+1. Orchestrator가 Tier 분류·라우팅.
+2. `<x>-writer`가 `<x>-write` 스킬을 호출해 `status: draft` 산출 — **자기 완료를 선언하지 않는다**.
+3. Orchestrator가 **별개** `<x>-reviewer` 디스패치 — source read-only, 이슈는 **§4 캐노니컬 리뷰 파일**(`artifacts/review/{type}-{scope}-review-{reviewer}-round{N}.md`)에만 기록(원칙 7, 새 경로 발명 금지).
+4. **기계적 판정(하드 제약).** reviewer 보고 Critical+Major가 **1건이라도 있으면 자동 FAIL** — Orchestrator 재량 통과 금지. FAIL → writer 재작업 → reviewer 재디스패치 = **§4 Round 루프**(상한 T2 R1~2 / T3 R1~3, 초과 시 사용자 에스컬레이션).
+5. **종결·발행 게이트 — T3 held-out 예외 없음(§4).** 패턴 진입 산출물은 경계상 **모두 T3**((공개 AND 비가역)=§2 2축=T3, 또는 자동 T3)이므로 §4 "작성 비참여 노드 종결"이 **예외 없이 적용**된다. same-model `<x>-reviewer`는 *first-pass 게이트*(하드 제약)일 뿐 **종결 노드가 아니다**. "**고위험**" ≡ 자동 T3·위험도메인(§2). 두 분기는 held-out **강도만** 다르다(상호배타):
+   - **고위험(자동 T3·위험도메인)**: `<x>-reviewer` first-pass 후 **§6 교차모델 3인 게이트 필수**. 3인 C+M 0 = held-out 종결 → 사용자 발행 승인.
+   - **(공개 AND 비가역) but ¬고위험**: `<x>-reviewer` first-pass 후 **held-out 종결 필수 — fresh 세션 또는 §6 중 택1**(§4 충족, §6 3인까지는 비강제). same-model 단독 종결 불가. 의심 시 §6 승격.
+
+**전환 경계 (과공학 방지 — 원칙 13).** 3노드화는 **(공개 AND 비가역) 또는 자동 T3**(데이터·위험도메인·보안·메타·신규 화면+상태+데이터)인 산출물에만. 판단은 §2 **3축 전체**(사용자 영향·되돌림 비용·검증 불명확)와 판정 함수(2+ = T3)를 그대로 쓴다 — 새 기준을 만들지 않는다. 저위험 유틸리티(로컬 read/transform: 문서 변환·검색 등)는 메인 직접 실행 **순수 스킬로 유지**. ⚠️ 단 형상관리처럼 **원격·발행·merge 등 비가역 쓰기**를 포함하는 스킬은 저Tier여도 §9 DoD·§8.4의 사용자/Ops 발행 게이트를 유지한다(저위험 예외 ≠ 발행 자동화 허용).
+
+**네이밍 규약.** action 스킬 = 동사(`<x>-write`/`-render`/`-build`), maker = `<x>-writer`, checker = **캐노니컬 역할 reviewer명 재사용**(developer↔code-reviewer, designer↔design-reviewer, planner↔us-reviewer), 없을 때만 `<x>-reviewer` 신설. `<x>` = 스킬 기준 명사(예: `sns`).
+- **agent 역할명 ≠ reviewer 식별자**: §4/§6 리뷰 파일의 `{reviewer}`는 *모델 id*(claude/codex/agy), `code-reviewer`는 *agent 역할명* — 혼동 금지.
+- ⚠️ **마이그레이션·충돌**: 기존 스킬 `sns-writer`(이미 `-writer` 점유)는 규약상 **스킬 `sns-write` + 에이전트 `sns-writer`**로 분리(P1 파일럿 처리). `-write`/`-writer` 1글자 차이는 grep·오타 취약 — 파일럿에서 혼동 비용을 측정해 필요 시 동사 분리(`sns-compose` 등) 재검토.
+
+**메커니즘은 파일럿(RFC) — 검증 전 표준화 금지.** 위 *거버넌스*(3노드 역할·held-out 종결·검수 분리·하드 제약·경계)는 원칙 11·12의 정본 강제다. 그러나 **"에이전트가 스킬을 호출"하는 구현 메커니즘은 미검증 = 파일럿**:
+- **Option A**(우선): maker 에이전트 frontmatter `tools: Skill,…` + "초안은 `<x>-write`로만".
+- **Option C**(경량 폴백): 하네스가 서브에이전트 `Skill` 미지원이면 메인이 스킬을 실행하되 **독립 `<x>-reviewer` 서브에이전트로 검수만 분리**(검수 분리 = 가치의 핵심).
+- **Option B**(무거움·최후): cmux pane(multi-ai-discussion식) — 화면 점유·흐름 단절 크니 다른 경로 불가 시만.
+- **파일럿 게이트**: 첫 전환(dakman-sns)에서 동작·기록 경로·성공 기준을 확인하기 전까지 **메커니즘(A/B/C) 표준 확정과 타 프로젝트 agent/skill 생성을 금지**한다. 거버넌스 표준의 *문서화 자체*(본 §9·project-init §8 포인터)는 정본이므로 이 금지와 무관 — 다운스트림은 *문서화된 스펙*에 맞춰 파일럿 후 구현한다. 결과는 §10.2 지표로.
+
+**측정(원칙 13).** §10.2에 추가: **공개 산출물 탈출 결함 수(패턴 전/후)** · **단일 모델 self-approval 발행 건수**(同 계열 노드만 거쳐 발행된 공개물). 개선 없으면 §10.3으로 폐기 검토.
+
+**산출물 상태기계.** maker 산출 frontmatter `status`: `draft`(writer) → `reviewed`(same-model `<x>-reviewer` first-pass PASS) → `held-out-passed`(§4 held-out 종결: 고위험=§6 교차모델 / ¬고위험=fresh 세션 또는 §6) → `published`(사용자 승인 후 Orchestrator 기록). 검수 노드(`same-model`·`held-out:fresh|xmodel`)를 frontmatter에 함께 기록 — 이게 §10.2 "단일 모델 self-approval 발행 건수" **집계 키**다(`held-out-passed` 없이 `published` = self-approval 신호). **T3(=모든 패턴 진입 산출물)는 `reviewed`에서 바로 `published`로 갈 수 없다** — `held-out-passed` 필수.
+
 ### 완료 조건 (Definition of Done)
 - 모든 적용 게이트 Critical+Major 0건 (종결 판정은 §4 held-out 규칙)
 - `artifacts/progress/todo.md` 갱신 — 항목별 1줄 spine: `status(open/tried/passed/blocked) · 다음 행동 · 검증 증거 링크 · 되돌릴 커밋`. 상세 증거는 artifacts/review·tests 링크로 (todo 오염 방지). **세션 재개 시 첫 Read 대상.**
@@ -403,6 +443,7 @@ Tier / 리뷰 라운드 수 / 게이트 first-pass 여부 / 사용자 활성 검
 - **사용자 활성 검토 시간 추이** — 본 워크플로우의 1차 비용 함수 (증가 추세 = 워크플로우 실패 신호)
 - **summary ↔ raw 대조** — 3인 리뷰 summary의 C/M 카운트와 raw 리뷰 파일 집계 일치 여부 (요약 편향 감지, §6.7 병기 의무와 쌍)
 - **자동 루프 §8.4 준수** — 등록된 루프의 7개 항목 기록·예산 cap·사용량 기록이 실제로 채워졌는지
+- **에이전트 중심 패턴 효과(§9)** — 공개 산출물 탈출 결함 수(패턴 전/후) · 단일 모델 self-approval 발행 건수(同 계열 노드만 거쳐 발행된 공개물). 개선 없으면 §10.3으로 폐기 검토
 
 ### 10.3 평가 기반 결정 (개선 / 유지 / 폐기)
 
@@ -455,6 +496,7 @@ Tier / 리뷰 라운드 수 / 게이트 first-pass 여부 / 사용자 활성 검
 
 ## 12. 변경 이력
 
+- **2026-06-21 에이전트 중심 실행 패턴 명문화 (3인 교차 리뷰 R1 반영)**: 스킬 중심(메인 직접 실행 → self-approval 구멍) → 에이전트 중심 전환 표준을 §9에 신설 — `<x>-writer`(maker)·`<x>-write`(스킬)·`<x>-reviewer`(checker) 3노드 + Orchestrator 패턴. 원칙 11·12의 *구조적 강제*(새 원칙 아님). codex·agy·claude 3인 리뷰(R1 전원 FAIL) 반영: **격리≠탈상관** 명시(same-model 검수는 §4 held-out 아님 → 공개·비가역·고위험은 §6 교차모델 종결) · Orchestrator 자기 종결 선언 금지 + **하드 제약**(reviewer C+M≥1=자동 FAIL) · 리뷰 파일은 §4 캐노니컬 경로 재사용 · FAIL 루프를 §4 Round 상한에 배선 · 전환 경계 = (공개 AND 비가역) 또는 자동 T3 + §2 3축 전체 · 메커니즘은 파일럿(RFC)로 격리(검증 전 다운스트림 롤아웃 금지) · §10.2 측정 지표 추가 · 산출물 status 상태기계. project-init §8은 정본 §9를 가리키는 포인터로(SSoT). 다운스트림(글로벌 스킬·각 프로젝트)이 이 스펙에 맞춰 구현.
 - **2026-06-13 project-init 개명 + 검토 반영**: 3자 토론(`.cmux/debates/project-setup-review/`) 결론 반영 — `docs/project-setup.md` → **`docs/project-init.md`** 개명(SETUP=빌드·실행 오해 회피, 1회성 init 성격), 초기화 가이드 본문 8절 정렬·§2 저장소 생성·§5 mkdir·§7 workflow §0 채우기 보강, `.cmux/` 추적 정책 명시. 본 문서 원칙 6·9·§2·§11 참조 경로 동반 수정.
 - **2026-06-11 워크플로우 문서 이동**: `docs/workflow.{md,drawio,html}` → **`.claude/workflows/`** — 워크플로우 정의 문서를 Claude 설정 폴더 구조(project-setup.md §4)의 의도된 위치로 이동. 참조 경로 동반 수정.
 - **2026-06-11 design 폴더 분리**: 디자인 산출물을 `artifacts/planning/design/` → **`artifacts/design/`**(최상위)로 분리 — 기획(2)·디자인(3) 단계 분리 및 Planner·Designer 역할 분리와 정합. §3·§11·project-setup.md 트리·drawio 동반 수정.

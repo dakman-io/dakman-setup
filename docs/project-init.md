@@ -282,6 +282,14 @@ gh api repos/<owner>/<repo>/branches \
   - developer ↔ code-reviewer
 - 발동 지점이 workflow.md에 없는 agent는 만들지 않는다 (원칙 11 — 지점 바인딩).
 
+### 에이전트 중심 실행 패턴 (정본: workflow.md §9)
+
+공개·비가역·고위험 산출물을 만드는 스킬은 메인이 직접 실행하면 self-approval이 생긴다. **3노드 패턴**으로 분리한다 — 상세(제어 흐름·종결 게이트·네이밍·경계·메커니즘)는 **workflow.md §9 "에이전트 중심 실행 패턴"이 정본**(여기 중복 기술하지 않음):
+
+- `<x>-writer`(maker 에이전트) → `<x>-write`(action 스킬) → `<x>-reviewer`(checker, source read-only) → Orchestrator(라우팅·판정 요청, 자기 종결 선언 금지).
+- ⚠️ same-model 서브에이전트 검수는 §4 held-out이 아니다 — 공개·비가역·고위험 발행의 종결은 §6 교차모델 3인/fresh 세션.
+- 전환 경계: **(공개 AND 비가역) 또는 자동 T3**만. 저위험 유틸리티는 순수 스킬 유지.
+
 ## 9. LLM 위키 연동 (지식 축적)
 
 이 프로젝트에서 나오는 지식(리서치·의사결정·방법론)은 부문별 **중앙 LLM 위키**(dakman/chagok/emotion vault)로 모은다. Karpathy "LLM wiki" 패턴 — 매 질의마다 재발견하는 RAG와 달리 **한 번 컴파일해 최신 유지**, 소스를 더할수록 복리로 풍부해진다.

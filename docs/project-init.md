@@ -15,6 +15,24 @@
 - **왜**: 다른 세션은 자기 작업트리가 외부에서 바뀐 걸 모르고 혼란스러워하며, 그 repo의 git 흐름·작업 맥락은 그 세션이 소유한다. 직접 손대면 진행 중 작업(미커밋 feature 브랜치 등)과 엉킨다.
 - 기존 "다른 repo **git 대행 금지 → 통지**"를 **작업 위임까지 강화**한 규약. 글로벌 정본: `~/.claude/CLAUDE.md` + `cross-project-notify` 스킬.
 
+## cmux 멀티 세션 환경 (진행자·pane)
+
+dakman 생태계는 **cmux 멀티 세션** 위에서 돈다 — 프로젝트마다 Claude 세션('진행자')이 하나의 **터미널 surface**에서 돌고, 다른 프로젝트·AI 도구(codex·agy 등)는 별도 pane으로 함께 뜬다. 위의 크로스 프로젝트 위임도, 아래 워크플로우의 3인 교차 리뷰도 전부 이 cmux 위에서 동작하므로 새 프로젝트 에이전트도 기본 멘탈 모델을 알아야 한다.
+
+- **계층**: `window > workspace > tab > surface(=pane 콘텐츠)`. 각 surface = 하나의 터미널 화면.
+- **자기 위치 파악**: `cmux identify` → 내 `surface_ref`·`workspace_ref`. 명령은 항상 **`--surface surface:N`** 으로 타깃(`--pane`은 focus 리다이렉트 위험 — 비권장). **다른 workspace를 대상으로 하면 `--workspace workspace:N`도 함께** — 안 주면 surface ref가 *내 workspace* 기준으로 해석돼 오발사된다(크로스 프로젝트 위임 시 필수).
+- **입력**: `cmux send --surface S '<텍스트>'` **다음에** `cmux send-key --surface S enter`(분리). ⚠️ send 후 enter 미제출이 빈번 → 작업중 패턴 확인 후 재전송.
+
+**용도별 스킬을 쓴다(raw cmux 직접 조작 대신):**
+
+| 목적 | 스킬 |
+|------|------|
+| pane 즉시 열고/SSH/명령·출력 회수 (TTY 필요·지속 세션) | `cmux-pane` (`scripts/pane.sh` 한 줄로 캡슐화) |
+| codex·agy·claude 3인 교차 리뷰/토론 (4-pane·칠판 모드) | `multi-ai-discussion` |
+| 다른 프로젝트 진행자에 작업 위임·통지 (닫힌 루프) | `cross-project-notify` |
+
+> 깊은 cmux 조작 정본: `~/.claude/skills/multi-ai-discussion/references/cmux-guide.md`. 요구: macOS + cmux.
+
 ## 셋업 체크리스트
 
 - [ ] 1. 페르소나 지정 + 로컬 경로 확인

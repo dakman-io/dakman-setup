@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PRD 심층 조사 — 클래식부터 AI 시대까지</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0c0f15; --bg2:#0f131b; --panel:#151b26; --panel2:#1b2331; --line:#283142; --line2:#36425a;
+    --ink:#e9edf5; --muted:#98a4b6; --faint:#69748a;
+    --accent:#6d8cff; --accent2:#9db4ff; --accentbg:#6d8cff14;
+    --ok:#43dd86; --warn:#f5b13d; --opin:#86a0e0; --excl:#737d92;
+    --disp:"Space Grotesk","Noto Sans KR",sans-serif;
+    --body:"Noto Sans KR","Space Grotesk",-apple-system,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15.5px;line-height:1.7;
+    background-image:radial-gradient(1000px 540px at 88% -8%,#6d8cff14,transparent),radial-gradient(760px 520px at -5% 10%,#43dd8609,transparent);background-attachment:fixed;}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.03;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+  .wrap{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:0 22px 110px}
+  a{color:var(--accent2);text-decoration:none;border-bottom:1px solid #6d8cff44}
+  code{font-family:var(--mono);font-size:.84em;background:#1a2230;border:1px solid var(--line);border-radius:5px;padding:1px 6px;color:#cdd9ea}
+  h2{font-family:var(--disp);font-weight:700;font-size:1.55rem;letter-spacing:-.02em;margin:0 0 4px;color:#f3f6fb}
+  h3{font-family:var(--disp);font-weight:600;font-size:1.05rem;margin:0 0 8px}
+  .sec{margin-top:60px}
+  .sec>.kicker{font-family:var(--mono);font-size:.7rem;letter-spacing:.26em;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
+  p{margin:.5em 0}
+  .reveal{opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease}
+  .reveal.in{opacity:1;transform:none}
+  @media print{.reveal{opacity:1!important;transform:none!important;transition:none!important}}
+  @media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+
+  header.hero{padding:72px 0 18px}
+  .eyebrow{font-family:var(--mono);font-size:.74rem;letter-spacing:.2em;color:var(--accent);text-transform:uppercase}
+  .hero h1{font-family:var(--disp);font-weight:700;font-size:clamp(2rem,5vw,3.1rem);line-height:1.06;letter-spacing:-.03em;margin:14px 0 8px;color:#f5f8fc}
+  .hero .lede{color:var(--muted);font-size:1.04rem;max-width:760px}
+  .hero .meta{margin-top:14px;font-family:var(--mono);font-size:.76rem;color:var(--faint)}
+
+  /* verification legend / badges */
+  .legend{display:flex;gap:9px;flex-wrap:wrap;margin:18px 0 0}
+  .bdg{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.74rem;font-weight:600;padding:3px 10px;border-radius:20px;white-space:nowrap}
+  .b-ok{background:#43dd8618;color:#7ff0b1;border:1px solid #43dd8644}
+  .b-warn{background:#f5b13d18;color:#fcd089;border:1px solid #f5b13d44}
+  .b-opin{background:#86a0e018;color:#b9caf3;border:1px solid #86a0e044}
+  .b-excl{background:transparent;color:var(--excl);border:1px dashed #737d9266}
+
+  .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:11px;margin:26px 0 0}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 14px}
+  .stat .n{font-family:var(--disp);font-weight:700;font-size:1.35rem;color:#f3f6fb}
+  .stat .l{font-size:.74rem;color:var(--muted);margin-top:2px;line-height:1.35}
+  @media (max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}}
+
+  /* tldr numbered */
+  .tldr{display:grid;gap:11px;margin-top:14px}
+  .tl{display:grid;grid-template-columns:auto 1fr;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:15px 18px}
+  .tl .num{font-family:var(--disp);font-weight:700;font-size:1.3rem;color:var(--accent);line-height:1.2}
+  .tl p{margin:0;font-size:.97rem}
+  .tl b{color:#f3f6fb}
+
+  /* cards */
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
+  .cards.two{grid-template-columns:1fr 1fr}
+  @media (max-width:760px){.cards,.cards.two{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:16px 18px}
+  .card h3{font-size:.98rem}
+  .card p{margin:0;color:var(--muted);font-size:.9rem}
+  .card b{color:var(--ink)}
+
+  /* table */
+  .tbl{width:100%;border-collapse:separate;border-spacing:0;margin-top:8px;font-size:.88rem;border:1px solid var(--line);border-radius:13px;overflow:hidden;background:var(--panel)}
+  .tbl th,.tbl td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+  .tbl thead th{background:var(--panel2);font-family:var(--mono);font-size:.7rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+  .tbl tbody tr:last-child td{border-bottom:none}
+  .tbl tbody tr:hover{background:#19222f}
+  .tbl td:first-child{color:#eef2f8;font-weight:500}
+  .strike{color:var(--excl);text-decoration:line-through;text-decoration-color:#737d9277}
+
+  blockquote{margin:14px 0;padding:12px 18px;border-left:3px solid var(--accent);background:var(--accentbg);border-radius:0 10px 10px 0;color:#d7deea;font-size:.94rem}
+  blockquote b{color:var(--accent2)}
+
+  /* debate split */
+  .debate{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:8px}
+  @media (max-width:760px){.debate{grid-template-columns:1fr}}
+  .camp{border:1px solid var(--line);border-radius:13px;padding:16px 18px;background:var(--panel)}
+  .camp .tag{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+  .camp.a{border-color:#f5b13d44} .camp.a .tag{color:var(--warn)}
+  .camp.b{border-color:#43dd8644} .camp.b .tag{color:var(--ok)}
+  .camp p{margin:.3em 0;color:var(--muted);font-size:.9rem}
+  .camp b{color:var(--ink)}
+
+  /* spectrum bar */
+  .spectrum{margin-top:16px;border:1px solid var(--line);border-radius:13px;overflow:hidden;background:var(--panel)}
+  .spec-bar{display:flex;height:14px}
+  .spec-bar i{display:block}
+  .s1{flex:17;background:linear-gradient(90deg,#f5b13d,#f5b13db0)}
+  .s2{flex:50;background:linear-gradient(90deg,#86a0e0,#9db4ff)}
+  .s3{flex:33;background:linear-gradient(90deg,#43dd86,#43dd86c0)}
+  .spec-row{display:grid;grid-template-columns:17fr 50fr 33fr;gap:0}
+  .spec-row>div{padding:13px 15px;border-right:1px solid var(--line)}
+  .spec-row>div:last-child{border-right:none}
+  .spec-row .pct{font-family:var(--disp);font-weight:700;font-size:1.05rem}
+  .spec-row .t1{color:var(--warn)} .spec-row .t2{color:var(--accent2)} .spec-row .t3{color:var(--ok)}
+  .spec-row .d{font-size:.82rem;color:var(--muted);margin-top:3px}
+  @media (max-width:680px){.spec-row{grid-template-columns:1fr}.spec-row>div{border-right:none;border-bottom:1px solid var(--line)}}
+
+  /* eval pyramid */
+  .pyr{display:flex;flex-direction:column;align-items:center;gap:7px;margin:8px 0 4px}
+  .pyr .tier{border-radius:9px;padding:11px 16px;text-align:center;border:1px solid var(--line)}
+  .pyr .t-top{width:46%;background:#f5b13d12;border-color:#f5b13d40}
+  .pyr .t-mid{width:68%;background:#86a0e012;border-color:#86a0e040}
+  .pyr .t-bot{width:90%;background:#43dd8612;border-color:#43dd8640}
+  .pyr .tier b{font-size:.92rem} .pyr .tier small{display:block;color:var(--muted);font-size:.78rem;margin-top:2px}
+
+  ul.tight{margin:6px 0 0;padding-left:18px}
+  ul.tight li{margin:5px 0;color:var(--muted)}
+  ul.tight li b{color:var(--ink)}
+  .vote{font-family:var(--mono);font-size:.78rem;color:var(--ok)}
+
+  /* dakman reco */
+  .reco{border:1px solid #6d8cff3d;background:linear-gradient(180deg,#6d8cff0e,transparent);border-radius:13px;padding:6px 4px}
+  .reco .item{padding:11px 18px;border-bottom:1px solid var(--line)}
+  .reco .item:last-child{border-bottom:none}
+  .reco .item b{color:var(--accent2)}
+  .reco .item span{color:var(--muted)}
+
+  .grade{display:grid;gap:9px;margin-top:8px}
+  .gr{display:grid;grid-template-columns:auto 1fr;gap:13px;align-items:start;border:1px solid var(--line);border-radius:12px;padding:12px 15px;background:var(--panel);font-size:.9rem;color:var(--muted)}
+  .gr.excl{border-style:dashed;background:transparent}
+  .src{margin-top:14px;font-size:.86rem;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 18px}
+  footer{margin-top:60px;padding-top:18px;border-top:1px solid var(--line);color:var(--faint);font-size:.8rem;font-family:var(--mono)}
+  .note{font-size:.86rem;color:var(--muted);background:var(--bg2);border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:0 10px 10px 0;padding:11px 16px;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero reveal">
+    <div class="eyebrow">Multi-source Research · 우리 위키 + GitHub·X·Reddit·YouTube·블로그</div>
+    <h1>PRD 심층 조사 — 클래식부터 AI 시대까지</h1>
+    <p class="lede">"PRD는 죽었나?"가 아니라 <b style="color:var(--ink)">헤비 vs 경량</b>이 진짜 논쟁이다. 그리고 AI는 PRD를 <b style="color:var(--accent2)">사람용(경량)</b> + <b style="color:var(--ok)">에이전트용(엄격 스펙+Eval)</b> 둘로 쪼갠다.</p>
+    <div class="legend">
+      <span class="bdg b-ok">✅ 다출처 교차검증</span>
+      <span class="bdg b-warn">⚠️ 단일/secondary · 한 진영</span>
+      <span class="bdg b-opin">💬 오피니언 / 일화</span>
+      <span class="bdg b-excl">🚫 마케팅 과장(배제)</span>
+    </div>
+    <div class="meta">dakman research · 2026-06-20 · 검증 등급은 항목별 표기</div>
+  </header>
+
+  <section class="stats reveal">
+    <div class="stat"><div class="n">3갈래</div><div class="l">병렬 멀티소스 조사 (GitHub·소셜·블로그/영상)</div></div>
+    <div class="stat"><div class="n">~50%</div><div class="l">중심 진영 = "경량+리빙·정렬"</div></div>
+    <div class="stat"><div class="n">114k★</div><div class="l">spec-kit (GitHub 공식 SDD)</div></div>
+    <div class="stat"><div class="n">8항목</div><div class="l">AI PRD 필수 + Eval Plan</div></div>
+    <div class="stat"><div class="n">3단계</div><div class="l">Eval 피라미드 (교차검증)</div></div>
+  </section>
+
+  <!-- TL;DR -->
+  <section class="sec reveal">
+    <div class="kicker">TL;DR</div>
+    <h2>핵심 결론</h2>
+    <div class="tldr">
+      <div class="tl"><div class="num">1</div><p><b>PRD는 안 죽었다.</b> 진짜 논쟁은 죽음이 아니라 <b>헤비 vs 경량</b> — <em>아무도 10~50쪽 워터폴 PRD를 옹호하지 않는다.</em> <span class="bdg b-ok">✅</span></p></div>
+      <div class="tl"><div class="num">2</div><p><b>핵심 통찰</b>: "문서는 <b>사고의 잔여물</b>이다 — 사고·정렬을 지키고 문서는 줄여라." (Reddit 최고 득표 + Cagan/Lenny 계보) <span class="bdg b-ok">✅</span></p></div>
+      <div class="tl"><div class="num">3</div><p><b>AI가 PRD를 둘로 쪼갠다</b>: ⓐ 인간용 = 더 경량(정렬) + ⓑ 에이전트용 = 더 엄격(기계검증 스펙 + Eval). 두 커뮤니티가 <em>"사람엔 가볍게, 에이전트엔 엄밀하게"</em>로 수렴. <span class="bdg b-ok">✅</span></p></div>
+      <div class="tl"><div class="num">4</div><p>우리 <b>요즘IT 노트('AI PRD = Eval 중심으로 허용 답변 범위 정의')는 다출처로 교차검증됨</b> — 단일 한국 출처의 특이 주장이 아니라 업계 패턴. <span class="bdg b-ok">✅</span></p></div>
+      <div class="tl"><div class="num">5</div><p><b>단, 정직하게</b>: "AI 때문에 PRD가 <em>더 중요해졌다</em>"는 컨센서스가 아니라 <b>한 진영(~30–35%, 급성장)</b>. 다수(~50%)는 "더 <em>가벼워졌고</em> 가치는 늘 사고/정렬." 반론: <em>"엄밀함은 원래 필요했고 AI는 부재를 더 빨리 드러낼 뿐."</em> <span class="bdg b-warn">⚠️</span><span class="bdg b-opin">💬</span></p></div>
+    </div>
+  </section>
+
+  <!-- §1 -->
+  <section class="sec reveal">
+    <div class="kicker">§1 · 클래식</div>
+    <h2>PRD란 + 왜 중요한가</h2>
+    <p style="color:var(--muted)"><b style="color:var(--ink)">PRD</b> = "무엇을·왜 만드는가"를 정의해 팀을 정렬시키는 문서. 15년+ 권위자가 일치하는 핵심 가치 <span class="bdg b-ok">✅</span></p>
+    <div class="cards" style="margin-top:13px">
+      <div class="card"><h3>① 문제 우선</h3><p>Lenny: <b>"문제 정의가 모든 문제 해결의 가장 중요한 단 한 걸음."</b> Amazon "Working Backwards"는 고객 가치에서 거꾸로 설계.</p></div>
+      <div class="card"><h3>② 정렬(alignment)</h3><p>산출물 자체가 아니라 <b>팀이 같은 그림을 공유</b>하는 게 목적.</p></div>
+      <div class="card"><h3>③ 사고 강제</h3><p>Shreyas Doshi: <b>"쓰는 행위가 사고를 강제한다"</b> — PRD의 진짜 값은 작성자 자신의 추론을 명료화.</p></div>
+    </div>
+  </section>
+
+  <!-- §2 -->
+  <section class="sec reveal">
+    <div class="kicker">§2 · 구조</div>
+    <h2>캐노니컬 PRD 구조 (컨센서스)</h2>
+    <p style="color:var(--muted)">Product School·Aha!·Reforge·Atlassian·ChatPRD 종합 — 채워 넣는 양식이 아니라 <b style="color:var(--ink)">사고 체크리스트</b>로 쓰라(Mind the Product). <span class="bdg b-ok">✅</span></p>
+    <table class="tbl">
+      <thead><tr><th>영역</th><th>섹션</th></tr></thead>
+      <tbody>
+        <tr><td>맥락</td><td>개요 · 변경 이력(changelog) · 작성자 · 상태</td></tr>
+        <tr><td>왜</td><td><b>문제 정의</b>(고객 페인 · 대상)</td></tr>
+        <tr><td>목표</td><td>비즈니스 목표 + <b>측정 가능한 성공 지표</b></td></tr>
+        <tr><td>사용자</td><td>페르소나 · 유스케이스 · 시나리오</td></tr>
+        <tr><td>요구</td><td>사용자 스토리(As a…/I want…/so that…) · 기능 요구</td></tr>
+        <tr><td>검증</td><td><b>수용 기준</b>(Given-When-Then 증가 추세)</td></tr>
+        <tr><td>품질</td><td>비기능 요구(성능·보안·접근성, ISO/IEC 25010)</td></tr>
+        <tr><td>경계</td><td><b>스코프 & 비목표(non-goals)</b> — 명시적 "안 함"</td></tr>
+        <tr><td>설계</td><td>UX · 고충실도 프로토타입 링크</td></tr>
+        <tr><td>운영</td><td>분석/텔레메트리 · 의존성 · 리스크 · 롤아웃</td></tr>
+        <tr><td>미정</td><td><b>열린 질문</b>(TBD 허용)</td></tr>
+      </tbody>
+    </table>
+    <blockquote><b>ChatPRD 10섹션</b>(가장 많이 인용되는 클래식 템플릿): 개요/문제 → 목표·지표 → 유저스토리 → 기능요구("system shall…") → 비기능요구 → 디자인 → 기술고려 → 일정 → 열린질문·리스크 → 부록.</blockquote>
+  </section>
+
+  <!-- §3 debate -->
+  <section class="sec reveal">
+    <div class="kicker">§3 · 논쟁</div>
+    <h2>헤비 vs 경량 (죽음 아님)</h2>
+    <p style="color:var(--muted)">명명된 두 진영이 15년간 충돌. 수렴점 = <b style="color:var(--ink)">문제 우선·경량·리빙·프로토타입 짝</b>. 차이는 "글로 된 산출물이 얼마나 남는가". <span class="bdg b-ok">✅</span></p>
+    <div class="debate">
+      <div class="camp a">
+        <div class="tag">반(反)-헤비 PRD</div>
+        <p><b>Marty Cagan(SVPG)</b> · Amazon(PR-FAQ) · Basecamp(Shape Up) · Intercom</p>
+        <p><em>"고충실도 프로토타입이 곧 스펙"</em> / "발견(discovery) &gt; 문서화" / "남이 정의한 요구를 맹목 실행하지 않는다"</p>
+      </div>
+      <div class="camp b">
+        <div class="tag">구조화-경량-리빙독</div>
+        <p><b>Lenny</b>(1-pager) · <b>Reforge</b>("PRD는 명사 아닌 동사") · <b>Aakash Gupta</b></p>
+        <p><em>"끝내거나 완벽할 걱정 말고, 시작하기에 충분한가만 봐라."</em></p>
+      </div>
+    </div>
+
+    <div class="spectrum">
+      <div class="spec-bar"><i class="s1"></i><i class="s2"></i><i class="s3"></i></div>
+      <div class="spec-row">
+        <div><div class="pct t1">~15–20%</div><div class="d"><b>PRD 죽었다</b> — 프로토타입 우선, 그냥 바이브코딩 (인디/바이브코더)</div></div>
+        <div><div class="pct t2">~50% · 중심</div><div class="d"><b>경량 + 진화</b> — 가치는 문서 아닌 정렬 (주류 PM, Cagan 계보)</div></div>
+        <div><div class="pct t3">~30–35% · 급성장</div><div class="d"><b>더 중요</b> — 스펙이 해법, 에이전트가 그대로 실행 + AI는 Eval 필요 (AI-PM·에이전트 빌더)</div></div>
+      </div>
+    </div>
+    <p style="margin-top:12px;color:var(--muted)" class="b-opin-note"><span class="bdg b-opin">💬 Reddit 실측</span> 최고 득표: <span class="vote">"빠른 무문서 개발은 결국 큰 혼란"(250▲)</span> — "PRD 죽었다" 백래시. 동시에 <span class="vote">"PRD는 이제 더 중요. LLM이 내 문서를 실제로 읽으니까"(85▲)</span>. 헤비 PRD 실패는 대개 <b style="color:var(--ink)">발견 실패</b>(엔지니어를 일찍 안 끼움)이지 PRD 무용의 증거가 아니다.</p>
+  </section>
+
+  <!-- §4 AI shift -->
+  <section class="sec reveal">
+    <div class="kicker">§4 · AI 전환</div>
+    <h2>AI 시대 — PRD가 둘로 갈린다</h2>
+    <div class="cards two" style="margin-top:13px">
+      <div class="card">
+        <h3>4-A · AI <span style="color:var(--accent2)">제품</span>용 PRD (확률적)</h3>
+        <p>전통 PRD는 <em>"입력 A → 항상 출력 B"</em> 가정. LLM은 <em>"사실은 맞아도 부적절"</em>. → <b>측정 가능한 품질 차원 + 허용 임계값</b>으로 전환. <span class="bdg b-ok">✅</span></p>
+        <ul class="tight">
+          <li><b>Eval이 테스트케이스를 대체.</b> 예: <em>"사실 정확·구조화된 응답을 최소 92% 반환"</em> = 요즘IT "허용 답변 범위" 프레임과 일치.</li>
+          <li><b>이중 성공지표</b>: AI(Eval 통과율·환각률·가드레일 발동률) + 전통(인게이지먼트·리텐션·NPS).</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>4-B · <span style="color:var(--ok)">에이전트 입력</span>용 PRD (Spec-Driven)</h3>
+        <p>PRD = 정적 청사진이 아니라 <b>코딩 에이전트가 실행하는 입력</b>. <span class="bdg b-ok">✅</span></p>
+        <ul class="tight">
+          <li><b>spec-kit</b>(114k★): <code>/constitution→/specify→/plan→/tasks→/implement</code>. 스펙=실행 가능 아티팩트.</li>
+          <li><b>Amazon Kiro</b>: EARS("WHEN…THE SYSTEM SHALL…") · <b>requirement→task 역링크 추적성</b>.</li>
+          <li><b>Anthropic Cat Wu</b>: <em>"스펙을 Claude Code에 보내 빌드되는지 봐라."</em> Peter Yang: <em>"PRD = CLAUDE.md."</em></li>
+          <li>에이전트 가독 PRD(OpenAI Miqdad Jaffer 템플릿): 기계검증 수용기준(정확도·환각&lt;X%·드리프트) · <b>"DO NOT CHANGE" 경계</b>.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- §5 assets -->
+  <section class="sec reveal">
+    <div class="kicker">§5 · 핵심 자산</div>
+    <h2>AI PRD 8항목 + Eval 3단계 (교차검증·정련)</h2>
+    <p style="color:var(--muted)"><b style="color:var(--ink)">AI PRD 8항목</b>: ① 기능 개요 ② 입출력 명세(언어 포함) ③ 시스템 프롬프트 초안(금지사항) ④ 품질 기준(합격선) ⑤ <b style="color:var(--ink)">실패 정의</b>(불허 시나리오) ⑥ 평가 계획(회귀테스트) ⑦ 모니터링 ⑧ 리스크·제한.</p>
+
+    <h3 style="margin:22px 0 6px">Eval 평가 피라미드 <span class="bdg b-ok" style="vertical-align:middle">✅ Husain·Yan·Gupta·Pragmatic Eng 독립 확인 — 최대 검증 수확</span></h3>
+    <div class="pyr">
+      <div class="tier t-top"><b>3. 사람 평가</b><small>까다로운 케이스·회귀 기준점 (선별)</small></div>
+      <div class="tier t-mid"><b>2. LLM-as-Judge</b><small>다른 LLM이 적절성 판단 (사람 100배속)</small></div>
+      <div class="tier t-bot"><b>1. 규칙 / 코드 기반</b><small>단어·길이·기밀·구조·실행 자동 채점 (싸고 빠름)</small></div>
+    </div>
+    <table class="tbl" style="margin-top:12px">
+      <thead><tr><th>단계</th><th>정련 (외부 권위자)</th></tr></thead>
+      <tbody>
+        <tr><td>1. 규칙/코드</td><td>Husain은 아래에 <b>code-based</b>(정규식/구조/실행) 단계를 더 분리. <b>binary Pass/Fail &gt; Likert</b>.</td></tr>
+        <tr><td>2. LLM-Judge</td><td><span class="bdg b-warn">⚠️</span> Eugene Yan: <em>"LLM-judge가 구원하지 않는다"</em> — <b>사람 라벨로 보정</b> 필수, judge 자체가 비결정·게임 가능. 100+ 라벨 있을 때만.</td></tr>
+        <tr><td>3. 사람</td><td>선별 적용 (회귀 기준점).</td></tr>
+      </tbody>
+    </table>
+    <div class="note"><span class="bdg b-warn">⚠️</span> 우리 노트 사례(에어캐나다·Salesforce/Adobe)는 글 자체가 1차 검증원이 아님 — 알려진 일화이나 <b>verified 금지</b>(원 노트 표기 유지).</div>
+    <ul class="tight" style="margin-top:12px">
+      <li><b>보강 ① eval-driven dev</b>: 만들기 <em>전에</em> 성공기준(Eval) 정의 → 8항목 ④⑤⑥을 *최종 섹션*이 아니라 <b>전제조건</b>으로.</li>
+      <li><b>보강 ② 결합 후보</b>: requirement→task 추적성(Kiro) + constitution/품질게이트 층(spec-kit) = 우리 노트에 없던 결합.</li>
+    </ul>
+  </section>
+
+  <!-- §6 tools -->
+  <section class="sec reveal">
+    <div class="kicker">§6 · 도구 지형</div>
+    <h2>무게중심 = spec-driven (PRD 템플릿 repo 아님)</h2>
+    <p style="color:var(--muted)">클래식 "PRD 템플릿 repo"는 대부분 저-star·파편화. <span class="bdg b-ok">✅</span></p>
+    <table class="tbl">
+      <thead><tr><th>도구</th><th>신뢰</th><th>무엇</th></tr></thead>
+      <tbody>
+        <tr><td>github/spec-kit</td><td>✅ 114k★·GitHub 공식</td><td>SDD 정본 (constitution→specify→plan→tasks)</td></tr>
+        <tr><td>Amazon Kiro</td><td>✅ AWS 공식</td><td>에이전틱 IDE · EARS·요구역링크 3파일 스펙</td></tr>
+        <tr><td>ChatPRD (Claire Vo)</td><td>상용·업계 존중</td><td>AI가 PRD 초안→사람 정제, 10섹션 템플릿</td></tr>
+        <tr><td>snarktank/ai-dev-tasks</td><td>7.8k★ 커뮤니티</td><td>create-prd→generate-tasks→process(승인 체크포인트)</td></tr>
+        <tr><td>johnnychauvet/prd-skill</td><td>소·신규</td><td>Claude Code <code>/prd</code>(JTBD+수용기준)</td></tr>
+        <tr><td class="strike">priankr/prd-templates</td><td><span class="bdg b-excl">🚫 ~3★·준-방치</span></td><td>"리딩 PM 출처" 미검증 — 약한 출처, 의존 금지</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- §7 practitioners -->
+  <section class="sec reveal">
+    <div class="kicker">§7 · 실무 <span class="bdg b-opin" style="vertical-align:middle">💬 오피니언/일화</span></div>
+    <h2>실무자가 실제로 하는 것</h2>
+    <p style="color:var(--muted)">(r/ProductManagement "2026년 PRD 작성법" 100+ 답변 요약 + 실측 스레드)</p>
+    <ul class="tight">
+      <li><b>엔지니어와 협업 &gt; 문서</b>(가장 강한 테마): 스펙을 벽 너머로 던지지 말고 일찍 대화.</li>
+      <li><b>간결함 승</b>: 1-pager·짧은 문제정의·Jira/Linear 불릿. <em>"아무도 10쪽 PRD 안 읽는다."</em></li>
+      <li><b>AI는 주로 리서치+초안</b>: 인터뷰 요약·경쟁분석·초안 (작성자 대체 아님).</li>
+      <li>실전 경량 포맷: <b>one-pager</b>(문제·비목표·성공지표·가드레일) · PR-FAQ · 제품 컨셉(1–3쪽) · 결정 로그.</li>
+      <li>실전 AI 습관: <b>음성메모→Claude Code→2~3회 반복</b>("CC를 주니어 PM처럼") · <b>적대적 다모델 리뷰</b>(PRD를 Claude→ChatGPT→Gemini로 코딩 전 검토) · <b>에이전트-컨텍스트 분리</b>(사람용 1-pager + 에이전트용 <code>.md</code> — "에이전트가 제약을 슬쩍 버리니까").</li>
+      <li>엔지니어 관찰: <em>"빌드 중 실제 참조하는 건 수용기준과 엣지케이스 목록뿐. 배경 섹션은 아무도 안 읽는다."</em></li>
+    </ul>
+  </section>
+
+  <!-- §8 best/anti -->
+  <section class="sec reveal">
+    <div class="kicker">§8 · 모범 & 안티</div>
+    <h2>모범사례 & 안티패턴</h2>
+    <table class="tbl">
+      <thead><tr><th>✅ 모범</th><th>🚫 안티패턴</th></tr></thead>
+      <tbody>
+        <tr><td>문제 우선, 해법 나중</td><td>문제 검증 전 해법으로 점프</td></tr>
+        <tr><td>PRD=동사/리빙독("시작에 충분한가")</td><td>한 번 쓰고 얼린 워터폴 PRD</td></tr>
+        <tr><td>고충실도 프로토타입과 짝</td><td>긴 산문이 발견/검증을 대체(Cagan 경고)</td></tr>
+        <tr><td>테스트 가능 수용기준(G-W-T); AI는 Eval 임계</td><td>모호 기준("빠른"·"직관적")</td></tr>
+        <tr><td>협업·회람·우선순위(RICE)·비목표 명시</td><td><b>LLM 생성 bloat</b>(Aakash: 길수록 좋은 거 아님)</td></tr>
+        <tr><td>(AI) 확률 시스템에 맞는 Eval·이중지표</td><td>확률 시스템에 결정론적 pass/fail / 한쪽 지표만</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- §9 dakman -->
+  <section class="sec reveal">
+    <div class="kicker">§9 · 적용</div>
+    <h2>dakman 적용 (제안)</h2>
+    <p style="color:var(--muted)">우리 워크플로우(SDD: 제안요청서→제안서→<b style="color:var(--ink)">PRD</b>→TASK / project-init / <code>artifacts/planning/</code>)와 직접 맞물린다.</p>
+    <div class="reco" style="margin-top:12px">
+      <div class="item"><b>AI 기능 스펙 템플릿화</b> <span class="bdg b-ok">✅</span> <span>— 8항목 + Eval Plan을 <code>artifacts/planning/</code>의 *기능·품질 축* 템플릿으로. 기존 ERD/데이터흐름 스펙(*데이터 축*)의 짝.</span></div>
+      <div class="item"><b>Eval 피라미드 ↔ 우리 검증 규율</b> <span>— 규칙→LLM-judge→사람 순서가 <code>llm-false-consensus-discipline</code>의 "비-LLM 오라클 정박 → judge는 사람 라벨로 보정"과 동형. <em>Yan의 "judge가 구원 아니다"를 §3에 명시 반영.</em></span></div>
+      <div class="item"><b>spec-driven 결합 후보</b> <span>— spec-kit <code>constitution</code> ↔ 우리 <code>workflow.md</code> 원칙 / Kiro <b>requirement→task 추적성</b> ↔ 우리 US→AC→task. project-init §5와 정합.</span></div>
+      <div class="item"><b>두 갈래 PRD 채택</b> <span>— 사람용 경량 1-pager(정렬) + 에이전트용 엄격 스펙(기계검증 수용기준·"DO NOT CHANGE"·CLAUDE.md 짝). 실무자·도구 양쪽이 수렴한 패턴.</span></div>
+      <div class="item"><b>균형 경계</b> <span class="bdg b-warn">⚠️</span> <span>— "AI라서 PRD가 더 중요"를 교조화 금지. 다수 여론은 "사람엔 더 가볍게". 우리 강점 <b>Tier(위험 기반 강도)</b>로 — 고위험 AI 기능엔 8항목+Eval 풀, 저위험엔 경량. <em>"엄밀함은 위험에 비례."</em></span></div>
+    </div>
+  </section>
+
+  <!-- §10 verification -->
+  <section class="sec reveal">
+    <div class="kicker">§10 · 검증 & 출처</div>
+    <h2>검증 상태</h2>
+    <div class="grade">
+      <div class="gr"><span class="bdg b-ok">✅ 교차검증</span><div>Eval 3단계 피라미드 · deterministic→probabilistic 전환 · 헤비vs경량 논쟁 · 캐노니컬 구조 · spec-driven dev(spec-kit/Kiro) · "스펙을 에이전트에 보내라"(Anthropic)</div></div>
+      <div class="gr"><span class="bdg b-warn">⚠️ 단일·한 진영</span><div>"AI라서 PRD가 <em>더 중요</em>"(한 진영 ~30–35%) · 요즘IT 사례(에어캐나다·Salesforce/Adobe = 일화, 1차 검증원 아님) · AI-PRD <em>섹션별 템플릿</em>은 아직 통합 중(emerging)</div></div>
+      <div class="gr"><span class="bdg b-opin">💬 오피니언</span><div>Reddit/X 여론·스펙트럼 % (정성 추정, 측정 분포 아님) · 실무자 워크플로우</div></div>
+      <div class="gr excl"><span class="bdg b-excl">🚫 배제</span><div>"PRD 50% 빨리"·"AI 도구 5종 비교 승자" 리스티클·프롬프트팩 — 마케팅 과장</div></div>
+    </div>
+    <div class="src">
+      <b>주요 출처</b> — github/spec-kit · Amazon Kiro(kiro.dev) · ChatPRD · Hamel Husain(hamel.dev) · Eugene Yan · Aakash Gupta(news.aakashg.com) · Marty Cagan(svpg.com) · Lenny Rachitsky · Amazon Working Backwards · Reforge · Anthropic Cat Wu(claude.com/blog) · OpenAI Miqdad Jaffer 템플릿(productcompass.pm) · Reddit r/ProductManagement·r/vibecoding · 우리 위키 <code>ai-prd-methodology.md</code>.
+      <div class="note" style="margin-top:12px;border-left-color:var(--faint)"><b>접근 한계</b>: SVPG·Lenny·Aakash 원문 다수 403/페이월 → 색인 요약+다중 secondary로 재구성(verbatim 인용 시 원문 대조 필요). Reddit은 playwright 실브라우저로 verbatim·득표수 직접 추출. X/Twitter는 402 차단 — 검색 스니펫+뉴스레터 기반(2차).</div>
+    </div>
+  </section>
+
+  <footer>PRD 심층 조사 · 우리 LLM 위키 + GitHub·X·Reddit·YouTube·블로그 멀티소스 교차검증 · dakman research · 2026-06-20</footer>
+</div>
+<script>
+  const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}})},{threshold:.06});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+  setTimeout(()=>document.querySelectorAll('.reveal:not(.in)').forEach(el=>el.classList.add('in')),4000);
+</script>
+</body>
+</html>

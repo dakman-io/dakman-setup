@@ -43,7 +43,7 @@ dakman 생태계는 **cmux 멀티 세션** 위에서 돈다 — 프로젝트마�
 - [ ] 6. 첫 커밋 (HEAD 생성)
 - [ ] 7. 브랜치 전략 (로컬 생성 → 원격 push·보호·main 삭제)
 - [ ] 8. skill / agent 구성 (워크플로우 지점 바인딩)
-- [ ] 9. LLM 위키 연동 (지식 축적 — 무설정 자동 + 마커 규약)
+- [ ] 9. LLM 위키 연동 (지식 축적 ingest + 참조 recall — dakman-wiki 먼저 조회)
 
 ---
 
@@ -308,11 +308,13 @@ gh api repos/<owner>/<repo>/branches \
 - ⚠️ same-model 서브에이전트 검수는 §4 held-out이 아니다 — 공개·비가역·고위험 발행의 종결은 §6 교차모델 3인/fresh 세션.
 - 전환 경계: **(공개 AND 비가역) 또는 자동 T3**만. 저위험 유틸리티는 순수 스킬 유지.
 
-## 9. LLM 위키 연동 (지식 축적)
+## 9. LLM 위키 연동 (지식 축적·참조)
 
-이 프로젝트에서 나오는 지식(리서치·의사결정·방법론)은 부문별 **중앙 LLM 위키**(dakman/chagok/emotion vault)로 모은다. Karpathy "LLM wiki" 패턴 — 매 질의마다 재발견하는 RAG와 달리 **한 번 컴파일해 최신 유지**, 소스를 더할수록 복리로 풍부해진다.
+이 프로젝트에서 나오는 지식(리서치·의사결정·방법론)은 부문별 **중앙 LLM 위키**(dakman/chagok/emotion vault)로 모은다. Karpathy "LLM wiki" 패턴 — 매 질의마다 재발견하는 RAG와 달리 **한 번 컴파일해 최신 유지**, 소스를 더할수록 복리로 풍부해진다. 위키는 **양방향**이다: 지식을 **쌓고**(ingest) 작업 시 **참조한다**(recall).
 
-**무설정 자동 연결.** 위키 자동 ingest는 **머신 전역 Claude 유저 훅**(`~/.claude/settings.json` PostToolUse → `~/.claude/hooks/`)으로 동작한다 — **per-repo 훅·설정이 필요 없다.** 새 프로젝트는 만들자마자 자동 커버된다. 운영 스킬(`wiki-ingest`·`wiki-organize`)과 온보딩(`wiki-onboarding`)도 글로벌 단일 정본(`~/.claude/skills/`)이므로 **리포에 사본을 두지 않는다**(드리프트 방지).
+**참조 먼저 (recall) — 모든 dakman 프로젝트의 정리된 지식 소스 = dakman-wiki.** 작업 착수 시(브리핑·기획)와 검증 근거가 필요할 때, 관련 지식을 **`wiki-recall`로 dakman-wiki에서 먼저 조회·인용**한다(매번 재발견 대신 컴파일된 지식 사용). **READ-ONLY**(조회·인용만 — vault에 쓰지 않는다), **`verified` 페이지 우선**(사실 근거 게이트), 인용표기 **`dakman-wiki: wiki/xxx (verified)`**. 인터페이스는 글로벌 스킬 `wiki-recall` 하나(별도 설정 없음), 위키 운영 정본은 dakman-wiki/CLAUDE.md. workflow.md §3 "지식 참조 먼저" 표준과 정합.
+
+**축적 (ingest) — 무설정 자동 연결.** 위키 자동 ingest는 **머신 전역 Claude 유저 훅**(`~/.claude/settings.json` PostToolUse → `~/.claude/hooks/`)으로 동작한다 — **per-repo 훅·설정이 필요 없다.** 새 프로젝트는 만들자마자 자동 커버된다. 운영 스킬(`wiki-ingest`·`wiki-organize`)과 온보딩(`wiki-onboarding`)도 글로벌 단일 정본(`~/.claude/skills/`)이므로 **리포에 사본을 두지 않는다**(드리프트 방지).
 
 **셋업에서 할 일은 두 가지뿐:**
 

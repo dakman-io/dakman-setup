@@ -14,4 +14,8 @@
 - **초기화**: [`docs/project-init.md`](docs/project-init.md) — 새 프로젝트 셋업 체크리스트
 - **운영 정본**: [`.claude/workflows/workflow.md`](.claude/workflows/workflow.md) — 7단계 워크플로우 (Tier 분류·ATDD·3인 교차 리뷰·정량 평가)
 
+## 지식 소스 (dakman-wiki)
+
+작업 착수·검증 시 관련 지식을 **`wiki-recall`로 중앙 위키 dakman-wiki에서 먼저 조회·인용**한다 — READ-ONLY(조회·인용만), `verified` 페이지 우선, 인용표기 `dakman-wiki: wiki/xxx (verified)`. 지식 축적(ingest)은 무설정 자동(project-init §9). 정본: dakman-wiki/CLAUDE.md · workflow.md §3.
+
 > 본 문서 / project-init.md / workflow.md 변경은 자동 Tier 3 (workflow.md 원칙 9).

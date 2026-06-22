@@ -121,6 +121,8 @@ flowchart LR
 
 > 시각화: `.claude/workflows/workflow.drawio` (7 스윔레인 A~G, 역할 색상) · `.claude/workflows/workflow.html`
 
+> **지식 참조 먼저 (dakman-wiki)**: 작업 착수 시(1 브리핑·2 기획)와 검증 근거가 필요할 때, 관련 지식을 **`wiki-recall`로 중앙 위키 dakman-wiki에서 먼저 조회·인용**한다 — 매 질의 재발견(RAG) 대신 한 번 컴파일된 정리 지식을 쓴다. **READ-ONLY**(조회·인용만, 쓰기 금지), **`verified` 페이지 우선**(사실 근거 게이트), 인용표기 `dakman-wiki: wiki/xxx (verified)`. 지식 *축적*(ingest)은 `docs/project-init.md` §9. 위키 운영 정본: dakman-wiki/CLAUDE.md.
+
 ---
 
 ## 4. 공통 리뷰 루프
@@ -487,6 +489,8 @@ Tier / 리뷰 라운드 수 / 게이트 first-pass 여부 / 사용자 활성 검
 | `.claude/skills/` | 프로젝트 스킬 (커버리지 측정 SSoT 등) |
 | 글로벌 스킬 `project-init` | 프로젝트 초기화 — `docs/project-init.md`를 MAY/ASK/STOP 플레이북으로 실행 (글로벌 단일 정본 `~/.claude/skills/project-init/`, 리포 사본 없음; 비가역 원격 작업은 승인 게이트) |
 | 글로벌 스킬 `multi-ai-discussion` | cmux 3-pane 셋업, codex/gemini 3인 교차 리뷰 프로토콜 (§6.8) |
+| 글로벌 스킬 `wiki-recall` | 중앙 위키 dakman-wiki에서 지식 조회·인용 (READ-ONLY, verified 우선) — 작업 착수 시 "지식 참조 먼저" 표준의 인터페이스 (§3 note) |
+| 글로벌 스킬 `wiki-ingest` | 프로젝트 지식을 중앙 위키에 축적 (recall의 대칭, 무설정 자동 — `docs/project-init.md` §9) |
 | [Addy Osmani "Loop Engineering"](https://x.com/addyosmani/status/2064127981161959567) | §8.4·§10.4·held-out 판정의 외부 근거 (원문 발췌·댓글 클러스터: `.cmux/debates/loop-engineering-workflow/sources.md`) |
 | `.cmux/debates/<토론명>/<토론명>.md`·`.html` | 3자 토론 결론 산출물 — 본 문서 개정 근거 (`workflow-tier-utility`, `loop-engineering-workflow`). 결과 파일만 git 추적, 전사·시그널은 무시 |
 
@@ -496,6 +500,7 @@ Tier / 리뷰 라운드 수 / 게이트 first-pass 여부 / 사용자 활성 검
 
 ## 12. 변경 이력
 
+- **2026-06-22 지식 참조 먼저 (dakman-wiki) 표준 추가**: dakman-wiki를 모든 dakman 프로젝트의 *정리된 지식 소스*로 확정 — §3에 "작업 착수·검증 시 `wiki-recall`로 중앙 위키 먼저 조회·인용(READ-ONLY·verified 우선·인용표기 `dakman-wiki: wiki/xxx (verified)`)" 표준 note + §11에 `wiki-recall`(참조)·`wiki-ingest`(축적) 행 추가. ingest(축적)와 recall(참조)의 대칭 완성. dakman-wiki 세션 cross-project 요청, 정본=dakman-wiki/CLAUDE.md. (project-init 스킬은 dakman-claude-config에 sub-위임.)
 - **2026-06-21 에이전트 중심 실행 패턴 명문화 (3인 교차 리뷰 R1 반영)**: 스킬 중심(메인 직접 실행 → self-approval 구멍) → 에이전트 중심 전환 표준을 §9에 신설 — `<x>-writer`(maker)·`<x>-write`(스킬)·`<x>-reviewer`(checker) 3노드 + Orchestrator 패턴. 원칙 11·12의 *구조적 강제*(새 원칙 아님). codex·agy·claude 3인 리뷰(R1 전원 FAIL) 반영: **격리≠탈상관** 명시(same-model 검수는 §4 held-out 아님 → 공개·비가역·고위험은 §6 교차모델 종결) · Orchestrator 자기 종결 선언 금지 + **하드 제약**(reviewer C+M≥1=자동 FAIL) · 리뷰 파일은 §4 캐노니컬 경로 재사용 · FAIL 루프를 §4 Round 상한에 배선 · 전환 경계 = (공개 AND 비가역) 또는 자동 T3 + §2 3축 전체 · 메커니즘은 파일럿(RFC)로 격리(검증 전 다운스트림 롤아웃 금지) · §10.2 측정 지표 추가 · 산출물 status 상태기계. project-init §8은 정본 §9를 가리키는 포인터로(SSoT). 다운스트림(글로벌 스킬·각 프로젝트)이 이 스펙에 맞춰 구현.
 - **2026-06-13 project-init 개명 + 검토 반영**: 3자 토론(`.cmux/debates/project-setup-review/`) 결론 반영 — `docs/project-setup.md` → **`docs/project-init.md`** 개명(SETUP=빌드·실행 오해 회피, 1회성 init 성격), 초기화 가이드 본문 8절 정렬·§2 저장소 생성·§5 mkdir·§7 workflow §0 채우기 보강, `.cmux/` 추적 정책 명시. 본 문서 원칙 6·9·§2·§11 참조 경로 동반 수정.
 - **2026-06-11 워크플로우 문서 이동**: `docs/workflow.{md,drawio,html}` → **`.claude/workflows/`** — 워크플로우 정의 문서를 Claude 설정 폴더 구조(project-setup.md §4)의 의도된 위치로 이동. 참조 경로 동반 수정.

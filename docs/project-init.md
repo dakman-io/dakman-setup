@@ -33,6 +33,27 @@ dakman 생태계는 **cmux 멀티 세션** 위에서 돈다 — 프로젝트마�
 
 > 깊은 cmux 조작 정본: `~/.claude/skills/multi-ai-discussion/references/cmux-guide.md`. 요구: macOS + cmux.
 
+## 오디오 알림 훅 (선택 — 멀티 세션 편의)
+
+여러 프로젝트 세션을 동시에 돌리면 **어느 세션이 끝났는지/입력을 기다리는지** 화면을 안 봐도 알면 편하다. 프로젝트 루트 `.claude/settings.local.json`(개인 설정 — 이미 `.gitignore` 대상, §3)에 Stop·Notification 훅을 달아 **프로젝트명을 음성으로** 읽게 한다. `say`는 macOS 전용·`async`로 작업 흐름 비차단. **`<프로젝트명>`은 각 프로젝트 이름으로 치환**(이게 멀티 세션에서 어느 세션인지 구분하는 핵심):
+
+```json
+{
+  "hooks": {
+    "Stop": [
+      { "hooks": [ { "type": "command", "command": "say -v Yuna \"<프로젝트명> 작업 완료\" 2>/dev/null || true", "async": true } ] }
+    ],
+    "Notification": [
+      { "hooks": [ { "type": "command", "command": "say -v Yuna \"<프로젝트명> 확인 요청\" 2>/dev/null || true", "async": true } ] }
+    ]
+  }
+}
+```
+
+- **Stop** = Claude가 응답을 마칠 때(작업 완료) / **Notification** = 승인·입력을 기다릴 때(확인 요청).
+- `-v Yuna` = macOS 한국어 음성(다른 음성·언어로 교체 가능, `say -v ?`로 목록). 비-macOS면 해당 플랫폼 알림 명령으로 대체하거나 생략.
+- `settings.local.json`은 **개인·머신별 설정**이라 커밋하지 않는다(§3 `.gitignore`에 포함) — 팀 공유 훅은 `.claude/settings.json`.
+
 ## 셋업 체크리스트
 
 - [ ] 1. 페르소나 지정 + 로컬 경로 확인

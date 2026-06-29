@@ -50,6 +50,8 @@
 12. **maker-checker 쌍** — 만드는 에이전트가 있으면 그 산출물을 검사하는 에이전트가 반드시 있어야 한다 (예: developer ↔ code-reviewer). 검사 없는 생성 에이전트 도입 금지.
 13. **정량 평가 기반 진화** — 워크플로우 완료 시마다 정량 지표를 남기고, 평가 결과로 **개선/유지/폐기**를 결정한다 (§10). 측정할 수 없는 규칙은 만들지 않는다.
 
+> **4대 엔지니어링 (이 워크플로우가 구현하는 층 — 어휘·근거 정박).** 이 흐름은 *AI 엔지니어링 4층*을 명시적 게이트로 구현한다: **Prompt**(지시·system prompt 구조화, Context의 부분집합) → **Context**(추론 중 high-signal 토큰 큐레이션 — attention budget·context rot 관리) → **Harness**(모델을 감싼 제어계 = constraint·feedback·quality gate, "hard CI failure로 강제" = §5 게이트) → **Loop**(프롬프트하는 사람을 *시스템으로 대체* — 가치 단위=궤적, automations·worktrees·skills·sub-agents = §8.4·§9·§10). 1차 출처는 §11. **종결 규율**: maker(또는 동일 모델계열 reviewer)가 자기 산출물 인증 금지 — 종결은 작성 비참여 **held-out**(탈상관 강도 = 교차모델[완전] > fresh 세션[부분] > 동일모델 same-session=first-pass; §4). 「**최고 ≠ 최대**」: 분량이 아니라 근거 깊이·반증·운영 가능성.
+
 ---
 
 ## 2. Tier 분류 — 모든 작업의 진입점
@@ -138,14 +140,22 @@ flowchart LR
 
 R2 초과 시 **Context Hygiene** — 세션을 새로 열고 핵심 스펙만 Read하여 컨텍스트 정화.
 
-**리뷰 파일**: `artifacts/review/{type}-{scope}-review[-{reviewer}]-round{N}.md` (type: us/design/code/e2e/content, reviewer: claude/codex/gemini).
+**리뷰 파일**: `artifacts/review/{type}-{scope}-review[-{reviewer}]-round{N}.md` (type: us/design/code/e2e/content, reviewer: claude/codex/agy[구 gemini]).
 
 **판정 주체**: 라운드 중 통합·중재는 **Orchestrator (Claude 메인 세션)**. 별도 "기획 판단 에이전트" 없음.
 
 **종결 판정 (held-out)**: 루프 종결("Critical+Major 0건") 선언은 Tier 차등 —
-- **T3·위험 도메인**: 작성에 참여하지 않은 노드(3인 리뷰의 codex/gemini 또는 fresh 세션)가 **필수**로 판정. 코드를 쓴 에이전트가 자기 완료를 선언하지 않는다 (원칙 12).
+- **고위험 (자동 T3·위험 도메인)**: 작성 비참여 **교차모델 3인(codex·agy)**이 **필수** 판정 — **fresh 세션은 부족**(부분 탈상관, §9). 코드를 쓴 에이전트가 자기 완료를 선언하지 않는다 (원칙 12).
+- **¬고위험 T3**: 작성 비참여 **fresh 세션 또는 교차모델** 중 택1(강도 서열=§4 노트·§1, 게이트 적용=§9).
 - **T2**: 선택 (비용 고려, Orchestrator 재량).
 - **T1**: self.
+
+> 근거(walk-forward 종결): Consensus≠Verification(arXiv:2603.06612) · LLM self-preference bias(arXiv:2410.21819·2404.13076) · 금융 walk-forward 분석(Pardo 1992/2008; Bailey·López de Prado 2014). (※ arXiv ID는 read-only 환경 미확인 — 의존 전 1회 resolve 확인.) **탈상관 강도 3단**: 완전 탈상관 = **교차모델**(고위험 종결 필수) > **fresh 세션 = 부분 탈상관**(컨텍스트 격리뿐 모델 편향 잔존 — ¬고위험 T3 종결엔 가능, 고위험엔 부족) > **동일모델 same-session reviewer = first-pass**(종결 노드 아님). §1·§9·project-init §8의 fresh 지위와 동일.
+
+**검증 삼각 (offline + online + 재현).** held-out 리뷰만으론 *실행 갭*이 안 보인다 — 도구 권한·발동 경로 같은 결함은 **fresh 서브에이전트 재현 런에서만** 드러난다(정적 컨벤션 문서로는 못 잡음). 그래서 검증 = **offline(held-out 리뷰) + online(실트래픽 채점) + 재현(walk-forward 실행)** 삼각.
+- **실행 주체**: 재현 런은 **Orchestrator가 별도 fresh 서브에이전트로 디스패치**한다(§9의 read-only `<x>-reviewer`가 아님 — 검수와 실행 분리). 테스트·실행 명령은 §0 placeholder를 따른다.
+- **적용 범위(과공학 방지·원칙 13)**: 재현 런 *의무*는 **T3·위험 도메인 + §10.5 메타 채택 검증**에 한정 — T1/T2는 기존 게이트(§5)로 충분. online 축은 **실트래픽 채점 가능 서비스만**, 로컬 앱·비공개 도구는 `n/a` 기록.
+- **산출물**: 재현 증거 = `artifacts/tests/repro/<date>-<scope>.md`(생략 시 `n/a` 사유 1줄). 개선 채택 후엔 다음 사이클 **재현 실측**으로 효과 재측정(정적 문서보다 재현 우선) — §10.5.
 
 ---
 
@@ -236,7 +246,7 @@ T2/T3 작업 1건 = 4~5개 시점 (US/AC → 디자인 → 테스트 → 소스 
 
 **기본 원칙 (병렬 + 시점별 즉시 검토)**:
 - 각 시점 작성 직후 즉시 발동 (다음 시점 진입 전 완료)
-- 3인 리뷰는 codex/gemini 동시 송신 (병렬, 가장 느린 모델 기준 wall-clock)
+- 3인 리뷰는 codex·agy 동시 송신 (병렬, 가장 느린 모델 기준 wall-clock)
 - Orchestrator summary는 **시점별 1쪽** (시점마다 1회)
 - 사용자 검토 = 시점별 1회, 작업당 4~5회 × 5~20분 = 총 활성 시간 20~100분
 
@@ -250,7 +260,7 @@ T2/T3 작업 1건 = 4~5개 시점 (US/AC → 디자인 → 테스트 → 소스 
 
 ```
 [1] AI 산출물 작성
-[2] 3인 리뷰 (Claude+Codex+Gemini, 병렬)        ← 사용자 시간 0 (다른 작업 가능)
+[2] 3인 리뷰 (Claude+Codex+agy, 병렬)           ← 사용자 시간 0 (다른 작업 가능)
 [3] Orchestrator summary 작성 (1쪽, ≤5개 결정)  ← 사용자 시간 0
 [4] AI 합의 이슈 반영                           ← 사용자 시간 0
 [5] 사용자 검토 1회 (summary만)                 ← 활성 시간 5~20분
@@ -266,10 +276,10 @@ T2/T3 작업 1건 = 4~5개 시점 (US/AC → 디자인 → 테스트 → 소스 
 ```markdown
 ## 3인 리뷰 통합 (Round N, 시점: <US/AC|디자인|테스트|소스|E2E>)
 - Critical/Major 합의 이슈: <list>
-- raw C/M 집계 병기: claude C{n}/M{n} · codex C{n}/M{n} · gemini C{n}/M{n}  ← summary와 불일치 시 즉시 노출 (요약 편향 가드)
+- raw C/M 집계 병기: claude C{n}/M{n} · codex C{n}/M{n} · agy C{n}/M{n}  ← summary와 불일치 시 즉시 노출 (요약 편향 가드)
 - 모델 간 의견 충돌: <있으면 명시>
 - 사용자 결정 필요 질문: <≤5개, 핵심 의도 결정>
-- raw 파일: artifacts/review/*-{claude|codex|gemini}-round{N}.md
+- raw 파일: artifacts/review/*-{claude|codex|agy}-round{N}.md
 ```
 
 **최대 5개 결정 항목** cap. Critical+Major 0이면 사용자는 summary 보고 즉시 OK.
@@ -369,6 +379,7 @@ T1 = 브리핑 → 구현 → 형상관리 → 완료(§10.1 기록 1줄)의 단
 - **지점 바인딩**: 새 agent/skill 도입 시 §3 단계·§5 게이트·§6 시점 중 **어디서 발동하는지 먼저 명시**하고 `.claude/agents/`·`.claude/skills/`에 기록한다. 발동 지점 없는 범용 agent 금지.
 - **maker-checker 쌍 필수**: 생성형 agent(planner, designer, developer 등)는 대응하는 검사 agent(us-reviewer, design-reviewer, code-reviewer 등)와 **쌍으로만** 도입한다. 검사자는 작성에 참여하지 않은 노드여야 한다 (원칙 7 리뷰-수정 분리와 연결).
 - **배치 맵 = §3 단계 표의 "담당" 열**: agent를 추가·변경하면 §3 표를 같이 갱신한다 — 표에 없는 agent는 워크플로우에 없는 것이다.
+- **병렬 의존 maker는 순차 디스패치**: **공유 파일경로**(같은 route·schema·공통 lib)를 건드리는 의존 maker는 **순차**로 디스패치한다 — *독립 파일집합*일 때만 병렬 fan-out. 근거: 병렬 maker가 동일 파일을 동시 편집하면 clobber(덮어쓰기)가 운에 의존해 재발한다(운영 실측 near-miss). counter-metric: 순차화로 wall-clock↑ ↔ 동시쓰기 충돌·재작업 라운드 0. `git worktree` 격리는 *재발 시 승격*(선제 도입 = 과설계, 원칙 13).
 
 ### 에이전트 중심 실행 패턴 (스킬 실행 주체 = maker 에이전트 — 원칙 12의 구조적 강제)
 
@@ -398,13 +409,13 @@ T1 = 브리핑 → 구현 → 형상관리 → 완료(§10.1 기록 1줄)의 단
 
 **네이밍 규약.** action 스킬 = 동사(`<x>-write`/`-render`/`-build`), maker = `<x>-writer`, checker = **캐노니컬 역할 reviewer명 재사용**(developer↔code-reviewer, designer↔design-reviewer, planner↔us-reviewer), 없을 때만 `<x>-reviewer` 신설. `<x>` = 스킬 기준 명사(예: `sns`).
 - **agent 역할명 ≠ reviewer 식별자**: §4/§6 리뷰 파일의 `{reviewer}`는 *모델 id*(claude/codex/agy), `code-reviewer`는 *agent 역할명* — 혼동 금지.
-- ⚠️ **마이그레이션·충돌**: 기존 스킬 `sns-writer`(이미 `-writer` 점유)는 규약상 **스킬 `sns-write` + 에이전트 `sns-writer`**로 분리(P1 파일럿 처리). `-write`/`-writer` 1글자 차이는 grep·오타 취약 — 파일럿에서 혼동 비용을 측정해 필요 시 동사 분리(`sns-compose` 등) 재검토.
+- ⚠️ **마이그레이션·충돌**: 기존 스킬 `sns-writer`(이미 `-writer` 점유)는 규약상 **스킬 `sns-write` + 에이전트 `sns-writer`**로 분리(sns **네이밍-마이그레이션 파일럿** — §10.5의 P0~P3 자기개선 단계와 무관). `-write`/`-writer` 1글자 차이는 grep·오타 취약 — 파일럿에서 혼동 비용을 측정해 필요 시 동사 분리(`sns-compose` 등) 재검토.
 
-**메커니즘은 파일럿(RFC) — 검증 전 표준화 금지.** 위 *거버넌스*(3노드 역할·held-out 종결·검수 분리·하드 제약·경계)는 원칙 11·12의 정본 강제다. 그러나 **"에이전트가 스킬을 호출"하는 구현 메커니즘은 미검증 = 파일럿**:
-- **Option A**(우선): maker 에이전트 frontmatter `tools: Skill,…` + "초안은 `<x>-write`로만".
+**메커니즘 — Option A 검증됨(운영 통과), B/C 폴백.** 위 *거버넌스*(3노드 역할·held-out 종결·검수 분리·하드 제약·경계)는 원칙 11·12의 정본 강제다. "에이전트가 스킬을 호출"하는 구현은:
+- **Option A**(기본·**검증됨** — dakman-sns·emotion-setup 운영 통과, 2026-06): maker 에이전트 frontmatter `tools: Skill,…` + 대응 스킬의 `allowed-tools`에 무거운 권한(MCP 등) 보유 → maker가 Skill로 호출. ⚠️ **Bash 없는 maker는 산출 후 외부 명령(git·테스트 등)을 실행 못 한다** → maker에 `Bash` 부여하거나 Orchestrator가 대행.
 - **Option C**(경량 폴백): 하네스가 서브에이전트 `Skill` 미지원이면 메인이 스킬을 실행하되 **독립 `<x>-reviewer` 서브에이전트로 검수만 분리**(검수 분리 = 가치의 핵심).
 - **Option B**(무거움·최후): cmux pane(multi-ai-discussion식) — 화면 점유·흐름 단절 크니 다른 경로 불가 시만.
-- **파일럿 게이트**: 첫 전환(dakman-sns)에서 동작·기록 경로·성공 기준을 확인하기 전까지 **메커니즘(A/B/C) 표준 확정과 타 프로젝트 agent/skill 생성을 금지**한다. 거버넌스 표준의 *문서화 자체*(본 §9·project-init §8 포인터)는 정본이므로 이 금지와 무관 — 다운스트림은 *문서화된 스펙*에 맞춰 파일럿 후 구현한다. 결과는 §10.2 지표로.
+- 새 환경/하네스에서 A가 안 되면 C로 폴백·기록한다. 결과·효과는 §10.2 지표 + §10.5 재현 실측으로 재측정.
 
 **측정(원칙 13).** §10.2에 추가: **공개 산출물 탈출 결함 수(패턴 전/후)** · **단일 모델 self-approval 발행 건수**(同 계열 노드만 거쳐 발행된 공개물). 개선 없으면 §10.3으로 폐기 검토.
 
@@ -466,6 +477,16 @@ Tier / 리뷰 라운드 수 / 게이트 first-pass 여부 / 사용자 활성 검
 - 산출물: `artifacts/progress/loop-triage.md` — 발견이 있을 때만 기록, 없으면 자동 종료.
 - 참고 잔여 아이디어(미채택): Complexity Delta(수정 대비 코드량 비대 = 슬롭 신호) — 측정 방법 확립 전까지 §10.2 수동 점검 시 정성 참고만.
 
+### 10.5 신호 기반 자기개선 루프 (자율 진단·제안 + 게이트된 채택)
+
+§10의 정량평가를 *운영화*. 핵심 = **자율은 진단·제안까지만 / 채택은 게이트**(self-approval 금지). 이 설계가 두 함정을 막는다 — **메타층 self-approval**(improver가 자기 제안을 자기 채택)과 **Goodhart**(바닥 준수율↑ ≠ 품질↑).
+
+- **신호 수집 = 에이전트 호출당 1파일** — `artifacts/progress/signals/<date>-<stage>-<agent>-<seq>.json`(glob 집계). 단일 로그 동시 append의 **레이스 회피**(병렬 maker 충돌 운영 교훈, §9 순차 디스패치와 같은 뿌리). `kind`=`friction|gap|risk|win`. **체커 결과 우선·maker self-praise 배제**(작성자 자화자찬은 신호 아님).
+- **improver = 집계·진단·제안서만 + 멈춤** — 반복 신호=시스템 갭으로 진단하고 제안서(`artifacts/progress/improve/<date>-proposal.md`)를 쓴 뒤 **멈춘다**. **improver 자체는 어느 단계에서도 write 금지**(§8.4 "쓰기 금지·Draft까지"·원칙 5 "검수 후 커밋"와 정합) — *적용은 항상 별도 흐름*(Orchestrator), 자기 완료 선언 금지(§4 held-out·§9 하드 제약 연장).
+- **3단 채택 게이트(G1~G3 — §9 Option A/B/C와 무관)**: **G1 비메타·가역** → 경량 체크 + 사용자 승인 후 **Orchestrator가 적용**(improver 아님, 원칙 5) / **G2 메타**(workflow.md·project-init·CLAUDE.md) → **자동 T3 + held-out + 사람** / **G3 글로벌 자산**(`~/.claude`) → 소유 세션(claude-config)에 위임(스펙).
+- **counter-metric 의무**: 모든 제안은 **(개선 지표 ↔ 함께 지킬 반대 지표)** 쌍으로 — Goodhart 방어. **게이트 약화 제안은 무조건 G2 + "침식 위험" 플래그**(= P1 시범 ≥3사이클 관찰 + 사용자 직접 재심사 의무, 통과 전 채택 보류). improver는 **자기 제안 효과를 스스로 PASS 못 한다** — 다음 사이클 **walk-forward 재현 실측**(§4 검증 삼각)이 판정한다(메타 self-approval 차단).
+- **단계 도입**: **P0** 신호 수집만 → **P1** 제안(적용 0) → **P2** G1등급만 *적용 후보 생성*(Orchestrator 경량 검토 + 사용자 승인 게이트; improver write 0, 완전 자동 적용은 §8.4 예외 승격 없이는 금지) → **P3** 재현 실측 정례화. **메타(G2)는 영원히 사람 게이트** — 자동화하지 않는다.
+
 ---
 
 ## 11. 참고 문서
@@ -488,18 +509,24 @@ Tier / 리뷰 라운드 수 / 게이트 first-pass 여부 / 사용자 활성 검
 | `.claude/agents/*.md` | 6개 역할별 전문 프롬프트 |
 | `.claude/skills/` | 프로젝트 스킬 (커버리지 측정 SSoT 등) |
 | 글로벌 스킬 `project-init` | 프로젝트 초기화 — `docs/project-init.md`를 MAY/ASK/STOP 플레이북으로 실행 (글로벌 단일 정본 `~/.claude/skills/project-init/`, 리포 사본 없음; 비가역 원격 작업은 승인 게이트) |
-| 글로벌 스킬 `multi-ai-discussion` | cmux 3-pane 셋업, codex/gemini 3인 교차 리뷰 프로토콜 (§6.8) |
+| 글로벌 스킬 `multi-ai-discussion` | cmux 4-pane 셋업(진행자 + claude·codex·agy), 3인 교차 리뷰 프로토콜 (§6.8) |
 | 글로벌 스킬 `wiki-recall` | 중앙 위키 dakman-wiki에서 지식 조회·인용 (READ-ONLY, verified 우선) — 작업 착수 시 "지식 참조 먼저" 표준의 인터페이스 (§3 note) |
 | 글로벌 스킬 `wiki-ingest` | 프로젝트 지식을 중앙 위키에 축적 (recall의 대칭, 무설정 자동 — `docs/project-init.md` §9) |
-| [Addy Osmani "Loop Engineering"](https://x.com/addyosmani/status/2064127981161959567) | §8.4·§10.4·held-out 판정의 외부 근거 (원문 발췌·댓글 클러스터: `.cmux/debates/loop-engineering-workflow/sources.md`) |
-| `.cmux/debates/<토론명>/<토론명>.md`·`.html` | 3자 토론 결론 산출물 — 본 문서 개정 근거 (`workflow-tier-utility`, `loop-engineering-workflow`). 결과 파일만 git 추적, 전사·시그널은 무시 |
+| [Addy Osmani "Loop Engineering"](https://x.com/addyosmani/status/2064127981161959567) | §1 4대 엔지니어링 **Loop** + §8.4·§10.4·§10.5·held-out 판정의 외부 근거 (원문 발췌·댓글 클러스터: `.cmux/debates/loop-engineering-workflow/sources.md`) |
+| Anthropic, *Effective context engineering for AI agents* (2025-09-29) | §1 4대 엔지니어링 **Context**(**Prompt 포함** — Prompt는 Context의 부분집합) — high-signal 토큰 큐레이션·attention budget·context rot |
+| M. Hashimoto, *My AI Adoption Journey* (2026-02-05) · Augment Code, *Harness Engineering* | §1 4대 엔지니어링 **Harness** — 모델을 감싼 제어계(constraint·feedback·quality gate). "Agent=Model+Harness"는 커뮤니티 의역 |
+| walk-forward 종결 학술 근거 | §1·§4 — Consensus≠Verification(arXiv:2603.06612) · LLM self-preference bias(arXiv:2410.21819·2404.13076) · 금융 walk-forward(Pardo 1992/2008; Bailey·López de Prado 2014) |
+| PMBOK 8판 (PMI, 2025-11) | PM 표준 **방향** 정합 참고 — 비규범+테일러링↔Lean Default·Focus on Value↔아웃컴 비용함수·AI 부록(X3)↔AIDD 외부 정당성. ⚠️ PM 표준이지 SW 방법론 아님 — 운영 정본은 본 워크플로우(정합은 방향까지). 1차=pmi.org/standards/pmbok |
+| `.cmux/debates/<토론명>/<토론명>.md`·`.html` · `debates/<토론명>/` | 3자 토론 결론 산출물 — 본 문서 개정 근거 (`workflow-tier-utility`·`loop-engineering-workflow`·`agent-vs-skill-backend`). 결과 파일만 git 추적, 전사·시그널은 무시 |
 
 > 새 프로젝트에서는 위 경로를 생성하면서 시작한다. 없는 문서는 해당 단계 첫 진입 시 작성.
+> ⚠️ **출처 행 중 URL 미부착·arXiv ID(§1·§4)는 read-only 환경에서 resolve 미확인** — "1차 출처"로 의존하기 전 온라인 1회 resolve 확인(검증 삼각의 online 축). 미확인 상태로 단정 인용 금지.
 
 ---
 
 ## 12. 변경 이력
 
+- **2026-06-29 AIDD 방법론 환류 반영 (emotion-setup 기여, #1~#5)**: 한 AIDD 프로젝트가 워크플로우를 실제 굴려 도출·검증한 도메인 중립 개선을 표준에 환류 — §1 **4대 엔지니어링**(prompt·context·harness·loop) 어휘·1차출처 정박 + "최고≠최대" / §4 held-out **학술 근거 정박** + **검증 삼각**(offline+online+재현, 재현 런이 정적 문서 못 잡는 실행 갭 적출) / §9 **병렬 의존 maker 순차 디스패치**(clobber 방지) + **Option A 파일럿→검증 승격**(dakman-sns·emotion 운영 통과) + **Bash-less maker 주의** / §10.5 **신호 기반 자기개선 루프**(improver 제안만 + 3단 채택 게이트 + counter-metric → 메타 self-approval·Goodhart 방어, 메타는 영원히 사람 게이트) / §11 출처(Anthropic context·Hashimoto harness·walk-forward 학술·PMBOK 8판 방향참고). git 머지-subject 기밀회피(#7)는 dakman(공개 org) 비해당으로 미채택. 메타 변경 = 자동 T3 + held-out(codex·agy·claude) 거쳐 반영.
 - **2026-06-22 지식 참조 먼저 (dakman-wiki) 표준 추가**: dakman-wiki를 모든 dakman 프로젝트의 *정리된 지식 소스*로 확정 — §3에 "작업 착수·검증 시 `wiki-recall`로 중앙 위키 먼저 조회·인용(READ-ONLY·verified 우선·인용표기 `dakman-wiki: wiki/xxx (verified)`)" 표준 note + §11에 `wiki-recall`(참조)·`wiki-ingest`(축적) 행 추가. ingest(축적)와 recall(참조)의 대칭 완성. dakman-wiki 세션 cross-project 요청, 정본=dakman-wiki/CLAUDE.md. (project-init 스킬은 dakman-claude-config에 sub-위임.)
 - **2026-06-21 에이전트 중심 실행 패턴 명문화 (3인 교차 리뷰 R1 반영)**: 스킬 중심(메인 직접 실행 → self-approval 구멍) → 에이전트 중심 전환 표준을 §9에 신설 — `<x>-writer`(maker)·`<x>-write`(스킬)·`<x>-reviewer`(checker) 3노드 + Orchestrator 패턴. 원칙 11·12의 *구조적 강제*(새 원칙 아님). codex·agy·claude 3인 리뷰(R1 전원 FAIL) 반영: **격리≠탈상관** 명시(same-model 검수는 §4 held-out 아님 → 공개·비가역·고위험은 §6 교차모델 종결) · Orchestrator 자기 종결 선언 금지 + **하드 제약**(reviewer C+M≥1=자동 FAIL) · 리뷰 파일은 §4 캐노니컬 경로 재사용 · FAIL 루프를 §4 Round 상한에 배선 · 전환 경계 = (공개 AND 비가역) 또는 자동 T3 + §2 3축 전체 · 메커니즘은 파일럿(RFC)로 격리(검증 전 다운스트림 롤아웃 금지) · §10.2 측정 지표 추가 · 산출물 status 상태기계. project-init §8은 정본 §9를 가리키는 포인터로(SSoT). 다운스트림(글로벌 스킬·각 프로젝트)이 이 스펙에 맞춰 구현.
 - **2026-06-13 project-init 개명 + 검토 반영**: 3자 토론(`.cmux/debates/project-setup-review/`) 결론 반영 — `docs/project-setup.md` → **`docs/project-init.md`** 개명(SETUP=빌드·실행 오해 회피, 1회성 init 성격), 초기화 가이드 본문 8절 정렬·§2 저장소 생성·§5 mkdir·§7 workflow §0 채우기 보강, `.cmux/` 추적 정책 명시. 본 문서 원칙 6·9·§2·§11 참조 경로 동반 수정.

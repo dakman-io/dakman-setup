@@ -326,7 +326,7 @@ gh api repos/<owner>/<repo>/branches \
 공개·비가역·고위험 산출물을 만드는 스킬은 메인이 직접 실행하면 self-approval이 생긴다. **3노드 패턴**으로 분리한다 — 상세(제어 흐름·종결 게이트·네이밍·경계·메커니즘)는 **workflow.md §9 "에이전트 중심 실행 패턴"이 정본**(여기 중복 기술하지 않음):
 
 - `<x>-writer`(maker 에이전트) → `<x>-write`(action 스킬) → `<x>-reviewer`(checker, source read-only) → Orchestrator(라우팅·판정 요청, 자기 종결 선언 금지).
-- ⚠️ same-model 서브에이전트 검수는 §4 held-out이 아니다 — 공개·비가역·고위험 발행의 종결은 §6 교차모델 3인/fresh 세션.
+- ⚠️ same-model 서브에이전트 검수는 §4 held-out이 아니다 — **고위험 발행의 종결은 §6 교차모델 3인 필수**(fresh 세션은 부분 탈상관이라 부족), **¬고위험 공개·비가역은 fresh 세션 또는 §6**. (workflow.md §4 강도표 정합)
 - 전환 경계: **(공개 AND 비가역) 또는 자동 T3**만. 저위험 유틸리티는 순수 스킬 유지.
 
 ## 9. LLM 위키 연동 (지식 축적·참조)

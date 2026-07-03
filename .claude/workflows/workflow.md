@@ -171,9 +171,18 @@ R2 초과 시 **Context Hygiene** — 세션을 새로 열고 핵심 스펙만 R
 | 디자인 대조 | skip | UI 시 | UI 시 ✓ | `{디자인도구}` vs `{실행환경}` |
 | 코드 리뷰 | self | R1 | R1~R3 | Critical+Major 0 |
 | E2E (`{E2E도구}`) | skip | 핵심 영향 시 | 기본 전체 — 명시적 Impact 분석 근거 시 관련 flow로 축소 가능 | `{E2E실행}` pass. SYS 면제 가능 |
+| **이해 Explainer** (`/explain-diff`) | 생략 | 요약형(핵심 변경 1~2문단) | **✓ 필수** | diff→**산문 Explainer**(배경 먼저→직관 먼저→diff 아닌 산문 + 핵심 스니펫), PR 본문 포함 |
 | 3인 교차 리뷰 | §6 매트릭스 참조 |
 
-**Tier별 최소 증거**: T1 변경 파일+테스트 / T2 AC+리뷰 1개 / T3 US+리뷰들+테스트·E2E.
+**Tier별 최소 증거**: T1 변경 파일+테스트 / T2 AC+리뷰 1개+요약 Explainer / T3 US+리뷰들+테스트·E2E+Explainer.
+
+> **이해 병목 (Understanding is the new bottleneck).** AI가 코드를 잘 쓰고 self-verify까지 하면서 병목이 "작성"→**"인간의 이해"**로 이동(**1차 출처**: Geoffrey Litt, *Understanding is the new bottleneck*, geoffreylitt.com, 2026-07-02 · 정리 경유 dakman-wiki wiki/understanding-is-the-bottleneck.md는 **미검증**이라 근거는 원문 기준). 본 워크플로우의 1차 비용함수(**사용자 활성 검토 시간**)를 직접 낮추면서 이해는 높이는 도구 = `/explain-diff` Explainer. Tier 연동은 Lean Default + Escalation과 정합(T3 필수·T2 요약·T1 생략).
+> - **생성 시점·위치**: 구현(§3 4단계) 완료 후 Explainer를 로컬(`artifacts/progress/explain-<scope>.md`, 인터랙티브 아티팩트도 여기)에 산출 → 검증(§5)에서 검토 대상 → 형상관리(§6)에서 **PR 본문에 포함**. 산출 주체 = Orchestrator/Ops(누가 돌리든 §4 held-out 위반 아님).
+> - ⚠️ **Explainer = 판정 *자료*지 판정이 아니다** — maker가 자기 diff를 설명해도 **self-approval이 아니다**(§4). ★ **held-out 모델 리뷰어는 Explainer가 아니라 source/diff를 1차 검토**(§9 read-only) — 리뷰 입력을 Explainer로 대체하지 않는다(maker 서사 앵커링 방지, 상관 재유입 차단). Explainer는 **사용자 이해용 보조자료**(§6.6 summary 검토).
+> - **잠정 발효**: `/explain-diff` 스킬은 claude-config 구현·검증 후 발효 — **그 전 T3는 수기 Explainer 허용**(규율 = Explainer 산문이지 도구 아님; §9 "검증 전 롤아웃 금지" 정합).
+> - **인터랙티브 아티팩트(옵션 관행)**: T3·위험 도메인은 이해 아티팩트(`erd-viewer`·`md2html` 등)를 첨부 가능 — *기존 스킬 활용 관행이지 신규 스킬 아님*.
+> - **퀴즈 게이트 미채택**(정착 후 T3·위험 도메인 on-demand 재검토) — 인지 부채 대비 speed bump는 보류.
+> - **효과 측정은 §10.2**(첨부율 ↔ 인지부채 마스킹 counter-metric).
 
 ---
 
@@ -428,6 +437,7 @@ T1 = 브리핑 → 구현 → 형상관리 → 완료(§10.1 기록 1줄)의 단
 - pre-merge 검증: `{단위테스트}` + `{타입체크}` pass
 - PR 본문 필수 필드:
   - **why / risk / rollback** 각 1줄 (Comprehension Debt 가드 — 사용자가 확인)
+  - **이해 Explainer**(`/explain-diff`, §5) — **T3 필수 · T2 요약형 · T1 생략**. 배경 먼저→직관 먼저→diff 아닌 산문 + 핵심 스니펫(**why 1줄 = Explainer 배경의 TL;DR**, 중복 아님). Orchestrator/Ops 산출. *사용자 이해용 검토 자료지 판정 아님* — held-out 리뷰어는 source/diff를 1차 검토(§4·§9 read-only, 앵커링 방지).
   - **Tier 기록**: initial/final Tier · 3축 판정 값 · 자동 T3 여부 · 재분류 사유(해당 시)
   - §10.1 정량 기록 (라운드 수 · first-pass · 활성 시간) + Fast-track/SYS 면제 근거(해당 시) + 3인 리뷰 summary 링크
 - `gh pr merge --merge` (rebase 금지, PR/US 단위 추적성 유지)
@@ -457,6 +467,7 @@ Tier / 리뷰 라운드 수 / 게이트 first-pass 여부 / 사용자 활성 검
 - **summary ↔ raw 대조** — 3인 리뷰 summary의 C/M 카운트와 raw 리뷰 파일 집계 일치 여부 (요약 편향 감지, §6.7 병기 의무와 쌍)
 - **자동 루프 §8.4 준수** — 등록된 루프의 7개 항목 기록·예산 cap·사용량 기록이 실제로 채워졌는지
 - **에이전트 중심 패턴 효과(§9)** — 공개 산출물 탈출 결함 수(패턴 전/후) · 단일 모델 self-approval 발행 건수(同 계열 노드만 거쳐 발행된 공개물). 개선 없으면 §10.3으로 폐기 검토
+- **이해 Explainer 효과(§5)** — Explainer 첨부율(Tier별 준수: T3 필수/T2 요약/T1 생략) ↔ **counter-metric: 첨부에도 활성 검토시간 미개선·재질문 발생**(= 인지부채 마스킹 신호 — Explainer는 붙었지만 안 읽힘). 개선 없으면 §10.3으로 폐기 검토
 
 ### 10.3 평가 기반 결정 (개선 / 유지 / 폐기)
 
@@ -526,6 +537,7 @@ Tier / 리뷰 라운드 수 / 게이트 first-pass 여부 / 사용자 활성 검
 
 ## 12. 변경 이력
 
+- **2026-07-03 이해 Explainer(/explain-diff) 게이트 추가 (dakman-brain 기여, rtong GO)**: 병목이 "작성"→"인간의 이해"로 이동(Geoffrey Litt) → 1차 비용함수(사용자 활성 검토 시간)를 직접 낮추는 도구를 §5 게이트 + §9 DoD PR 본문에 발동지점 신설(원칙 11 지점바인딩). diff→산문 Explainer(배경→직관→산문+스니펫), Tier 연동(T3 필수·T2 요약·T1 생략, Lean Default+Escalation). 경계: Explainer=판정 자료지 판정 아님(maker 자기설명 ≠ self-approval, §4). T3·위험도메인 인터랙티브 아티팩트(erd-viewer·md2html) 첨부=옵션 관행(신규 스킬 아님). 퀴즈 게이트는 미채택(정착 후 재검토). 스킬 구현은 `docs/handoff/explain-diff-spec.md`로 claude-config 위임. 메타 변경 = 자동 T3 + held-out(codex·agy·claude) 거쳐 반영.
 - **2026-06-29 AIDD 방법론 환류 반영 (emotion-setup 기여, #1~#5)**: 한 AIDD 프로젝트가 워크플로우를 실제 굴려 도출·검증한 도메인 중립 개선을 표준에 환류 — §1 **4대 엔지니어링**(prompt·context·harness·loop) 어휘·1차출처 정박 + "최고≠최대" / §4 held-out **학술 근거 정박** + **검증 삼각**(offline+online+재현, 재현 런이 정적 문서 못 잡는 실행 갭 적출) / §9 **병렬 의존 maker 순차 디스패치**(clobber 방지) + **Option A 파일럿→검증 승격**(dakman-sns·emotion 운영 통과) + **Bash-less maker 주의** / §10.5 **신호 기반 자기개선 루프**(improver 제안만 + 3단 채택 게이트 + counter-metric → 메타 self-approval·Goodhart 방어, 메타는 영원히 사람 게이트) / §11 출처(Anthropic context·Hashimoto harness·walk-forward 학술·PMBOK 8판 방향참고). git 머지-subject 기밀회피(#7)는 dakman(공개 org) 비해당으로 미채택. 메타 변경 = 자동 T3 + held-out(codex·agy·claude) 거쳐 반영.
 - **2026-06-22 지식 참조 먼저 (dakman-wiki) 표준 추가**: dakman-wiki를 모든 dakman 프로젝트의 *정리된 지식 소스*로 확정 — §3에 "작업 착수·검증 시 `wiki-recall`로 중앙 위키 먼저 조회·인용(READ-ONLY·verified 우선·인용표기 `dakman-wiki: wiki/xxx (verified)`)" 표준 note + §11에 `wiki-recall`(참조)·`wiki-ingest`(축적) 행 추가. ingest(축적)와 recall(참조)의 대칭 완성. dakman-wiki 세션 cross-project 요청, 정본=dakman-wiki/CLAUDE.md. (project-init 스킬은 dakman-claude-config에 sub-위임.)
 - **2026-06-21 에이전트 중심 실행 패턴 명문화 (3인 교차 리뷰 R1 반영)**: 스킬 중심(메인 직접 실행 → self-approval 구멍) → 에이전트 중심 전환 표준을 §9에 신설 — `<x>-writer`(maker)·`<x>-write`(스킬)·`<x>-reviewer`(checker) 3노드 + Orchestrator 패턴. 원칙 11·12의 *구조적 강제*(새 원칙 아님). codex·agy·claude 3인 리뷰(R1 전원 FAIL) 반영: **격리≠탈상관** 명시(same-model 검수는 §4 held-out 아님 → 공개·비가역·고위험은 §6 교차모델 종결) · Orchestrator 자기 종결 선언 금지 + **하드 제약**(reviewer C+M≥1=자동 FAIL) · 리뷰 파일은 §4 캐노니컬 경로 재사용 · FAIL 루프를 §4 Round 상한에 배선 · 전환 경계 = (공개 AND 비가역) 또는 자동 T3 + §2 3축 전체 · 메커니즘은 파일럿(RFC)로 격리(검증 전 다운스트림 롤아웃 금지) · §10.2 측정 지표 추가 · 산출물 status 상태기계. project-init §8은 정본 §9를 가리키는 포인터로(SSoT). 다운스트림(글로벌 스킬·각 프로젝트)이 이 스펙에 맞춰 구현.

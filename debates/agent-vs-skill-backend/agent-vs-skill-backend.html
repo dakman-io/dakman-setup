@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>백엔드 에이전트 구조 — 2 에이전트 vs 1 에이전트 + 2 스킬 (3자 토론 결론)</title>
+<style>
+  :root{
+    --bg:#0d0f14;
+    --bg2:#11131a;
+    --panel:#161922;
+    --panel2:#1b1f2a;
+    --panel3:#20242f;
+    --ink:#eae8e1;
+    --ink-soft:#cdcdd4;
+    --muted:#969aa6;
+    --faint:#6b6f7c;
+    --line:rgba(255,255,255,.08);
+    --line2:rgba(255,255,255,.15);
+    --brand:#74a4ff;        /* steel blue — structural / option B */
+    --brand-deep:#2c4574;
+    --slate:#9aa6bd;        /* option A neutral */
+    --green:#52c878;
+    --green-bg:rgba(82,200,120,.12);
+    --green-bd:rgba(82,200,120,.45);
+    --amber:#e3aa3c;
+    --amber-bg:rgba(227,170,60,.11);
+    --amber-bd:rgba(227,170,60,.5);
+    --red:#ec5b50;
+    --red-bg:rgba(236,91,80,.12);
+    --red-bd:rgba(236,91,80,.5);
+    --font-display:'Hoefler Text','AppleMyungjo','Nanum Myeongjo',Georgia,'Times New Roman',serif;
+    --font-body:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Pretendard','Noto Sans KR',sans-serif;
+    --font-mono:'JetBrains Mono','SF Mono',ui-monospace,Menlo,'Cascadia Code',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:var(--font-body);
+    background:var(--bg);
+    color:var(--ink);
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+    position:relative;
+  }
+  /* ambient depth */
+  body::before{
+    content:"";position:fixed;inset:0;z-index:-2;
+    background:
+      radial-gradient(1100px 620px at 78% -8%, rgba(116,164,255,.13), transparent 60%),
+      radial-gradient(900px 600px at 4% 8%, rgba(227,170,60,.06), transparent 55%),
+      linear-gradient(180deg,#0d0f14 0%, #0b0d12 100%);
+  }
+  body::after{
+    content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.5;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.025'/%3E%3C/svg%3E");
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:0 26px}
+  a{color:var(--brand);text-decoration:none}
+  code{
+    font-family:var(--font-mono);
+    font-size:.86em;
+    background:rgba(116,164,255,.1);
+    border:1px solid rgba(116,164,255,.18);
+    color:#cdddff;
+    padding:.06em .42em;
+    border-radius:5px;
+    white-space:nowrap;
+  }
+  em{font-style:normal;color:#fff;background:linear-gradient(transparent 62%,rgba(227,170,60,.28) 0);padding:0 .05em}
+  .mono{font-family:var(--font-mono)}
+
+  /* ---------- reveal ---------- */
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+  .reveal.in{opacity:1;transform:none}
+  @media print{.reveal{opacity:1!important;transform:none!important;transition:none!important}}
+  @media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+
+  /* ---------- hero ---------- */
+  header.hero{padding:74px 0 28px;border-bottom:1px solid var(--line);position:relative}
+  .eyebrow{
+    font-family:var(--font-mono);font-size:.72rem;letter-spacing:.34em;text-transform:uppercase;
+    color:var(--brand);display:flex;align-items:center;gap:14px;margin-bottom:26px;
+  }
+  .eyebrow::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line2),transparent)}
+  h1{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:clamp(2rem,5.4vw,3.5rem);
+    line-height:1.1;
+    letter-spacing:-.01em;
+    color:#fff;
+    margin-bottom:8px;
+  }
+  h1 .sub{display:block;font-size:.46em;color:var(--slate);font-weight:400;margin-top:14px;letter-spacing:0}
+  .meta-line{
+    font-family:var(--font-mono);font-size:.78rem;color:var(--muted);
+    margin-top:22px;line-height:1.9;display:flex;flex-wrap:wrap;gap:6px 14px;
+  }
+  .meta-line .pill{border:1px solid var(--line);border-radius:20px;padding:3px 12px;background:rgba(255,255,255,.02)}
+  .meta-line .pill b{color:var(--ink);font-weight:600}
+
+  /* ---------- stat strip ---------- */
+  .stats{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin:34px 0 8px;
+    border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel);
+  }
+  .stat{padding:20px 18px;border-right:1px solid var(--line)}
+  .stat:last-child{border-right:0}
+  .stat .n{font-family:var(--font-display);font-size:1.9rem;color:#fff;line-height:1;letter-spacing:-.01em}
+  .stat .n small{font-size:.5em;color:var(--brand);font-family:var(--font-mono);letter-spacing:0}
+  .stat .l{font-size:.74rem;color:var(--muted);margin-top:9px;font-family:var(--font-mono);letter-spacing:.02em}
+
+  /* ---------- hero callout (core conclusion) ---------- */
+  .verdict{
+    margin:30px 0 8px;border:1px solid var(--brand-deep);border-radius:18px;overflow:hidden;
+    background:linear-gradient(160deg,rgba(116,164,255,.11),rgba(116,164,255,.025) 55%,transparent),var(--panel2);
+    box-shadow:0 24px 60px -34px rgba(116,164,255,.5);
+  }
+  .verdict .top{padding:30px 30px 22px;border-bottom:1px dashed var(--line2)}
+  .verdict .tag{
+    font-family:var(--font-mono);font-size:.7rem;letter-spacing:.26em;text-transform:uppercase;
+    color:var(--brand);margin-bottom:16px;
+  }
+  .verdict h2{font-family:var(--font-display);font-size:clamp(1.45rem,3.4vw,2.15rem);color:#fff;font-weight:600;line-height:1.28;letter-spacing:-.01em}
+  .verdict h2 .opt{
+    display:inline-block;background:var(--brand);color:#0b1020;font-family:var(--font-mono);font-weight:700;
+    padding:.04em .5em;border-radius:8px;font-size:.82em;letter-spacing:0;margin:0 .12em;
+  }
+  .verdict .lead{color:var(--ink-soft);font-size:1.02rem;margin-top:16px;line-height:1.7}
+  .verdict .agree{
+    display:inline-flex;align-items:center;gap:8px;margin-top:18px;
+    font-family:var(--font-mono);font-size:.78rem;color:var(--green);
+    background:var(--green-bg);border:1px solid var(--green-bd);border-radius:20px;padding:5px 14px;
+  }
+  /* decision rule band */
+  .rule{padding:24px 30px;background:rgba(0,0,0,.22)}
+  .rule .rl{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.24em;text-transform:uppercase;color:var(--amber);margin-bottom:12px}
+  .rule p{font-size:1.05rem;line-height:1.75;color:var(--ink)}
+  .chip-b,.chip-a{font-family:var(--font-mono);font-weight:700;font-size:.86em;padding:.05em .5em;border-radius:6px;display:inline-block}
+  .chip-b{background:rgba(116,164,255,.18);color:#bcd2ff;border:1px solid var(--brand-deep)}
+  .chip-a{background:rgba(154,166,189,.14);color:#cdd4e2;border:1px solid rgba(154,166,189,.35)}
+
+  /* ---------- section frame ---------- */
+  section{padding:54px 0;border-bottom:1px solid var(--line)}
+  .sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:30px}
+  .sec-num{font-family:var(--font-mono);font-size:.8rem;color:var(--brand);border:1px solid var(--brand-deep);border-radius:7px;padding:4px 10px;flex:none}
+  .sec-head h3{font-family:var(--font-display);font-size:clamp(1.4rem,3vw,1.95rem);color:#fff;font-weight:600;letter-spacing:-.01em}
+  .sec-head .hint{margin-left:auto;font-family:var(--font-mono);font-size:.74rem;color:var(--faint);align-self:center;text-align:right}
+
+  /* axis contrast */
+  .axis{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:stretch;margin-bottom:10px}
+  .axis .col{padding:26px;border:1px solid var(--line);background:var(--panel)}
+  .axis .col.stable{border-radius:14px 0 0 14px;background:linear-gradient(180deg,rgba(116,164,255,.07),transparent)}
+  .axis .col.shift{border-radius:0 14px 14px 0;border-left:0;background:linear-gradient(180deg,rgba(227,170,60,.06),transparent)}
+  .axis .who{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+  .axis .ttl{font-family:var(--font-display);font-size:1.35rem;color:#fff;margin-bottom:6px}
+  .axis .stable .ttl{color:#cfe0ff}
+  .axis .shift .ttl{color:#f3d79a}
+  .axis .desc{font-size:.92rem;color:var(--muted)}
+  .axis .vs{display:flex;align-items:center;justify-content:center;padding:0 16px;background:var(--panel);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .axis .vs span{font-family:var(--font-mono);font-size:.78rem;color:var(--faint)}
+  .axis-foot{margin-top:18px;font-size:1rem;color:var(--ink-soft);background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--brand);border-radius:0 12px 12px 0;padding:16px 20px}
+
+  /* reasons grid */
+  .reasons{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .reason{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;position:relative;transition:border-color .25s,transform .25s}
+  .reason:hover{border-color:var(--line2);transform:translateY(-2px)}
+  .reason .rn{font-family:var(--font-mono);font-size:.72rem;color:var(--brand);letter-spacing:.1em}
+  .reason h4{font-family:var(--font-display);font-size:1.22rem;color:#fff;margin:8px 0 10px;font-weight:600}
+  .reason p{font-size:.93rem;color:var(--muted);line-height:1.65}
+  .reason.wide{grid-column:1 / -1}
+
+  /* exception (option A) list */
+  .exc-intro{font-size:.95rem;color:var(--muted);margin-bottom:18px}
+  .exc{list-style:none;display:grid;gap:12px}
+  .exc li{
+    display:flex;gap:16px;background:var(--panel);border:1px solid var(--line);
+    border-left:3px solid var(--slate);border-radius:0 12px 12px 0;padding:16px 20px;
+  }
+  .exc li .ai{font-family:var(--font-mono);font-weight:700;color:var(--slate);flex:none;font-size:.9rem;padding-top:1px}
+  .exc li p{font-size:.95rem;color:var(--ink-soft)}
+
+  /* binding warning panel */
+  .warnpanel{
+    background:linear-gradient(160deg,rgba(227,170,60,.1),transparent 60%),var(--panel2);
+    border:1px solid var(--amber-bd);border-radius:16px;padding:28px 28px 24px;
+  }
+  .warnpanel .wh{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .warnpanel .wh .ic{font-size:1.3rem}
+  .warnpanel .wh h4{font-family:var(--font-display);font-size:1.3rem;color:#f5d99a;font-weight:600}
+  .warnpanel .pre{font-size:.98rem;color:var(--ink-soft);margin-bottom:18px}
+  .acts{list-style:none;counter-reset:a;display:grid;gap:12px;margin-bottom:18px}
+  .acts li{counter-increment:a;display:flex;gap:14px;background:rgba(0,0,0,.2);border:1px solid var(--line);border-radius:11px;padding:14px 18px}
+  .acts li::before{content:counter(a);font-family:var(--font-mono);font-weight:700;color:#0b1020;background:var(--amber);width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex:none;font-size:.82rem}
+  .acts li p{font-size:.94rem;color:var(--ink-soft)}
+  .note-q{border-left:3px solid var(--amber);padding:10px 18px;background:rgba(227,170,60,.06);border-radius:0 10px 10px 0;font-size:.92rem;color:#e7cf9a}
+
+  /* ---------- LEDGER (centerpiece) ---------- */
+  .ledger-intro{font-size:.95rem;color:var(--muted);margin-bottom:22px;max-width:680px}
+  .legend{
+    display:flex;flex-wrap:wrap;gap:10px;margin-bottom:24px;padding:18px;
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;align-items:center;
+  }
+  .legend .lt{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-right:6px}
+  .legend .li{display:flex;align-items:center;gap:9px;font-size:.83rem;color:var(--muted)}
+  .legend .li + .li{margin-left:6px}
+  .legend .count{margin-left:auto;font-family:var(--font-mono);font-size:.78rem;color:var(--muted);display:flex;gap:12px}
+  .legend .count b{color:var(--ink)}
+
+  .badge{
+    font-family:var(--font-mono);font-weight:700;font-size:.74rem;letter-spacing:.02em;
+    padding:4px 11px;border-radius:7px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;flex:none;
+  }
+  .badge .dot{width:7px;height:7px;border-radius:50%}
+  .badge.green{background:var(--green-bg);color:#9fe6b6;border:1px solid var(--green-bd)}
+  .badge.green .dot{background:var(--green)}
+  .badge.amber{background:var(--amber-bg);color:#f0cf8d;border:1px dashed var(--amber-bd)}
+  .badge.amber .dot{background:var(--amber)}
+  .badge.red{background:var(--red-bg);color:#f7a59d;border:1px solid var(--red-bd)}
+  .badge.red .dot{background:var(--red)}
+
+  .ledger{display:grid;gap:14px}
+  .lrow{
+    display:grid;grid-template-columns:150px 1fr;gap:0;
+    background:var(--panel);border:1px solid var(--line);border-radius:13px;overflow:hidden;
+  }
+  .lrow .verdict-cell{
+    padding:18px;display:flex;flex-direction:column;gap:10px;align-items:flex-start;
+    border-right:1px solid var(--line);
+  }
+  .lrow .body-cell{padding:18px 20px}
+  .lrow .claim{font-size:1.02rem;color:#fff;font-weight:600;line-height:1.5;margin-bottom:9px;font-family:var(--font-body)}
+  .lrow .basis-l{font-family:var(--font-mono);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-bottom:5px}
+  .lrow .basis{font-size:.9rem;color:var(--muted);line-height:1.62}
+  .lrow .vn{font-family:var(--font-mono);font-size:.68rem;color:var(--faint)}
+  /* verdict-keyed accents — verified solid, tentative dashed+muted, refuted red */
+  .lrow.v-green{border-left:4px solid var(--green)}
+  .lrow.v-green .verdict-cell{background:rgba(82,200,120,.05)}
+  .lrow.v-amber{border-left:4px dashed var(--amber);background:linear-gradient(90deg,rgba(227,170,60,.05),transparent 40%)}
+  .lrow.v-amber .claim{color:#f0ead9}
+  .lrow.v-amber .verdict-cell{background:rgba(227,170,60,.05)}
+  .lrow.v-amber .tentnote{font-family:var(--font-mono);font-size:.64rem;color:var(--amber);opacity:.85;letter-spacing:.04em}
+  .lrow.v-red{border-left:4px solid var(--red);background:linear-gradient(90deg,rgba(236,91,80,.06),transparent 42%)}
+  .lrow.v-red .verdict-cell{background:rgba(236,91,80,.06)}
+  .lrow.v-red .claim{color:#f3d3cf;text-decoration:line-through;text-decoration-color:rgba(236,91,80,.55);text-decoration-thickness:1.5px}
+  .lrow.v-red .claim .strikenote{display:block;text-decoration:none;font-size:.72rem;color:var(--red);font-weight:600;margin-top:6px;font-family:var(--font-mono)}
+
+  /* residual / meta — kept visually ALIVE */
+  .alive{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:6px}
+  .panel-open{
+    background:linear-gradient(165deg,rgba(227,170,60,.08),transparent 60%),var(--panel2);
+    border:1px dashed var(--amber-bd);border-radius:16px;padding:24px;
+  }
+  .panel-open .ph{display:flex;align-items:center;gap:11px;margin-bottom:8px}
+  .panel-open .ph .ic{font-size:1.15rem}
+  .panel-open .ph h4{font-family:var(--font-display);font-size:1.25rem;color:#f5d99a;font-weight:600}
+  .panel-open .ph .stamp{margin-left:auto;font-family:var(--font-mono);font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);border:1px solid var(--amber-bd);border-radius:20px;padding:3px 10px}
+  .panel-open ul{list-style:none;display:grid;gap:12px;margin-top:14px}
+  .panel-open ul li{font-size:.93rem;color:var(--ink-soft);line-height:1.62;padding-left:18px;position:relative}
+  .panel-open ul li::before{content:"▸";position:absolute;left:0;color:var(--amber)}
+  .panel-meta{
+    background:linear-gradient(165deg,rgba(236,91,80,.06),transparent 55%),var(--panel2);
+    border:1px dashed var(--red-bd);border-radius:16px;padding:24px;
+  }
+  .panel-meta .ph{display:flex;align-items:center;gap:11px;margin-bottom:8px}
+  .panel-meta .ph .ic{font-size:1.15rem}
+  .panel-meta .ph h4{font-family:var(--font-display);font-size:1.25rem;color:#f6b3ac;font-weight:600}
+  .panel-meta .ph .stamp{margin-left:auto;font-family:var(--font-mono);font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:var(--red);border:1px solid var(--red-bd);border-radius:20px;padding:3px 10px}
+  .panel-meta p{font-size:.93rem;color:var(--ink-soft);line-height:1.7;margin-top:12px}
+  .panel-meta .punch{display:block;margin-top:14px;font-family:var(--font-display);font-size:1.1rem;color:#fff;border-top:1px solid var(--line);padding-top:14px}
+
+  /* footer */
+  footer{padding:46px 0 70px;color:var(--faint);font-family:var(--font-mono);font-size:.76rem;line-height:1.9}
+  footer .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  footer .tags span{border:1px solid var(--line);border-radius:20px;padding:3px 12px;color:var(--muted)}
+
+  /* ---------- responsive ---------- */
+  @media (max-width:780px){
+    .stats{grid-template-columns:1fr 1fr}
+    .stat:nth-child(2){border-right:0}
+    .stat:nth-child(1),.stat:nth-child(2){border-bottom:1px solid var(--line)}
+    .axis{grid-template-columns:1fr}
+    .axis .col.stable{border-radius:14px 14px 0 0}
+    .axis .col.shift{border-radius:0 0 14px 14px;border-left:1px solid var(--line);border-top:0}
+    .axis .vs{border-left:1px solid var(--line);border-right:1px solid var(--line)}
+    .reasons{grid-template-columns:1fr}
+    .lrow{grid-template-columns:1fr}
+    .lrow .verdict-cell{border-right:0;border-bottom:1px solid var(--line);flex-direction:row;align-items:center}
+    .alive{grid-template-columns:1fr}
+    .sec-head .hint{display:none}
+    .legend .count{margin-left:0;width:100%}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- ============ HERO ============ -->
+  <header class="hero">
+    <div class="eyebrow reveal">3-Party AI Debate · Verdict</div>
+    <h1 class="reveal">백엔드 에이전트 구조<span class="sub">2 에이전트 &nbsp;vs&nbsp; 1 에이전트 + 2 스킬 — 결정룰</span></h1>
+    <div class="meta-line reveal">
+      <span class="pill">토론자 <b>claude</b> (claude-debater)</span>
+      <span class="pill"><b>codex</b> (gpt-5.5)</span>
+      <span class="pill"><b>agy</b> (Gemini 3.5)</span>
+      <span class="pill">진행자(중립) <b>Claude Code</b></span>
+      <span class="pill">2026-06-29</span>
+      <span class="pill"><b>Light 모드</b> · 반증 의무 + 정직 라벨</span>
+    </div>
+
+    <div class="stats reveal">
+      <div class="stat"><div class="n">3<small> AI</small></div><div class="l">독립 토론자 · 전원 동의</div></div>
+      <div class="stat"><div class="n">B</div><div class="l">기본값 옵션</div></div>
+      <div class="stat"><div class="n">7</div><div class="l">검증 원장 항목</div></div>
+      <div class="stat"><div class="n">上~中</div><div class="l">신뢰도 (범위 해석차)</div></div>
+    </div>
+  </header>
+
+  <!-- ============ CORE VERDICT ============ -->
+  <div class="verdict reveal">
+    <div class="top">
+      <div class="tag">핵심 결론</div>
+      <h2>옵션 <span class="opt">B</span> — 에이전트 1개(<code>backender</code>) + 스킬 2개(<code>spring</code>·<code>fastapi</code>) + <code>backender-checker</code>(checker 쌍) 이 기본값.</h2>
+      <p class="lead">축: <em>에이전트 = 역할(안정축, "누가")</em> / <em>스킬 = 교체 가능한 지식(변하는축, "무엇으로")</em> → 변하는 축(스택)을 <em>교체 가능한 층(스킬)</em>에 둔다.</p>
+      <span class="agree">● 3자 전원 동의 (B / 신뢰도: in-scope 上 ~ 中)</span>
+    </div>
+    <div class="rule">
+      <div class="rl">결정룰 — 한 줄</div>
+      <p>지식(프레임워크) 차이 → <span class="chip-b">B</span> &nbsp;/&nbsp; 역할 판단·권한·checker 기준이 반복적으로 갈리거나, 도구권한이 하드 보안경계거나, 한 세션이 多스택을 오가거나, N이 영구 2 고정 → <span class="chip-a">A</span></p>
+    </div>
+  </div>
+
+  <!-- ============ AXIS ============ -->
+  <section class="reveal">
+    <div class="sec-head">
+      <span class="sec-num">01</span>
+      <h3>설계 축 — 무엇을 어디에 두는가</h3>
+    </div>
+    <div class="axis">
+      <div class="col stable">
+        <div class="who">안정축 · "누가"</div>
+        <div class="ttl">에이전트 = 역할</div>
+        <div class="desc">잘 변하지 않는 책임/권한의 축. 한 곳에 고정한다.</div>
+      </div>
+      <div class="vs"><span>→</span></div>
+      <div class="col shift">
+        <div class="who">변하는축 · "무엇으로"</div>
+        <div class="ttl">스킬 = 교체 가능한 지식</div>
+        <div class="desc">프레임워크·스택처럼 갈아끼우는 축. 교체 가능한 층에 둔다.</div>
+      </div>
+    </div>
+    <p class="axis-foot">변하는 축(스택)을 <em>교체 가능한 층(스킬)</em>에 두는 것 — 이것이 B를 기본값으로 만드는 한 문장 논리다.</p>
+  </section>
+
+  <!-- ============ WHY B ============ -->
+  <section class="reveal">
+    <div class="sec-head">
+      <span class="sec-num">02</span>
+      <h3>왜 B인가</h3>
+      <span class="hint">5 근거</span>
+    </div>
+    <div class="reasons">
+      <div class="reason wide">
+        <div class="rn">근거 01 · 역할 단일 정본</div>
+        <h4>역할 로직은 스택 무관 동일 → 1곳 작성, 드리프트 0</h4>
+        <p>backend 역할 로직(요구 해석·변경범위·테스트/마이그레이션 판단·리뷰대응·보안·보고)은 스택과 무관하게 동일하다. 한 곳에만 쓰면 드리프트가 0. <em>A는 역할 로직을 두 에이전트에 복제</em>한다.</p>
+      </div>
+      <div class="reason">
+        <div class="rn">근거 02 · 컨벤션 정합</div>
+        <h4>"에이전트=역할, 스킬=지식" 그대로</h4>
+        <p>기존 설계 컨벤션을 변형 없이 따른다.</p>
+      </div>
+      <div class="reason">
+        <div class="rn">근거 03 · 확장성</div>
+        <h4>스택 N개 = 에이전트 1 + 스킬 N</h4>
+        <p>스택이 늘어도 에이전트 1개 + 스킬 N개(<code>django</code>·<code>nestjs</code>…)면 된다. <em>A는 에이전트(+checker) N개</em>로 불어난다.</p>
+      </div>
+      <div class="reason">
+        <div class="rn">근거 04 · 컨텍스트 효율</div>
+        <h4>스택 스킬만 온디맨드 로드</h4>
+        <p>그 프로젝트가 쓰는 스택 스킬만 필요 시 로드한다.</p>
+      </div>
+      <div class="reason">
+        <div class="rn">근거 05 · checker 단순</div>
+        <h4><code>backender-checker</code> 1개로 공통 품질기준 유지</h4>
+        <p>checker 1개가 공통 품질기준을 유지한다(필요 시 스택 검증 스킬 호출).</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ EXCEPTION (A) ============ -->
+  <section class="reveal">
+    <div class="sec-head">
+      <span class="sec-num">03</span>
+      <h3>A가 맞는 예외 — 반대 옵션 조건</h3>
+    </div>
+    <p class="exc-intro">아래 조건들이 성립하면 옵션 A(스택별 별도 에이전트)가 정당화된다. <em>프레임워크 지식이 아니라 역할/거버넌스 차이</em>가 핵심이다.</p>
+    <ul class="exc">
+      <li><span class="ai">A·1</span><p>스택별로 <em>역할 판단·운영 책임·품질 기준·실패 모드·checker가 실제로 다를</em> 때 (프레임워크 지식이 아니라 역할/거버넌스 차이).</p></li>
+      <li><span class="ai">A·2</span><p>도구·배포·시크릿 권한이 <em>하드 보안경계</em>라 에이전트 수준 격리가 필요할 때.</p></li>
+      <li><span class="ai">A·3</span><p>한 세션이 <em>여러 스택을 오가</em>거나(예: monorepo), 스택→스킬 바인딩이 <em>재량적</em>일 때.</p></li>
+      <li><span class="ai">A·4</span><p>N이 <em>영구 2 고정</em>이고 공통 워크플로우 공유 필요가 없을 때.</p></li>
+    </ul>
+  </section>
+
+  <!-- ============ BINDING PRECONDITION ============ -->
+  <section class="reveal">
+    <div class="sec-head">
+      <span class="sec-num">04</span>
+      <h3>B의 전제 = 결정론적 바인딩</h3>
+      <span class="hint">행동 항목</span>
+    </div>
+    <div class="warnpanel">
+      <div class="wh"><span class="ic">⚠️</span><h4>희망이 아니라 강제해야 한다</h4></div>
+      <p class="pre">B의 안전성(스택 관용구 혼입 0)은 <em>"backender가 어느 스킬을 쓸지가 결정론적으로 고정"</em>된다는 데 의존한다. 이것은 강제되어야 한다:</p>
+      <ul class="acts">
+        <li><p><code>project-init</code>이 각 repo <code>CLAUDE.md</code>에 <em>stack → skill</em>을 못박는다 (예: "이 repo는 Spring → <code>spring</code> 스킬만").</p></li>
+        <li><p>스킬 frontmatter에 <em>hard stack-guard</em> ("타 스택 관용구 금지").</p></li>
+      </ul>
+      <p class="note-q">이 강제가 있으면 신뢰도 <b>上</b>, 없으면 <b>中</b>으로 하향 (혼입 리스크가 실재화 → A 경쟁력 상승).</p>
+    </div>
+  </section>
+
+  <!-- ============ VERIFICATION LEDGER (CENTERPIECE) ============ -->
+  <section class="reveal">
+    <div class="sec-head">
+      <span class="sec-num">05</span>
+      <h3>검증 원장</h3>
+      <span class="hint">주장 · 판정 · 근거</span>
+    </div>
+    <p class="ledger-intro">각 주장의 판정을 색으로 엄격히 구분한다. <b>매끈한 디자인이 미검증·추론을 확정처럼 보이게 하지 않도록</b> — 추론/미검증/잔여이견 행은 점선·뮤트 처리되어 있다.</p>
+
+    <div class="legend">
+      <span class="lt">범례</span>
+      <span class="li"><span class="badge green"><span class="dot"></span>✅ 확정</span> 출처·선례로 뒷받침</span>
+      <span class="li"><span class="badge amber"><span class="dot"></span>⚠️ 주의</span> 미검증·추론·잔여이견 (확정 아님)</span>
+      <span class="li"><span class="badge red"><span class="dot"></span>❌ 교정</span> 틀린 주장으로 판정</span>
+      <span class="count"><span>✅ <b>3</b></span><span>⚠️ <b>3</b></span><span>❌ <b>1</b></span></span>
+    </div>
+
+    <div class="ledger">
+      <!-- row 1 -->
+      <div class="lrow v-green">
+        <div class="verdict-cell">
+          <span class="badge green"><span class="dot"></span>✅ 확정</span>
+          <span class="vn">#1</span>
+        </div>
+        <div class="body-cell">
+          <div class="claim">에이전트=역할·스킬=지식, maker-checker 쌍 필수</div>
+          <div class="basis-l">근거</div>
+          <div class="basis"><code>workflow.md §9</code> · 원칙12</div>
+        </div>
+      </div>
+      <!-- row 2 -->
+      <div class="lrow v-green">
+        <div class="verdict-cell">
+          <span class="badge green"><span class="dot"></span>✅ 확정</span>
+          <span class="vn">#2</span>
+        </div>
+        <div class="body-cell">
+          <div class="claim">위키 5스킬이 per-vault <code>CLAUDE.md</code>로 vault 안 섞고 동작 (1세트 = 다(多)컨텍스트)</div>
+          <div class="basis-l">근거</div>
+          <div class="basis">실제 운영 선례(emotion/dakman/chagok-wiki <code>CLAUDE.md</code>) — <em>B 구조의 존재증명</em></div>
+        </div>
+      </div>
+      <!-- row 3 -->
+      <div class="lrow v-green">
+        <div class="verdict-cell">
+          <span class="badge green"><span class="dot"></span>✅ 확정 <span style="opacity:.7">(논리)</span></span>
+          <span class="vn">#3</span>
+        </div>
+        <div class="body-cell">
+          <div class="claim">동일 backend 역할 로직은 스택 무관 → A는 복제·드리프트</div>
+          <div class="basis-l">근거</div>
+          <div class="basis">역할 정의상</div>
+        </div>
+      </div>
+      <!-- row 4 — REFUTED -->
+      <div class="lrow v-red">
+        <div class="verdict-cell">
+          <span class="badge red"><span class="dot"></span>❌ 교정</span>
+          <span class="vn">#4</span>
+        </div>
+        <div class="body-cell">
+          <div class="claim">"에이전트/checker 폭발 = 거버넌스 붕괴"<span class="strikenote">↳ 틀린 주장으로 판정됨</span></div>
+          <div class="basis-l">근거 · 교정 내용</div>
+          <div class="basis">held-out 종결 게이트(교차모델 3인/fresh)는 <em>스택 수 무관 A·B 둘 다 1개</em> → A의 약점은 <em>등록·드리프트 오버헤드</em>지 거버넌스 붕괴 아님.</div>
+        </div>
+      </div>
+      <!-- row 5 -->
+      <div class="lrow v-amber">
+        <div class="verdict-cell">
+          <span class="badge amber"><span class="dot"></span>⚠️ 미검증</span>
+          <span class="vn">#5</span>
+          <span class="tentnote">확정 아님</span>
+        </div>
+        <div class="body-cell">
+          <div class="claim">"백엔드 공통규칙 80% 유사"</div>
+          <div class="basis-l">근거</div>
+          <div class="basis">출처 없는 정밀수치(수사). <em>결론의 load-bearing 아님.</em></div>
+        </div>
+      </div>
+      <!-- row 6 -->
+      <div class="lrow v-amber">
+        <div class="verdict-cell">
+          <span class="badge amber"><span class="dot"></span>⚠️ 추론</span>
+          <span class="vn">#6</span>
+          <span class="tentnote">실행검증 안 함</span>
+        </div>
+        <div class="body-cell">
+          <div class="claim"><code>@Transactional</code>(Spring thread-bound) vs FastAPI(async event-loop, session-per-task) 기본값 뒤집힘</div>
+          <div class="basis-l">근거 · 판정</div>
+          <div class="basis">프레임워크 설계상 알려진 사실이나 본 토론서 오라클 실행검증 안 함. 판정: <em>역할 판단 분기는 맞으나</em> repo 컨텍스트 고정 + 스킬 stack-guard로 통제 → <em>A로 밀지 않고 B 위 설계조건으로 강등</em>(claude 자기 prosecutor 강등, 3자 합의).</div>
+        </div>
+      </div>
+      <!-- row 7 -->
+      <div class="lrow v-amber">
+        <div class="verdict-cell">
+          <span class="badge amber"><span class="dot"></span>⚠️ 잔여 이견</span>
+          <span class="vn">#7</span>
+          <span class="tentnote">미해소</span>
+        </div>
+        <div class="body-cell">
+          <div class="claim">신뢰도 上 vs 中</div>
+          <div class="basis-l">근거</div>
+          <div class="basis">범위 해석 차 — <em>in-scope</em>(별 repo 2개, working-dir가 스택 고정) = <b>上</b>(claude) / 혼입 리스크 hedge = <b>中</b>(codex·agy). monorepo·교차스택 세션이면 <b>中~A</b> 재평가.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ RESIDUAL + META (kept alive) ============ -->
+  <section class="reveal">
+    <div class="sec-head">
+      <span class="sec-num">06</span>
+      <h3>지워지지 않은 것들</h3>
+      <span class="hint">잔여 이견 · 메타 주의</span>
+    </div>
+    <div class="alive">
+      <div class="panel-open">
+        <div class="ph"><span class="ic">⚖️</span><h4>잔여 이견</h4><span class="stamp">지우지 않음</span></div>
+        <ul>
+          <li><b>신뢰도</b>: claude <b>上</b>(in-scope) ↔ codex·agy <b>中</b>. 핵심 변수 = "stack→skill 바인딩이 결정론이냐 재량이냐". 결정론 강제(위 행동항목) 시 上으로 수렴 가능.</li>
+          <li>따라서 결론은 <em>"B + 결정론적 바인딩 강제"</em>가 한 묶음. 바인딩이 보장 안 되면 신뢰도 하향·A 재검토.</li>
+        </ul>
+      </div>
+      <div class="panel-meta">
+        <div class="ph"><span class="ic">🧭</span><h4>메타 주의</h4><span class="stamp">한계 명시</span></div>
+        <p>claude·codex·agy 모두 LLM(2개는 Gemini/GPT 계열, 1개 Claude) → <em>실패 모드 상관</em>. 본 결론은 <em>위키 선례(실제 운영 = 비-LLM 오라클에 준함)</em>에 정박했고, <code>@Transactional</code> 분기는 코드 실행으로 검증하지 않았다(추론 라벨 유지).</p>
+        <span class="punch">"3자 합의"가 곧 정답 보증은 아니다.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer>
+    백엔드 에이전트 구조 — 2 에이전트 vs 1 에이전트 + 2 스킬 (결정룰) · created 2026-06-29 · wiki-ingest: pending<br>
+    토론 모드: Light (반증 의무 + 정직 라벨) · 진행자 중립 · maker-checker 분리
+    <div class="tags">
+      <span>#agent-design</span><span>#skill-design</span><span>#architecture</span><span>#maker-checker</span><span>#methodology</span>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+  (function(){
+    var io;
+    if('IntersectionObserver' in window){
+      io=new IntersectionObserver(function(es){
+        es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+      },{threshold:.08,rootMargin:'0px 0px -8% 0px'});
+      var els=document.querySelectorAll('.reveal');
+      els.forEach(function(el,i){ el.style.transitionDelay=Math.min(i*55,330)+'ms'; io.observe(el); });
+    }else{
+      document.querySelectorAll('.reveal').forEach(function(el){el.classList.add('in');});
+    }
+    // safety net: never leave anything hidden (print / screenshot / stalled observer)
+    setTimeout(function(){
+      document.querySelectorAll('.reveal:not(.in)').forEach(function(el){el.classList.add('in');});
+    },4000);
+  })();
+</script>
+</body>
+</html>

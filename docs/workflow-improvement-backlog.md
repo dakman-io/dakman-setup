@@ -2,8 +2,12 @@
 
 > workflow.md에 **선제 추가하지 않는다**(덕지덕지 = 과공학, 원칙 13·§10.3). 여기 park해두고, **실제 신호**(같은 결함 반복·즉흥 처리 3회·탈출 결함)가 뜰 때만 채택 판단(§10.3 "3회 이상 즉흥 처리 = 문서화"). 채택 시 각각 메타 T3 = held-out 3인.
 
-## 2026-07-05 · LangChain "The Art of Loop Engineering" 도출 (X 경유·미검증)
-> 원천: `docs/handoff/wiki-loop-engineering-langchain.md`(dakman-wiki ingest 위임). **이 글은 대부분 우리 것의 외부 검증** — 4루프(agent·verification·event-driven·hill-climbing)가 §9·§4/§5·§8.4·§10.5에 이미 있음. 아래는 글이 우리보다 *날카로운* 지점만.
+## 2026-07-05 · 루프 엔지니어링 도출 (dakman-wiki verify로 출처 정정됨)
+> 원천: dakman-wiki `wiki/loop-engineering-langchain.md` (**verified**, PR #23) · 내 핸드오프 `docs/handoff/wiki-loop-engineering-langchain.md`.
+>
+> ★ **출처 정정 (dakman-wiki held-out verify — 2026-07-05)**: LangChain 원문 2회 대조 결과, **4루프(agent·verification·event·hill-climbing)·harness·create_agent·trace는 LangChain 1차 확인**(강한 외부 앵커). 그러나 아래 후보의 근거가 된 **'완료=판정'·'좋은 모델일수록 검증수요↑'·승인 피로/비대칭·'프롬프트 이후'는 LangChain 원문에 없음 = 율무커피 2차 정리의 가필**이다. → **이 후보들을 "LangChain이 그렇게 말했다"로 인용 금지**(2차 해석). 채택 시 근거 = **우리 자체 원칙·held-out**(2차 해석과 우리 원칙이 정합하는 것은 별개 사실).
+>
+> **이 글은 우리 4루프 구조를 외부 검증**(§9·§4/§5·§8.4·§10.5). 아래는 우리보다 *날카롭게* 표현된 지점(단 위 정정대로 출처는 2차).
 
 | # | 후보 | 착지(가정) | 채택 트리거 |
 |---|------|-----------|-------------|

@@ -12,6 +12,9 @@ note: "이건 dakman-wiki 세션이 ingest할 *풀 지식 문서*(요약 아님)
 
 # 루프 엔지니어링 — 에이전트가 언제 '시스템'이 되는가 (LangChain)
 
+> ✅ **ingest·verify 완료 (dakman-wiki, 2026-07-05, PR #23)** → 정본 = `dakman-wiki: wiki/loop-engineering-langchain.md (verified)`. 이 핸드오프 문서는 그 소스(역사 아티팩트).
+> ⚠️ **출처 정정**: verify에서 LangChain 원문 대조 결과 — **4루프·harness·create_agent·trace = LangChain 1차** 확인. 그러나 **'완료=판정'·'검증수요↑'·승인 피로/비대칭·'프롬프트 이후'는 LangChain 원문에 없음 = 율무커피 2차 정리의 가필**. 아래 본문은 1차/2차가 섞여 있으니, 인용 시 정본 위키 페이지(1차/2차 분리 라벨)를 쓸 것. 2차 해석을 "LangChain이 말했다"로 단정 금지.
+
 > **핵심 thesis**: 에이전트가 현실 업무를 자동화하려면 좋은 *모델*만으론 부족하고, 작업군에 맞게 설계된 **harness**(제어계)가 필요하다. 그 harness의 본체 = **루프**(단순 반복문이 아니라 *판단의 위치를 정하는 구조* — 무엇을 자동화·검사·재시도·사람승인할지 배치). **"완료는 모델의 발화가 아니라 시스템의 판정"**이 관통 명제.
 > ⚠️ **출처 등급**: LangChain 블로그가 1차(신뢰 높음), 이 정리는 한국어 2차 경유 → `secondary`·미검증. verify 시 LangChain 원문 대조 권장.
 

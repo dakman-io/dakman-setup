@@ -353,17 +353,34 @@ T1 = 브리핑 → 구현 → 형상관리 → 완료(§10.1 기록 1줄)의 단
 
 ### 8.4 자동 루프 등록 규칙 (Loop Budget & Permission Guard)
 
-/loop·cron·hooks 등 **자동 루프**를 등록할 때 다음 7개 항목을 함께 기록한다 (위치: `artifacts/progress/loop-triage.md` 상단):
+> **루프 4타입 (트리거·정지·용도 — 무엇을 언제 쓰나).** ClaudeDevs *Getting started with loops*(2026-07, @delba_oliveira; **dakman-brain 분석 경유** — §11, 1차 resolve·"팀 공식" 미확인)의 taxonomy. **원칙: 모든 작업이 복잡한 루프를 요구하지 않는다 — 가장 단순한 해법부터, 선택적으로.** 이 4타입은 §1 4대 엔지니어링의 **Loop** 층 세부다.
+
+| 타입 | 트리거 | 정지 | ClaudeDevs primitive¹ | 우리 대응(실존 확인) |
+|------|--------|------|----------------------|---------------------|
+| **Turn-based** (agentic) | 사용자 프롬프트 | Claude 완료 판단 | 매 프롬프트 | 상시 — 검증 스킬로 턴↓ |
+| **Goal-based** | 수동 프롬프트 | 목표 달성 or 턴 캡 | `/goal`(+evaluator) | §4 Round-상한 루프(완료기준+턴캡) |
+| **Time-based** | 시간 간격 | 취소 / 작업완료(PR 머지·큐 비움) | `/loop`·`/schedule` | `/loop`·cron |
+| **Proactive** | 이벤트·스케줄(실시간 사람 X) | 목표=종료 / routine=끌 때까지 | auto mode·dynamic workflows | cron·훅·Workflow 도구 |
+
+> ¹ **ClaudeDevs 아티클이 드는 Claude Code primitive(그들의 taxonomy 용어)** — 이 환경 실존은 미확인이다(`/goal`·auto mode는 이 세션/글로벌 스킬에서 확인 안 됨 — resolve 전 단정 금지). "우리 대응"은 **실측 확인된 대응물만** 적었다. taxonomy는 *지도*로 쓰고, 도구 실존 주장으로 쓰지 않는다. ※ dynamic workflows의 병렬 spawn은 *도구에 내장된* 파일 격리(worktree)를 쓴다 — 이건 도구 서술이지, 우리 병렬 maker에 worktree를 **선제 도입**하라는 규범이 아니다(선제 도입 금지 = §9).
+
+아래 등록 규칙은 **Time-based·Proactive**(사람 없이 도는 자동 루프)에 적용된다. 등록 시 다음 7개 항목을 함께 기록한다 (위치: `artifacts/progress/loop-triage.md` 상단):
 
 ```
 목적 / 주기 / 예산 cap (토큰 또는 시간) / 허용 도구 / 쓰기 권한 / 종료 조건 / 산출물 위치
 ```
+> 파일럿 슬라이스 루프면 +슬라이스 결과·확대/중단 임계, 모델 라우팅 쓰면 +단계별 모델 (아래 불릿 — §10.2가 대조).
 
 - **자동 루프는 커밋·머지·PR publish 금지** — 발견·기록까지만. 결정은 사람이 (원칙 5 유지).
+- **종료 조건 = 완료기준 + 턴/시도 캡** — 무한루프 방지(예: "5회 시도 후 정지"). *품질 판단* 루프의 완료기준 = Critical+Major 0(§4); *점검* 루프(§10.4 FT 카운트·기한 알림)는 "쿼리 성공/빈 결과"가 완료기준(품질 게이트 아님). ClaudeDevs `/goal`은 evaluator+턴캡 내장형 — 우리는 같은 패턴을 §4·캡으로 구성한다.
 - **예산 cap 필수** — 미지정 시 보수적 기본값(최대 3회 실행) 강제. 루프 종료 시 사용 토큰/비용 1줄 기록.
+- **파일럿 슬라이스(대규모 자동화 전 필수)** — 수백 에이전트를 spawn하는 루프(dynamic workflows류)는 전면 실행 전 **작은 슬라이스로 사용량·효과를 먼저 측정**하고, 사전에 정한 **확대/중단 임계**(예: 슬라이스 결함율·건당 토큰 목표 대비)를 넘으면 확대·못 넘으면 중단한다. 결과는 loop-triage에 기록(§10.2 대조). 예산 cap과 짝.
+- **단계별 모델 라우팅** — routine·기계적 단계는 작은/빠른 모델(결정적 작업은 스크립트가 추론보다 쌈), 판단·검수는 최강 모델. **§0 AI예산 상한 정합**(토큰 절감). ⚠️ 단 1차 비용함수는 "사용자 활성 검토 시간"(§0·§6)이라 토큰 절감은 2차 목표 — 소형모델이 검수 정확도를 깎아 재작업·활성 시간을 늘리면 역효과다. 라우팅별 비용↔재작업률을 §10.2에서 대조.
 - **자동화 대상은 점검류만** — 광역 버그 헌팅·탐사 금지 (§10.2 점검 항목이 1차 후보).
 - **커넥터(MCP/CLI) 이원화** — 읽기·증거 수집은 자유. 쓰기 행위(PR 생성 등)는 **Draft까지**, publish는 사용자 게이트.
 - 빈 결과로 끝난 루프는 자동 종료 (기록 0줄 — 트리아지 노이즈 방지).
+
+> 루프 *개선*은 §10.5(신호 기반 자기개선)로 — "개별 이슈 고치고 멈추지 말고 **시스템에 인코딩**"(§10.5·원칙 13 정신). fresh-context 2차 에이전트 리뷰는 §4 held-out으로 이미 커버(브레인 정합 확인).
 
 ---
 
@@ -466,6 +483,7 @@ Tier / 리뷰 라운드 수 / 게이트 first-pass 여부 / 사용자 활성 검
 - **사용자 활성 검토 시간 추이** — 본 워크플로우의 1차 비용 함수 (증가 추세 = 워크플로우 실패 신호)
 - **summary ↔ raw 대조** — 3인 리뷰 summary의 C/M 카운트와 raw 리뷰 파일 집계 일치 여부 (요약 편향 감지, §6.7 병기 의무와 쌍)
 - **자동 루프 §8.4 준수** — 등록된 루프의 7개 항목 기록·예산 cap·사용량 기록이 실제로 채워졌는지
+- **자동 루프 신규 규율 효과(§8.4)** — 파일럿 슬라이스: 슬라이스 대비 전면 실행의 비용·결함·활성시간(임계가 예측대로 작동했나) · 모델 라우팅: 라우팅별 비용↔재작업률(routine 소형모델 오판이 검수·재작업을 늘렸나). loop-triage에 pilot 결과·model-route 기록 → 개선 없으면 §10.3으로 폐기 검토
 - **에이전트 중심 패턴 효과(§9)** — 공개 산출물 탈출 결함 수(패턴 전/후) · 단일 모델 self-approval 발행 건수(同 계열 노드만 거쳐 발행된 공개물). 개선 없으면 §10.3으로 폐기 검토
 - **이해 Explainer 효과(§5)** — Explainer 첨부율(Tier별 준수: T3 필수/T2 요약/T1 생략) ↔ **counter-metric: 첨부에도 활성 검토시간 미개선·재질문 발생**(= 인지부채 마스킹 신호 — Explainer는 붙었지만 안 읽힘). 개선 없으면 §10.3으로 폐기 검토
 
@@ -528,6 +546,7 @@ Tier / 리뷰 라운드 수 / 게이트 first-pass 여부 / 사용자 활성 검
 | M. Hashimoto, *My AI Adoption Journey* (2026-02-05) · Augment Code, *Harness Engineering* | §1 4대 엔지니어링 **Harness** — 모델을 감싼 제어계(constraint·feedback·quality gate). "Agent=Model+Harness"는 커뮤니티 의역 |
 | walk-forward 종결 학술 근거 | §1·§4 — Consensus≠Verification(arXiv:2603.06612) · LLM self-preference bias(arXiv:2410.21819·2404.13076) · 금융 walk-forward(Pardo 1992/2008; Bailey·López de Prado 2014) |
 | PMBOK 8판 (PMI, 2025-11) | PM 표준 **방향** 정합 참고 — 비규범+테일러링↔Lean Default·Focus on Value↔아웃컴 비용함수·AI 부록(X3)↔AIDD 외부 정당성. ⚠️ PM 표준이지 SW 방법론 아님 — 운영 정본은 본 워크플로우(정합은 방향까지). 1차=pmi.org/standards/pmbok |
+| ClaudeDevs *Getting started with loops* (2026-07-06, @delba_oliveira) | §8.4 루프 4타입 taxonomy의 근거. 1차=X 아티클 `x.com/ClaudeDevs/status/2074208949205881033` / 본문은 **dakman-brain 분석 경유**(`dakman-brain/.web-research/2026-07-08-claudedevs-loops.md`, 로그인 Playwright 전문). ⚠️ 1차 URL resolve·"Claude Code 팀 공식" 귀속 미확인 — 단정 완화. **taxonomy의 primitive(`/goal`·auto mode 등)를 이 환경 실존 도구로 쓰지 말 것**(§8.4 primitive 열 각주) |
 | `.cmux/debates/<토론명>/<토론명>.md`·`.html` · `debates/<토론명>/` | 3자 토론 결론 산출물 — 본 문서 개정 근거 (`workflow-tier-utility`·`loop-engineering-workflow`·`agent-vs-skill-backend`). 결과 파일만 git 추적, 전사·시그널은 무시 |
 
 > 새 프로젝트에서는 위 경로를 생성하면서 시작한다. 없는 문서는 해당 단계 첫 진입 시 작성.
@@ -537,6 +556,7 @@ Tier / 리뷰 라운드 수 / 게이트 first-pass 여부 / 사용자 활성 검
 
 ## 12. 변경 이력
 
+- **2026-07-08 루프 4타입 taxonomy + 자동 루프 규율 보강 (dakman-brain co-derive, ClaudeDevs)**: ClaudeDevs *Getting started with loops*(@delba_oliveira, dakman-brain .web-research 분석 경유 — §11 등재, 1차 resolve·"팀 공식" 미확인) taxonomy를 §8.4에 반영 — (A) **루프 4타입 표**(Turn/Goal/Time/Proactive): ClaudeDevs primitive(`/goal`·auto mode 등)와 **우리 실존 대응**(상시·§4 Round루프·`/loop`·cron·Workflow 도구)을 열 분리, §1 Loop 층 세부. (B) **종료 조건 = 완료기준 + 턴/시도 캡**(품질 루프=C+M0 / 점검 루프=쿼리성공·빈결과). (C) **파일럿 슬라이스**(대규모 자동화 전 작은 슬라이스 측정 + 확대/중단 임계, §10.2 대조). (D) **단계별 모델 라우팅**(routine=소형·판단=최강; §0 AI예산 상한 정합, 단 1차 비용함수=활성시간이라 토큰절감은 2차, §10.2 라우팅별 재작업률 대조). "시스템 인코딩"·"fresh-context 2차 리뷰"는 §10.5·§4에 이미 있어 크로스레퍼만(중복 회피). **메타 = 자동 T3 + held-out 3인**: R1 전원 FAIL(§11 출처 미등재·새 규칙 측정지표 부재·미확인 도구 단정 매핑) → §11 출처 등재·§10.2 측정 배선·primitive 열 정직 라벨로 교정 후 재종결.
 - **2026-07-03 이해 Explainer(/explain-diff) 게이트 추가 (dakman-brain 기여, rtong GO)**: 병목이 "작성"→"인간의 이해"로 이동(Geoffrey Litt) → 1차 비용함수(사용자 활성 검토 시간)를 직접 낮추는 도구를 §5 게이트 + §9 DoD PR 본문에 발동지점 신설(원칙 11 지점바인딩). diff→산문 Explainer(배경→직관→산문+스니펫), Tier 연동(T3 필수·T2 요약·T1 생략, Lean Default+Escalation). 경계: Explainer=판정 자료지 판정 아님(maker 자기설명 ≠ self-approval, §4). T3·위험도메인 인터랙티브 아티팩트(erd-viewer·md2html) 첨부=옵션 관행(신규 스킬 아님). 퀴즈 게이트는 미채택(정착 후 재검토). 스킬 구현은 `docs/handoff/explain-diff-spec.md`로 claude-config 위임. 메타 변경 = 자동 T3 + held-out(codex·agy·claude) 거쳐 반영.
 - **2026-06-29 AIDD 방법론 환류 반영 (emotion-setup 기여, #1~#5)**: 한 AIDD 프로젝트가 워크플로우를 실제 굴려 도출·검증한 도메인 중립 개선을 표준에 환류 — §1 **4대 엔지니어링**(prompt·context·harness·loop) 어휘·1차출처 정박 + "최고≠최대" / §4 held-out **학술 근거 정박** + **검증 삼각**(offline+online+재현, 재현 런이 정적 문서 못 잡는 실행 갭 적출) / §9 **병렬 의존 maker 순차 디스패치**(clobber 방지) + **Option A 파일럿→검증 승격**(dakman-sns·emotion 운영 통과) + **Bash-less maker 주의** / §10.5 **신호 기반 자기개선 루프**(improver 제안만 + 3단 채택 게이트 + counter-metric → 메타 self-approval·Goodhart 방어, 메타는 영원히 사람 게이트) / §11 출처(Anthropic context·Hashimoto harness·walk-forward 학술·PMBOK 8판 방향참고). git 머지-subject 기밀회피(#7)는 dakman(공개 org) 비해당으로 미채택. 메타 변경 = 자동 T3 + held-out(codex·agy·claude) 거쳐 반영.
 - **2026-06-22 지식 참조 먼저 (dakman-wiki) 표준 추가**: dakman-wiki를 모든 dakman 프로젝트의 *정리된 지식 소스*로 확정 — §3에 "작업 착수·검증 시 `wiki-recall`로 중앙 위키 먼저 조회·인용(READ-ONLY·verified 우선·인용표기 `dakman-wiki: wiki/xxx (verified)`)" 표준 note + §11에 `wiki-recall`(참조)·`wiki-ingest`(축적) 행 추가. ingest(축적)와 recall(참조)의 대칭 완성. dakman-wiki 세션 cross-project 요청, 정본=dakman-wiki/CLAUDE.md. (project-init 스킬은 dakman-claude-config에 sub-위임.)

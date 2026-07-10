@@ -449,7 +449,7 @@
         <tr>
           <td>T1 없음 / T2 R1~R2 / T3 R1~R3 / 예외(사용자 승인) R5.</td>
           <td>R2 초과 시 세션을 새로 열고 핵심 스펙만 Read하여 컨텍스트 정화.</td>
-          <td><code>artifacts/review/{type}-{scope}-review[-{reviewer}]-round{N}.md</code><br><span style="font-size:11px;color:var(--muted)">type: us/design/code/e2e/content · reviewer: claude/codex/agy[구 gemini]</span></td>
+          <td><code>artifacts/review/{type}-{scope}-review[-{reviewer}]-round{N}.md</code><br><span style="font-size:11px;color:var(--muted)">type: us/design/code/e2e/content · reviewer: claude/codex/agy[구 gemini]/grok</span></td>
         </tr>
       </tbody>
     </table>
@@ -461,7 +461,7 @@
     <table>
       <thead><tr><th>구분</th><th>종결 판정 주체</th></tr></thead>
       <tbody>
-        <tr><td><span class="badge risk">고위험</span> 자동 T3·위험 도메인</td><td>작성 비참여 <b>교차모델 3인(codex·agy)</b>이 <b>필수</b> 판정 — <b>fresh 세션은 부족</b>(부분 탈상관, §9). 코드를 쓴 에이전트가 자기 완료를 선언하지 않는다 (원칙 12).</td></tr>
+        <tr><td><span class="badge risk">고위험</span> 자동 T3·위험 도메인</td><td>작성 비참여 <b>교차모델 3인(codex + 3번째 grok↔agy 로테이션; "넷이서" 명시 시 4인)</b>이 <b>필수</b> 판정 — <b>fresh 세션은 부족</b>(부분 탈상관, §9). 코드를 쓴 에이전트가 자기 완료를 선언하지 않는다 (원칙 12).</td></tr>
         <tr><td><span class="badge caution">¬고위험 T3</span></td><td>작성 비참여 <b>fresh 세션 또는 교차모델</b> 중 택1 (강도 서열=§4 노트·§1, 게이트 적용=§9).</td></tr>
         <tr><td><span class="badge tier2">T2</span></td><td>선택 (비용 고려, Orchestrator 재량).</td></tr>
         <tr><td><span class="badge tier1">T1</span></td><td>self.</td></tr>
@@ -607,7 +607,7 @@
       <h4 style="color:#8bdf99">기본 원칙 (병렬 + 시점별 즉시 검토)</h4>
       <ul style="margin:6px 0 0">
         <li>각 시점 작성 직후 즉시 발동 (다음 시점 진입 전 완료)</li>
-        <li>3인 리뷰는 codex·agy 동시 송신 (병렬, 가장 느린 모델 기준 wall-clock)</li>
+        <li>3인 리뷰는 codex + 3번째(grok↔agy 로테이션) 동시 송신 (병렬, 가장 느린 모델 기준 wall-clock)</li>
         <li>Orchestrator summary는 <b>시점별 1쪽</b> (시점마다 1회)</li>
         <li>사용자 검토 = 시점별 1회, 작업당 4~5회 × 5~20분 = <b>총 20~100분</b></li>
       </ul>
@@ -625,7 +625,7 @@
 
   <h3 class="sub">6.6 사용자 활성 시간 압축 흐름 (시점 1개 기준)</h3>
   <pre class="reveal">[1] AI 산출물 작성
-[2] 3인 리뷰 (Claude+Codex+agy, 병렬)           <span class="m">← 사용자 시간 0 (다른 작업 가능)</span>
+[2] 3인 리뷰 (Claude+Codex+3번째 grok/agy, 병렬) <span class="m">← 사용자 시간 0 (다른 작업 가능)</span>
 [3] Orchestrator summary 작성 (1쪽, ≤5개 결정)  <span class="m">← 사용자 시간 0</span>
 [4] AI 합의 이슈 반영                           <span class="m">← 사용자 시간 0</span>
 [5] 사용자 검토 1회 (summary만)                 <span class="c">← 활성 시간 5~20분</span>
@@ -639,7 +639,7 @@
 - raw C/M 집계 병기: claude C{n}/M{n} · codex C{n}/M{n} · agy C{n}/M{n}  <span class="m">← summary와 불일치 시 즉시 노출 (요약 편향 가드)</span>
 - 모델 간 의견 충돌: &lt;있으면 명시&gt;
 - 사용자 결정 필요 질문: &lt;≤5개, 핵심 의도 결정&gt;
-- raw 파일: artifacts/review/*-{claude|codex|agy}-round{N}.md</pre>
+- raw 파일: artifacts/review/*-{claude|codex|agy|grok}-round{N}.md</pre>
   <div class="note reveal"><span class="ic">▸</span> <b>최대 5개 결정 항목</b> cap. Critical+Major 0이면 사용자는 summary 보고 즉시 OK.</div>
 
   <h3 class="sub">6.8 절차</h3>
@@ -815,7 +815,7 @@
   <h4 class="subsub">네이밍 규약</h4>
   <p class="reveal">action 스킬 = 동사(<code>&lt;x&gt;-write</code>/<code>-render</code>/<code>-build</code>), maker = <code>&lt;x&gt;-writer</code>, checker = <b>캐노니컬 역할 reviewer명 재사용</b>(developer↔code-reviewer, designer↔design-reviewer, planner↔us-reviewer), 없을 때만 <code>&lt;x&gt;-reviewer</code> 신설. <code>&lt;x&gt;</code> = 스킬 기준 명사(예: <code>sns</code>).</p>
   <ul class="clean reveal">
-    <li><b>agent 역할명 ≠ reviewer 식별자:</b> §4/§6 리뷰 파일의 <code>{reviewer}</code>는 <i>모델 id</i>(claude/codex/agy), <code>code-reviewer</code>는 <i>agent 역할명</i> — 혼동 금지.</li>
+    <li><b>agent 역할명 ≠ reviewer 식별자:</b> §4/§6 리뷰 파일의 <code>{reviewer}</code>는 <i>모델 id</i>(claude/codex/agy/grok), <code>code-reviewer</code>는 <i>agent 역할명</i> — 혼동 금지.</li>
     <li><b>⚠ 마이그레이션·충돌:</b> 기존 스킬 <code>sns-writer</code>(이미 <code>-writer</code> 점유)는 규약상 <b>스킬 <code>sns-write</code> + 에이전트 <code>sns-writer</code></b>로 분리(sns <b>네이밍-마이그레이션 파일럿</b> — §10.5의 P0~P3 자기개선 단계와 무관). <code>-write</code>/<code>-writer</code> 1글자 차이는 grep·오타 취약 — 파일럿에서 혼동 비용 측정해 필요 시 동사 분리(<code>sns-compose</code> 등) 재검토.</li>
   </ul>
 
@@ -961,7 +961,7 @@
         <tr><td><code>.claude/agents/*.md</code></td><td>6개 역할별 전문 프롬프트</td></tr>
         <tr><td><code>.claude/skills/</code></td><td>프로젝트 스킬 (커버리지 측정 SSoT 등)</td></tr>
         <tr><td>글로벌 스킬 <code>project-init</code></td><td>프로젝트 초기화 — docs/project-init.md를 MAY/ASK/STOP 플레이북으로 실행 (글로벌 단일 정본 <code>~/.claude/skills/project-init/</code>, 리포 사본 없음; 비가역 원격 작업은 승인 게이트)</td></tr>
-        <tr><td>글로벌 스킬 <code>multi-ai-discussion</code></td><td>cmux 4-pane 셋업(진행자 + claude·codex·agy), 3인 교차 리뷰 프로토콜 (§6.8)</td></tr>
+        <tr><td>글로벌 스킬 <code>multi-ai-discussion</code></td><td>cmux 가변 pane 셋업(진행자 + claude·codex 항상 + 3번째 grok↔agy 로테이션; 3인 표준/4인 "넷이서" 명시 시), 3인 교차 리뷰 프로토콜 (§6.8)</td></tr>
         <tr><td>글로벌 스킬 <code>wiki-recall</code></td><td>중앙 위키 dakman-wiki에서 지식 조회·인용 (READ-ONLY, verified 우선) — 작업 착수 시 "지식 참조 먼저" 표준의 인터페이스 (§3 note)</td></tr>
         <tr><td>글로벌 스킬 <code>wiki-ingest</code></td><td>프로젝트 지식을 중앙 위키에 축적 (recall의 대칭, 무설정 자동 — docs/project-init.md §9)</td></tr>
       </tbody>
@@ -989,6 +989,11 @@
   </div>
   <div class="timeline reveal">
     <div class="tl latest">
+      <div class="dt">2026-07-10 <span class="badge meta">메타</span></div>
+      <div class="ti">multi-ai-discussion 참가자 서술 동기화 (grok 추가·로테이션 — 참조 sync)</div>
+      <p>글로벌 스킬 <code>multi-ai-discussion</code>에 <b>grok(xAI, <code>grok --yolo</code>) 토론자 추가 + 3번째 grok↔agy 로테이션</b>(표준 3인 / "넷이서" 명시 시 4인)이 반영됨(스킬 구현·실측검증·git = claude-config, <code>docs/handoff/multi-ai-discussion-add-grok.md</code> 위임 → PR #69, 워처 2단계 busy 견고화 PR #70). 본 문서 §4 held-out 리뷰어 열거·§6.6/6.7 3인 리뷰 표기·§9 reviewer id·§11 스킬 행을 <b>참조 동기화</b>(reviewer 식별자에 grok 추가, "codex·agy"→"codex + grok↔agy 로테이션"). <b>성격 = 이미 실측 검증된 스킬 변경의 서술 반영(참조 sync)이지 새 워크플로우 로직/정책 아님</b> — 수용 게이트로 grok 기동·착지·<code>.done</code> 자동실행·busy 패턴·로테이션 교대를 dakman-setup가 직접 실측(claude-config 완료 회신 대조; 내 실측이 grok busy 2단계를 적출해 워처 grep 견고화에 반영). 참가 정책 근거·다양성 논거는 스킬 정본.</p>
+    </div>
+    <div class="tl">
       <div class="dt">2026-07-08 <span class="badge meta">메타</span></div>
       <div class="ti">루프 4타입 taxonomy + 자동 루프 규율 보강 (dakman-brain co-derive, ClaudeDevs)</div>
       <p>ClaudeDevs <i>Getting started with loops</i>(@delba_oliveira, dakman-brain .web-research 분석 경유 — §11 등재, 1차 resolve·"팀 공식" 미확인) taxonomy를 §8.4에 반영 — (A) <b>루프 4타입 표</b>(Turn/Goal/Time/Proactive): ClaudeDevs primitive(<code>/goal</code>·auto mode 등)와 <b>우리 실존 대응</b>(상시·§4 Round루프·<code>/loop</code>·cron·Workflow 도구)을 열 분리. (B) <b>종료 조건 = 완료기준 + 턴/시도 캡</b>(품질 루프=C+M0 / 점검 루프=쿼리성공·빈결과). (C) <b>파일럿 슬라이스</b>(대규모 자동화 전 슬라이스 측정 + 확대/중단 임계, §10.2 대조). (D) <b>단계별 모델 라우팅</b>(routine=소형·판단=최강; §0 AI예산 정합, 1차 비용함수=활성시간이라 토큰절감은 2차). <b>메타 = 자동 T3 + held-out 3인</b>: R1 전원 FAIL(§11 출처 미등재·측정지표 부재·미확인 도구 단정 매핑) → 교정 후 <b>R2 전원 PASS(C+M 0)</b> 재종결.</p>

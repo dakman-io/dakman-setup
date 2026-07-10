@@ -140,12 +140,12 @@ flowchart LR
 
 R2 초과 시 **Context Hygiene** — 세션을 새로 열고 핵심 스펙만 Read하여 컨텍스트 정화.
 
-**리뷰 파일**: `artifacts/review/{type}-{scope}-review[-{reviewer}]-round{N}.md` (type: us/design/code/e2e/content, reviewer: claude/codex/agy[구 gemini]).
+**리뷰 파일**: `artifacts/review/{type}-{scope}-review[-{reviewer}]-round{N}.md` (type: us/design/code/e2e/content, reviewer: claude/codex/agy[구 gemini]/grok).
 
 **판정 주체**: 라운드 중 통합·중재는 **Orchestrator (Claude 메인 세션)**. 별도 "기획 판단 에이전트" 없음.
 
 **종결 판정 (held-out)**: 루프 종결("Critical+Major 0건") 선언은 Tier 차등 —
-- **고위험 (자동 T3·위험 도메인)**: 작성 비참여 **교차모델 3인(codex·agy)**이 **필수** 판정 — **fresh 세션은 부족**(부분 탈상관, §9). 코드를 쓴 에이전트가 자기 완료를 선언하지 않는다 (원칙 12).
+- **고위험 (자동 T3·위험 도메인)**: 작성 비참여 **교차모델 3인(codex + 3번째 grok↔agy 로테이션; "넷이서" 명시 시 4인)**이 **필수** 판정 — **fresh 세션은 부족**(부분 탈상관, §9). 코드를 쓴 에이전트가 자기 완료를 선언하지 않는다 (원칙 12).
 - **¬고위험 T3**: 작성 비참여 **fresh 세션 또는 교차모델** 중 택1(강도 서열=§4 노트·§1, 게이트 적용=§9).
 - **T2**: 선택 (비용 고려, Orchestrator 재량).
 - **T1**: self.
@@ -255,7 +255,7 @@ T2/T3 작업 1건 = 4~5개 시점 (US/AC → 디자인 → 테스트 → 소스 
 
 **기본 원칙 (병렬 + 시점별 즉시 검토)**:
 - 각 시점 작성 직후 즉시 발동 (다음 시점 진입 전 완료)
-- 3인 리뷰는 codex·agy 동시 송신 (병렬, 가장 느린 모델 기준 wall-clock)
+- 3인 리뷰는 codex + 3번째(grok↔agy 로테이션) 동시 송신 (병렬, 가장 느린 모델 기준 wall-clock)
 - Orchestrator summary는 **시점별 1쪽** (시점마다 1회)
 - 사용자 검토 = 시점별 1회, 작업당 4~5회 × 5~20분 = 총 활성 시간 20~100분
 
@@ -269,7 +269,7 @@ T2/T3 작업 1건 = 4~5개 시점 (US/AC → 디자인 → 테스트 → 소스 
 
 ```
 [1] AI 산출물 작성
-[2] 3인 리뷰 (Claude+Codex+agy, 병렬)           ← 사용자 시간 0 (다른 작업 가능)
+[2] 3인 리뷰 (Claude+Codex+3번째 grok/agy, 병렬) ← 사용자 시간 0 (다른 작업 가능)
 [3] Orchestrator summary 작성 (1쪽, ≤5개 결정)  ← 사용자 시간 0
 [4] AI 합의 이슈 반영                           ← 사용자 시간 0
 [5] 사용자 검토 1회 (summary만)                 ← 활성 시간 5~20분
@@ -285,10 +285,10 @@ T2/T3 작업 1건 = 4~5개 시점 (US/AC → 디자인 → 테스트 → 소스 
 ```markdown
 ## 3인 리뷰 통합 (Round N, 시점: <US/AC|디자인|테스트|소스|E2E>)
 - Critical/Major 합의 이슈: <list>
-- raw C/M 집계 병기: claude C{n}/M{n} · codex C{n}/M{n} · agy C{n}/M{n}  ← summary와 불일치 시 즉시 노출 (요약 편향 가드)
+- raw C/M 집계 병기: claude C{n}/M{n} · codex C{n}/M{n} · {grok|agy} C{n}/M{n}  ← summary와 불일치 시 즉시 노출 (요약 편향 가드)
 - 모델 간 의견 충돌: <있으면 명시>
 - 사용자 결정 필요 질문: <≤5개, 핵심 의도 결정>
-- raw 파일: artifacts/review/*-{claude|codex|agy}-round{N}.md
+- raw 파일: artifacts/review/*-{claude|codex|agy|grok}-round{N}.md
 ```
 
 **최대 5개 결정 항목** cap. Critical+Major 0이면 사용자는 summary 보고 즉시 OK.
@@ -434,7 +434,7 @@ T1 = 브리핑 → 구현 → 형상관리 → 완료(§10.1 기록 1줄)의 단
 **전환 경계 (과공학 방지 — 원칙 13).** 3노드화는 **(공개 AND 비가역) 또는 자동 T3**(데이터·위험도메인·보안·메타·신규 화면+상태+데이터)인 산출물에만. 판단은 §2 **3축 전체**(사용자 영향·되돌림 비용·검증 불명확)와 판정 함수(2+ = T3)를 그대로 쓴다 — 새 기준을 만들지 않는다. 저위험 유틸리티(로컬 read/transform: 문서 변환·검색 등)는 메인 직접 실행 **순수 스킬로 유지**. ⚠️ 단 형상관리처럼 **원격·발행·merge 등 비가역 쓰기**를 포함하는 스킬은 저Tier여도 §9 DoD·§8.4의 사용자/Ops 발행 게이트를 유지한다(저위험 예외 ≠ 발행 자동화 허용).
 
 **네이밍 규약.** action 스킬 = 동사(`<x>-write`/`-render`/`-build`), maker = `<x>-writer`, checker = **캐노니컬 역할 reviewer명 재사용**(developer↔code-reviewer, designer↔design-reviewer, planner↔us-reviewer), 없을 때만 `<x>-reviewer` 신설. `<x>` = 스킬 기준 명사(예: `sns`).
-- **agent 역할명 ≠ reviewer 식별자**: §4/§6 리뷰 파일의 `{reviewer}`는 *모델 id*(claude/codex/agy), `code-reviewer`는 *agent 역할명* — 혼동 금지.
+- **agent 역할명 ≠ reviewer 식별자**: §4/§6 리뷰 파일의 `{reviewer}`는 *모델 id*(claude/codex/agy/grok), `code-reviewer`는 *agent 역할명* — 혼동 금지.
 - ⚠️ **마이그레이션·충돌**: 기존 스킬 `sns-writer`(이미 `-writer` 점유)는 규약상 **스킬 `sns-write` + 에이전트 `sns-writer`**로 분리(sns **네이밍-마이그레이션 파일럿** — §10.5의 P0~P3 자기개선 단계와 무관). `-write`/`-writer` 1글자 차이는 grep·오타 취약 — 파일럿에서 혼동 비용을 측정해 필요 시 동사 분리(`sns-compose` 등) 재검토.
 
 **메커니즘 — Option A 검증됨(운영 통과), B/C 폴백.** 위 *거버넌스*(3노드 역할·held-out 종결·검수 분리·하드 제약·경계)는 원칙 11·12의 정본 강제다. "에이전트가 스킬을 호출"하는 구현은:
@@ -538,7 +538,7 @@ Tier / 리뷰 라운드 수 / 게이트 first-pass 여부 / 사용자 활성 검
 | `.claude/agents/*.md` | 6개 역할별 전문 프롬프트 |
 | `.claude/skills/` | 프로젝트 스킬 (커버리지 측정 SSoT 등) |
 | 글로벌 스킬 `project-init` | 프로젝트 초기화 — `docs/project-init.md`를 MAY/ASK/STOP 플레이북으로 실행 (글로벌 단일 정본 `~/.claude/skills/project-init/`, 리포 사본 없음; 비가역 원격 작업은 승인 게이트) |
-| 글로벌 스킬 `multi-ai-discussion` | cmux 4-pane 셋업(진행자 + claude·codex·agy), 3인 교차 리뷰 프로토콜 (§6.8) |
+| 글로벌 스킬 `multi-ai-discussion` | cmux 가변 pane 셋업(진행자 + claude·codex 항상 + 3번째 grok↔agy 로테이션; 3인 표준/4인 "넷이서" 명시 시), 3인 교차 리뷰 프로토콜 (§6.8) |
 | 글로벌 스킬 `wiki-recall` | 중앙 위키 dakman-wiki에서 지식 조회·인용 (READ-ONLY, verified 우선) — 작업 착수 시 "지식 참조 먼저" 표준의 인터페이스 (§3 note) |
 | 글로벌 스킬 `wiki-ingest` | 프로젝트 지식을 중앙 위키에 축적 (recall의 대칭, 무설정 자동 — `docs/project-init.md` §9) |
 | [Addy Osmani "Loop Engineering"](https://x.com/addyosmani/status/2064127981161959567) | §1 4대 엔지니어링 **Loop** + §8.4·§10.4·§10.5·held-out 판정의 외부 근거 (원문 발췌·댓글 클러스터: `.cmux/debates/loop-engineering-workflow/sources.md`) |
@@ -556,6 +556,7 @@ Tier / 리뷰 라운드 수 / 게이트 first-pass 여부 / 사용자 활성 검
 
 ## 12. 변경 이력
 
+- **2026-07-10 multi-ai-discussion 참가자 서술 동기화 (grok 추가·로테이션 — 참조 sync)**: 글로벌 스킬 `multi-ai-discussion`에 **grok(xAI, `grok --yolo`) 토론자 추가 + 3번째 grok↔agy 로테이션**(표준 3인 / "넷이서" 명시 시 4인)이 반영됨(스킬 구현·실측검증·git = claude-config, `docs/handoff/multi-ai-discussion-add-grok.md` 위임 → PR #69). 본 문서의 §4 held-out 리뷰어 열거·§6.6/6.7 3인 리뷰 표기·§11 스킬 행을 그에 맞춰 **참조 동기화**(reviewer 식별자에 grok 추가, "codex·agy"→"codex + grok↔agy 로테이션"). **성격 = 이미 실측 검증된 스킬 변경의 서술 반영(참조 sync)이지 새 워크플로우 로직/정책이 아님** — 수용 게이트로 grok 기동·착지·`.done` 자동실행·busy 패턴·로테이션 교대를 dakman-setup가 직접 실측(claude-config 완료 회신 대조). 참가 정책의 근거·다양성 논거는 스킬 정본.
 - **2026-07-08 루프 4타입 taxonomy + 자동 루프 규율 보강 (dakman-brain co-derive, ClaudeDevs)**: ClaudeDevs *Getting started with loops*(@delba_oliveira, dakman-brain .web-research 분석 경유 — §11 등재, 1차 resolve·"팀 공식" 미확인) taxonomy를 §8.4에 반영 — (A) **루프 4타입 표**(Turn/Goal/Time/Proactive): ClaudeDevs primitive(`/goal`·auto mode 등)와 **우리 실존 대응**(상시·§4 Round루프·`/loop`·cron·Workflow 도구)을 열 분리, §1 Loop 층 세부. (B) **종료 조건 = 완료기준 + 턴/시도 캡**(품질 루프=C+M0 / 점검 루프=쿼리성공·빈결과). (C) **파일럿 슬라이스**(대규모 자동화 전 작은 슬라이스 측정 + 확대/중단 임계, §10.2 대조). (D) **단계별 모델 라우팅**(routine=소형·판단=최강; §0 AI예산 상한 정합, 단 1차 비용함수=활성시간이라 토큰절감은 2차, §10.2 라우팅별 재작업률 대조). "시스템 인코딩"·"fresh-context 2차 리뷰"는 §10.5·§4에 이미 있어 크로스레퍼만(중복 회피). **메타 = 자동 T3 + held-out 3인**: R1 전원 FAIL(§11 출처 미등재·새 규칙 측정지표 부재·미확인 도구 단정 매핑) → §11 출처 등재·§10.2 측정 배선·primitive 열 정직 라벨로 교정 후 재종결.
 - **2026-07-03 이해 Explainer(/explain-diff) 게이트 추가 (dakman-brain 기여, rtong GO)**: 병목이 "작성"→"인간의 이해"로 이동(Geoffrey Litt) → 1차 비용함수(사용자 활성 검토 시간)를 직접 낮추는 도구를 §5 게이트 + §9 DoD PR 본문에 발동지점 신설(원칙 11 지점바인딩). diff→산문 Explainer(배경→직관→산문+스니펫), Tier 연동(T3 필수·T2 요약·T1 생략, Lean Default+Escalation). 경계: Explainer=판정 자료지 판정 아님(maker 자기설명 ≠ self-approval, §4). T3·위험도메인 인터랙티브 아티팩트(erd-viewer·md2html) 첨부=옵션 관행(신규 스킬 아님). 퀴즈 게이트는 미채택(정착 후 재검토). 스킬 구현은 `docs/handoff/explain-diff-spec.md`로 claude-config 위임. 메타 변경 = 자동 T3 + held-out(codex·agy·claude) 거쳐 반영.
 - **2026-06-29 AIDD 방법론 환류 반영 (emotion-setup 기여, #1~#5)**: 한 AIDD 프로젝트가 워크플로우를 실제 굴려 도출·검증한 도메인 중립 개선을 표준에 환류 — §1 **4대 엔지니어링**(prompt·context·harness·loop) 어휘·1차출처 정박 + "최고≠최대" / §4 held-out **학술 근거 정박** + **검증 삼각**(offline+online+재현, 재현 런이 정적 문서 못 잡는 실행 갭 적출) / §9 **병렬 의존 maker 순차 디스패치**(clobber 방지) + **Option A 파일럿→검증 승격**(dakman-sns·emotion 운영 통과) + **Bash-less maker 주의** / §10.5 **신호 기반 자기개선 루프**(improver 제안만 + 3단 채택 게이트 + counter-metric → 메타 self-approval·Goodhart 방어, 메타는 영원히 사람 게이트) / §11 출처(Anthropic context·Hashimoto harness·walk-forward 학술·PMBOK 8판 방향참고). git 머지-subject 기밀회피(#7)는 dakman(공개 org) 비해당으로 미채택. 메타 변경 = 자동 T3 + held-out(codex·agy·claude) 거쳐 반영.

@@ -23,6 +23,7 @@
 | E2E 도구 | `{E2E도구}` | Playwright (+ MCP) | Maestro |
 | E2E 실행 | `{E2E실행}` | `npx playwright test` | `./scripts/e2e-test.sh` |
 | 디자인 도구 | `{디자인도구}` | Pencil / Figma | Pencil |
+| 중앙 디자인시스템 | `{중앙DS}` | dakman-design-system v1.x | 없음 (제품 자체 DS) |
 | 실행 확인 환경 | `{실행환경}` | 브라우저 (dev server) | 시뮬레이터/에뮬레이터 |
 | 커버리지 목표 | `{커버리지}` | 핵심 도메인 80% / 서비스·스토어 70% / 유틸 90% | 좌동 |
 | 위험 도메인 | `{위험도메인}` | 결제, 인증, 주문 데이터 | Timer core, 백그라운드 복구, 세션 기록 |
@@ -30,6 +31,7 @@
 
 > `{위험도메인}` = 실패 시 사용자 데이터·돈·신뢰에 직접 영향을 주는 프로젝트 핵심 로직.
 > 프로젝트 시작 시 반드시 명시적으로 정의한다 (§2 자동 Tier 3의 입력값).
+> `{중앙DS}` = 이 프로젝트의 **중앙 DS 관계값**(소비하는 repo·판 / `없음` / 이 repo가 DS 본체면 `본체`). 원칙 8 층 소유의 입력값이라 **프로젝트 시작 시 정한다** — 읽는 시점의 자기선언이 아니다(자기선언 구멍 차단).
 
 ---
 
@@ -43,7 +45,7 @@
 5. **검수 후 커밋** — 사용자 확인 없이 형상관리 금지.
 6. **feature/* 브랜치만 직접 push** — develop 이후 PR 필수, `gh pr merge --merge` (PR/US 단위 추적성). 브랜치 전략 상세는 `docs/project-init.md` 참조.
 7. **리뷰-수정 분리** — 리뷰어는 별도 파일로 이슈 기록, 원본 직접 수정 금지. 작성자가 반영.
-8. **디자인 시스템 준수** — Foundation → Component → Pattern → Screen 4 레이어, 토큰 단일 소스.
+8. **디자인 시스템 준수** — Foundation → Component → Pattern → Screen 4 레이어, 토큰 단일 소스. **층 소유**는 `{중앙DS}`(§0)가 정한다 — **repo·판**이면 Foundation·Component = 중앙 DS / Pattern·Screen = 제품이고 참조는 **제품 → 중앙 DS 단방향**(제품은 토큰을 재정의하지 않고, 중앙 DS는 제품 소유 층에 규칙을 부과하지 않는다) · **`없음`**이면 제품이 4층 전부 · **`본체`**면 이 repo가 Foundation·Component 정본(Pattern·Screen은 소비 제품 소유). 값별 산출물 처리는 §11 표. **접근성 바닥**은 층을 가로질러 Pattern·Screen에서도 강제되며 **소유자가 발명하지 않고 WCAG·ARIA 조항을 인용**한다 — 층을 소유해도 그 층의 게이트를 소유하는 것은 아니다.
 9. **자기참조성** — 본 문서 / docs/project-init.md / CLAUDE.md 변경은 자동 Tier 3.
 10. **쉬프트-레프트** — US/AC 단계 결함 검출이 가장 비용 효율적. 작성 시점에 강한 리뷰 적용.
 11. **agent·skill 지점 바인딩** — 워크플로우가 뼈대, agent와 skill은 그 위의 **명시된 지점**(§3 단계·§5 게이트·§6 시점)에 배치한다. 발동 지점이 문서에 없는 agent/skill은 만들지 않는다 (§9 배치 원칙).
@@ -486,6 +488,7 @@ Tier / 리뷰 라운드 수 / 게이트 first-pass 여부 / 사용자 활성 검
 - **자동 루프 신규 규율 효과(§8.4)** — 파일럿 슬라이스: 슬라이스 대비 전면 실행의 비용·결함·활성시간(임계가 예측대로 작동했나) · 모델 라우팅: 라우팅별 비용↔재작업률(routine 소형모델 오판이 검수·재작업을 늘렸나). loop-triage에 pilot 결과·model-route 기록 → 개선 없으면 §10.3으로 폐기 검토
 - **에이전트 중심 패턴 효과(§9)** — 공개 산출물 탈출 결함 수(패턴 전/후) · 단일 모델 self-approval 발행 건수(同 계열 노드만 거쳐 발행된 공개물). 개선 없으면 §10.3으로 폐기 검토
 - **이해 Explainer 효과(§5)** — Explainer 첨부율(Tier별 준수: T3 필수/T2 요약/T1 생략) ↔ **counter-metric: 첨부에도 활성 검토시간 미개선·재질문 발생**(= 인지부채 마스킹 신호 — Explainer는 붙었지만 안 읽힘). 개선 없으면 §10.3으로 폐기 검토
+- **DS 층 경계 준수(원칙 8)** — `{중앙DS}`가 **repo·판인 프로젝트**(`없음`·`본체` 제외 — 본체는 정본 보유가 정상이라 계수 대상 아님)의 `artifacts/design/`·소스에서 **토큰 재정의 건수(목표 0)** ↔ **counter-metric: 경계 때문에 중앙 DS 반영 대기로 막힌 제품 작업 건수**(경계가 병목이면 §10.3 재검토). 개선 없으면 §10.3으로 폐기 검토
 
 ### 10.3 평가 기반 결정 (개선 / 유지 / 폐기)
 
@@ -530,7 +533,7 @@ Tier / 리뷰 라운드 수 / 게이트 first-pass 여부 / 사용자 활성 검
 | `artifacts/planning/user-stories/*.md` | US + AC (Given-When-Then) |
 | `artifacts/planning/architecture.md` | 기술 스택, 폴더 구조, 상태 관리 |
 | `artifacts/planning/ci-cd.md` | CI/CD 배포 파이프라인 (웹: Vercel/Cloudflare 등, 앱: EAS 등) |
-| `artifacts/design/design-system.md` | 디자인 시스템 4 레이어, 토큰 |
+| `artifacts/design/design-system.md` | **DS 소비 계약**(원칙 8 층 소유) — `{중앙DS}` 판(버전) + 이 제품이 소유하는 Pattern·Screen. DS(토큰·Component)를 *정의*하는 문서가 아니다. `{중앙DS}`=`없음`이면 4층 전부 여기서 정의 · `본체`(이 repo가 중앙 DS)면 정본 위치(예: `tokens/`·`components/`)를 명시 · **DS를 쓰지 않으면 `n/a`로 비운다** |
 | `artifacts/design/us-to-frame-map.md` | US ↔ 디자인 프레임 매핑 |
 | `artifacts/review/` | 리뷰 이슈 파일 (§4 네이밍 규칙) |
 | `artifacts/tests/` | E2E flow, pass-fail 로그, 커버리지 리포트 |
@@ -547,6 +550,8 @@ Tier / 리뷰 라운드 수 / 게이트 first-pass 여부 / 사용자 활성 검
 | walk-forward 종결 학술 근거 | §1·§4 — Consensus≠Verification(arXiv:2603.06612) · LLM self-preference bias(arXiv:2410.21819·2404.13076) · 금융 walk-forward(Pardo 1992/2008; Bailey·López de Prado 2014) |
 | PMBOK 8판 (PMI, 2025-11) | PM 표준 **방향** 정합 참고 — 비규범+테일러링↔Lean Default·Focus on Value↔아웃컴 비용함수·AI 부록(X3)↔AIDD 외부 정당성. ⚠️ PM 표준이지 SW 방법론 아님 — 운영 정본은 본 워크플로우(정합은 방향까지). 1차=pmi.org/standards/pmbok |
 | ClaudeDevs *Getting started with loops* (2026-07-06, @delba_oliveira) | §8.4 루프 4타입 taxonomy의 근거. 1차=X 아티클 `x.com/ClaudeDevs/status/2074208949205881033` / 본문은 **dakman-brain 분석 경유**(`dakman-brain/.web-research/2026-07-08-claudedevs-loops.md`, 로그인 Playwright 전문). ⚠️ 1차 URL resolve·"Claude Code 팀 공식" 귀속 미확인 — 단정 완화. **taxonomy의 primitive(`/goal`·auto mode 등)를 이 환경 실존 도구로 쓰지 말 것**(§8.4 primitive 열 각주) |
+| emotion-design-system `docs/decisions/lessons.md` **R-6** (층 소유·게이트 소유 규칙) | 원칙 8 **층 소유 + 접근성 바닥**의 1차 근거. 🔒 **회사 기밀 도메인 — 경로·규칙번호로만 인용하고 원문 문장·규칙 제목을 이 repo로 옮기지 않는다**(전역 규율 「emotion vault = 로컬-only」, 그리고 **이 repo는 PUBLIC**). 로컬 read-only 대조로 확인한 사실만 적는다: **원문의 제약 주체는 DS**이고, 본 문서는 이를 **소유자 중립(양방향)으로 확장**해 채택했다 — 확장은 우리 도메인 판단이지 원문 주장이 아니다 |
+| dakman-design-system `docs/decisions/lessons.md` **함정 클래스 11-가**("정본이 담은 처방이 복제된다") | §12 2026-07-27 항목의 결함 클래스 라벨 — 정본을 따른 것이 결함을 옮긴 것이 되는 형태. 클래스명은 원문 대조 확인 |
 | `.cmux/debates/<토론명>/<토론명>.md`·`.html` · `debates/<토론명>/` | 3자 토론 결론 산출물 — 본 문서 개정 근거 (`workflow-tier-utility`·`loop-engineering-workflow`·`agent-vs-skill-backend`). 결과 파일만 git 추적, 전사·시그널은 무시 |
 
 > 새 프로젝트에서는 위 경로를 생성하면서 시작한다. 없는 문서는 해당 단계 첫 진입 시 작성.
@@ -556,7 +561,8 @@ Tier / 리뷰 라운드 수 / 게이트 first-pass 여부 / 사용자 활성 검
 
 ## 12. 변경 이력
 
-- **2026-07-10 multi-ai-discussion 참가자 서술 동기화 (grok 추가·로테이션 — 참조 sync)**: 글로벌 스킬 `multi-ai-discussion`에 **grok(xAI, `grok --yolo`) 토론자 추가 + 3번째 grok↔agy 로테이션**(표준 3인 / "넷이서" 명시 시 4인)이 반영됨(스킬 구현·실측검증·git = claude-config, `docs/handoff/multi-ai-discussion-add-grok.md` 위임 → PR #69). 본 문서의 §4 held-out 리뷰어 열거·§6.6/6.7 3인 리뷰 표기·§11 스킬 행을 그에 맞춰 **참조 동기화**(reviewer 식별자에 grok 추가, "codex·agy"→"codex + grok↔agy 로테이션"). **성격 = 이미 실측 검증된 스킬 변경의 서술 반영(참조 sync)이지 새 워크플로우 로직/정책이 아님** — 수용 게이트로 grok 기동·착지·`.done` 자동실행·busy 패턴·로테이션 교대를 dakman-setup가 직접 실측(claude-config 완료 회신 대조). 참가 정책의 근거·다양성 논거는 스킬 정본.
+- **2026-07-27 디자인 시스템 층 소유 경계 명시 (템플릿 복제 결함 교정 — dakman-design-system 위임)**: 원칙 8과 §11 산출물 표(`artifacts/design/design-system.md`)가 **4레이어·토큰만 말하고 누가 어느 층을 소유하는지 없어서**, 이 템플릿으로 깔린 제품 프로젝트가 *자기 repo에서 DS·토큰을 정의하라*는 지시로 읽었다(중앙 DS 토큰 정본과 정면 충돌). 발견 = dakman-oraebom(자기 문제가 아니라 템플릿 문제로 정확히 진단) → dakman-design-system이 **3곳 grep 대조**(setup:533·oraebom:529·design-system:535)로 정리해 위임 — **발견 시점 기준 동일 행**이고, 이후 oraebom은 자체 ⚠️ 경고 주석을 달아 현재는 바이트 동일하지 않다. 근거·라벨(**둘 다 §11 등재**): (1) emotion-design-system `lessons.md` **R-6**(층 소유 = Foundation·Component=DS / Pattern·Screen=제품) — 🔒 기밀이라 **경로·규칙번호만** 인용(원문 문장·규칙 제목 비복사, 이 repo는 PUBLIC), 이 repo가 **1차 원문을 로컬 read-only 대조**함. (2) dakman-design-system `lessons.md` **함정 클래스 11-가**(정본이 담은 처방이 복제된다 — 템플릿은 복제력이 가장 큰 정본). 반영: 원칙 8에 **층 소유**(`{중앙DS}` 값이 정함 — repo·판이면 Foundation·Component=중앙 / Pattern·Screen=제품 · `없음`=제품 4층 · `본체`=이 repo가 정본, **참조는 제품→중앙 단방향**, 제품이 토큰 재정의 금지·중앙 DS가 제품 층에 규칙 부과 금지) + **접근성 바닥은 Pattern·Screen에서도 강제되고 소유자가 발명하지 않고 WCAG·ARIA를 인용**(층을 소유해도 그 층의 게이트를 소유하는 것은 아니다), 산출물 표를 **"DS 소비 계약"**으로 교체(3분기: `{중앙DS}` 판 소비 / `없음`=4층 자체 정의 / `본체`=정본 위치 명시, **DS 미사용은 `n/a`로 비움**), §0에 **`{중앙DS}` 변수 신설**(읽는 시점 자기선언이 아니라 프로젝트 시작 시 확정 — 자기선언 구멍 차단), §10.2에 **토큰 재정의 건수 ↔ 경계 병목 counter-metric** 배선(§10.3 측정 지표 관문). ⚠️ **held-out이 잡은 인용 반전 정정**: 요청측 요약은 접근성 조항을 "**제품이** 발명하지 않는다"로 전달했으나 **1차 원문 R-6의 제약 주체는 DS**다. 우리는 **소유자 중립(양방향)으로 확장**해 채택했다 — 확장은 우리 도메인 판단이고, 원문 주장으로 귀속하지 않는다(요청측에도 회신으로 통지). **템플릿 공용성 보정(dakman-setup 도메인 판단)**: 중앙 DS 없는 프로젝트는 4층 전부 제품 소유 — 무조건문이면 그 프로젝트가 토큰을 못 만드는 모순이라 조건절로 씀. 강제 아닌 **경계 표기**. **무증상 시점 교정** — 제품이 Phase 1에서 그 파일을 실제로 쓰는 순간 토큰 정본이 둘로 갈라지고, 그때는 이미 값이 갈라진 뒤다. **전파(🔴 미완 — 머지 후 예정)**: 템플릿 수정만으로 배포된 사본(dakman-design-system:535 원문 잔존 · dakman-oraebom:529 stale TODO)은 치유되지 않는다 — **머지 후** `cross-project-notify`로 두 세션에 **통지 예정**(사본 수정은 각 세션 소유). 통지 완료는 별도 기록으로 닫는다. **메타 = 자동 T3 + held-out 3인**(rtong 결정: 규정대로 waive 안 함): R1 전원 FAIL(codex C0M3·grok C0M2·**claude C1M6** — Critical=인용 주체 반전) → 위 정정·§0 변수·§10.2 측정·§11 등재·전파 계획으로 교정. **R2에서 2인이 신규 Critical로 잡았다 — 🔒 emotion 원문 문장·규칙 제목이 이 PUBLIC repo에 복사됨**(codex C1M1·claude C1M2 FAIL / **grok C0M0 PASS — 같은 지점을 Minor로 분류**, 이견 보존)(§11이 "복사 금지"를 선언한 바로 그 셀에서 위반 = 자기모순). 커밋 전 전건 제거하고 **확인한 사실만** 남기는 것으로 정정, 원칙 8도 분기 중복을 §0·§11 표로 이관해 단축(그 중복이 `본체` 분기 누락과 지표 오염의 원인이었다). R3: codex·grok PASS / **claude가 그 단축이 조건절을 소실시켜 층 소유를 무조건 단언으로 만든 것을 적출**(→ 3분기 규범 복원) + §12가 R2를 "3인"으로 오기술한 것(실제 2인, grok PASS)을 정정. **R4·R5는 §4 Round 상한(T3=R1~R3) 초과라 rtong 승인으로 열었다** — R4(claude 단독 닫힘 확인) PASS, 그러나 **최종 원칙 8 문안이 claude 제안의 축자 채택이라 작성 비참여 노드 미검토**라는 절차 갭을 claude가 자진 신고 → **R5(codex·grok 초경량, 문안 한정) 양자 PASS C0M0**으로 공백을 메우고 종결. **잔여 권고(미채택, §9.7 보존)**: grok — 원칙 8 본문에 "DS 미사용=`n/a`" 한 토막 추가(§11 표+포인터로 성립해 Critical/Major 아님) · codex·grok — 469자로 13원칙 최장이나 **양자 모두 "정확성 우선"에 동의**(분기를 다시 빼면 R3 M-1 재발).
+- **2026-07-10 multi-ai-discussion 참가자 서술 동기화 (grok 추가·로테이션 — 참조 sync)**: 글로벌 스킬 `multi-ai-discussion`에 **grok(xAI, `grok --yolo`) 토론자 추가 + 3번째 grok↔agy 로테이션**(표준 3인 / "넷이서" 명시 시 4인)이 반영됨(스킬 구현·실측검증·git = claude-config, `docs/handoff/multi-ai-discussion-add-grok.md` 위임 → PR #69, **워처 2단계 busy 견고화 PR #70**). 본 문서의 §4 held-out 리뷰어 열거·§6.6/6.7 3인 리뷰 표기·**§9 reviewer id**·§11 스킬 행을 그에 맞춰 **참조 동기화**(reviewer 식별자에 grok 추가, "codex·agy"→"codex + grok↔agy 로테이션"). **성격 = 이미 실측 검증된 스킬 변경의 서술 반영(참조 sync)이지 새 워크플로우 로직/정책이 아님** — 수용 게이트로 grok 기동·착지·`.done` 자동실행·busy 패턴·로테이션 교대를 dakman-setup가 직접 실측(claude-config 완료 회신 대조; **내 실측이 grok busy 2단계를 적출해 워처 grep 견고화에 반영**). 참가 정책의 근거·다양성 논거는 스킬 정본.
 - **2026-07-08 루프 4타입 taxonomy + 자동 루프 규율 보강 (dakman-brain co-derive, ClaudeDevs)**: ClaudeDevs *Getting started with loops*(@delba_oliveira, dakman-brain .web-research 분석 경유 — §11 등재, 1차 resolve·"팀 공식" 미확인) taxonomy를 §8.4에 반영 — (A) **루프 4타입 표**(Turn/Goal/Time/Proactive): ClaudeDevs primitive(`/goal`·auto mode 등)와 **우리 실존 대응**(상시·§4 Round루프·`/loop`·cron·Workflow 도구)을 열 분리, §1 Loop 층 세부. (B) **종료 조건 = 완료기준 + 턴/시도 캡**(품질 루프=C+M0 / 점검 루프=쿼리성공·빈결과). (C) **파일럿 슬라이스**(대규모 자동화 전 작은 슬라이스 측정 + 확대/중단 임계, §10.2 대조). (D) **단계별 모델 라우팅**(routine=소형·판단=최강; §0 AI예산 상한 정합, 단 1차 비용함수=활성시간이라 토큰절감은 2차, §10.2 라우팅별 재작업률 대조). "시스템 인코딩"·"fresh-context 2차 리뷰"는 §10.5·§4에 이미 있어 크로스레퍼만(중복 회피). **메타 = 자동 T3 + held-out 3인**: R1 전원 FAIL(§11 출처 미등재·새 규칙 측정지표 부재·미확인 도구 단정 매핑) → §11 출처 등재·§10.2 측정 배선·primitive 열 정직 라벨로 교정 후 재종결.
 - **2026-07-03 이해 Explainer(/explain-diff) 게이트 추가 (dakman-brain 기여, rtong GO)**: 병목이 "작성"→"인간의 이해"로 이동(Geoffrey Litt) → 1차 비용함수(사용자 활성 검토 시간)를 직접 낮추는 도구를 §5 게이트 + §9 DoD PR 본문에 발동지점 신설(원칙 11 지점바인딩). diff→산문 Explainer(배경→직관→산문+스니펫), Tier 연동(T3 필수·T2 요약·T1 생략, Lean Default+Escalation). 경계: Explainer=판정 자료지 판정 아님(maker 자기설명 ≠ self-approval, §4). T3·위험도메인 인터랙티브 아티팩트(erd-viewer·md2html) 첨부=옵션 관행(신규 스킬 아님). 퀴즈 게이트는 미채택(정착 후 재검토). 스킬 구현은 `docs/handoff/explain-diff-spec.md`로 claude-config 위임. 메타 변경 = 자동 T3 + held-out(codex·agy·claude) 거쳐 반영.
 - **2026-06-29 AIDD 방법론 환류 반영 (emotion-setup 기여, #1~#5)**: 한 AIDD 프로젝트가 워크플로우를 실제 굴려 도출·검증한 도메인 중립 개선을 표준에 환류 — §1 **4대 엔지니어링**(prompt·context·harness·loop) 어휘·1차출처 정박 + "최고≠최대" / §4 held-out **학술 근거 정박** + **검증 삼각**(offline+online+재현, 재현 런이 정적 문서 못 잡는 실행 갭 적출) / §9 **병렬 의존 maker 순차 디스패치**(clobber 방지) + **Option A 파일럿→검증 승격**(dakman-sns·emotion 운영 통과) + **Bash-less maker 주의** / §10.5 **신호 기반 자기개선 루프**(improver 제안만 + 3단 채택 게이트 + counter-metric → 메타 self-approval·Goodhart 방어, 메타는 영원히 사람 게이트) / §11 출처(Anthropic context·Hashimoto harness·walk-forward 학술·PMBOK 8판 방향참고). git 머지-subject 기밀회피(#7)는 dakman(공개 org) 비해당으로 미채택. 메타 변경 = 자동 T3 + held-out(codex·agy·claude) 거쳐 반영.

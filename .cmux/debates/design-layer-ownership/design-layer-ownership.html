@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>디자인 시스템 층 소유 경계 — held-out 5라운드 검증 원장</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700;900&family=Noto+Sans+KR:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0d12;
+    --bg-alt:#12151c;
+    --paper:#171a22;
+    --paper-raised:#1c202a;
+    --ink:#eae7de;
+    --ink-dim:#9a9ba6;
+    --ink-faint:#666a78;
+    --hairline:rgba(234,231,222,0.09);
+    --hairline-strong:rgba(234,231,222,0.16);
+    --gold:#c9a24d;
+    --gold-dim:#8f7738;
+    --green:#4cb47c;
+    --green-bg:rgba(76,180,124,0.10);
+    --green-line:rgba(76,180,124,0.35);
+    --red:#e0554d;
+    --red-bg:rgba(224,85,77,0.12);
+    --red-line:rgba(224,85,77,0.4);
+    --amber:#e0a94a;
+    --amber-bg:rgba(224,169,74,0.10);
+    --amber-line:rgba(224,169,74,0.45);
+    --serif:'Noto Serif KR',serif;
+    --sans:'Noto Sans KR',sans-serif;
+    --mono:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+    position:relative;
+  }
+  .grain{
+    position:fixed;inset:0;pointer-events:none;z-index:1;opacity:0.05;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .vignette{
+    position:fixed;inset:0;pointer-events:none;z-index:2;
+    background:radial-gradient(ellipse at 50% 0%, transparent 45%, rgba(0,0,0,0.45) 130%);
+  }
+  main, header, footer{position:relative;z-index:3;}
+
+  code{
+    font-family:var(--mono);
+    background:rgba(201,162,77,0.10);
+    color:var(--gold);
+    padding:0.05em 0.4em;
+    border-radius:4px;
+    font-size:0.92em;
+  }
+  strong{color:var(--ink);font-weight:700;}
+  em{color:var(--gold);font-style:normal;border-bottom:1px dotted var(--gold-dim);}
+
+  /* ===== HERO ===== */
+  .hero{
+    padding:76px 24px 48px;
+    background:
+      linear-gradient(180deg, var(--bg-alt) 0%, var(--bg) 100%);
+    border-bottom:1px solid var(--hairline-strong);
+  }
+  .hero-inner{max-width:960px;margin:0 auto;}
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:12.5px;
+    letter-spacing:0.16em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin:0 0 18px;
+    display:flex;align-items:center;gap:10px;
+  }
+  .eyebrow::before{content:'';width:26px;height:1px;background:var(--gold-dim);display:inline-block;}
+  h1{
+    font-family:var(--serif);
+    font-weight:900;
+    font-size:clamp(30px,5vw,50px);
+    line-height:1.25;
+    margin:0 0 16px;
+    letter-spacing:-0.01em;
+  }
+  .subtitle{
+    font-family:var(--serif);
+    font-size:18px;
+    color:var(--ink-dim);
+    max-width:680px;
+    margin:0 0 36px;
+    line-height:1.65;
+  }
+  .meta-strip{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:0;
+    border-top:1px solid var(--hairline-strong);
+    border-bottom:1px solid var(--hairline-strong);
+  }
+  .meta-strip.secondary{
+    grid-template-columns:repeat(2,1fr);
+    border-top:none;
+    margin-top:-1px;
+  }
+  .meta-item{
+    padding:14px 18px;
+    border-right:1px solid var(--hairline);
+  }
+  .meta-item:last-child{border-right:none;}
+  .meta-label{
+    display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:0.1em;
+    text-transform:uppercase;color:var(--ink-faint);margin-bottom:5px;
+  }
+  .meta-value{font-size:13.5px;color:var(--ink-dim);line-height:1.5;}
+  .meta-value code{font-size:0.88em;}
+
+  /* ===== MAIN LAYOUT ===== */
+  main{max-width:960px;margin:0 auto;padding:0 24px 60px;}
+  .section{padding:56px 0;border-bottom:1px solid var(--hairline);}
+  .section:last-child{border-bottom:none;}
+  h2{
+    font-family:var(--serif);font-weight:800;font-size:28px;margin:0 0 28px;
+    display:flex;align-items:baseline;gap:14px;
+  }
+  .num{
+    font-family:var(--mono);font-size:15px;color:var(--bg);
+    background:var(--gold);width:30px;height:30px;border-radius:50%;
+    display:inline-flex;align-items:center;justify-content:center;
+    flex-shrink:0;font-weight:700;
+  }
+  .section-sub{
+    font-family:var(--mono);font-size:12px;color:var(--ink-faint);
+    font-weight:400;letter-spacing:0.04em;
+  }
+  h3.sub-h{
+    font-family:var(--sans);font-size:15px;font-weight:800;color:var(--gold);
+    letter-spacing:0.03em;margin:44px 0 16px;text-transform:uppercase;
+    display:flex;align-items:center;gap:10px;
+  }
+  h3.sub-h small{
+    font-family:var(--sans);font-size:12px;font-weight:500;color:var(--ink-faint);
+    text-transform:none;letter-spacing:0;
+  }
+  h3.muted-h{color:var(--ink-faint);}
+
+  /* ===== §1 conclusion ===== */
+  .lead-quote{
+    margin:0 0 22px;padding:28px 30px;background:var(--paper);
+    border-left:3px solid var(--gold);border-radius:2px 10px 10px 2px;
+  }
+  .lead-quote p{
+    font-family:var(--serif);font-size:19px;line-height:1.85;margin:0;color:var(--ink);
+  }
+  .correction-box{
+    background:var(--green-bg);border:1px solid var(--green-line);
+    border-radius:10px;padding:18px 22px;display:flex;gap:16px;align-items:baseline;
+    margin-bottom:36px;
+  }
+  .correction-label{
+    font-family:var(--mono);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;
+    color:var(--green);background:rgba(76,180,124,0.16);padding:4px 10px;border-radius:5px;
+    flex-shrink:0;font-weight:700;
+  }
+  .correction-box p{margin:0;font-size:15px;color:var(--ink);}
+
+  .stat-strip{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+    background:var(--hairline-strong);border:1px solid var(--hairline-strong);
+    border-radius:10px;overflow:hidden;
+  }
+  .stat{background:var(--paper);padding:22px 16px;text-align:center;}
+  .stat-num{
+    display:block;font-family:var(--mono);font-weight:700;font-size:34px;color:var(--ink);
+    line-height:1;margin-bottom:8px;
+  }
+  .stat-label{font-size:12px;color:var(--ink-dim);line-height:1.4;}
+  .stat.critical .stat-num{color:var(--amber);}
+  .stat.invalid .stat-num{color:var(--red);}
+  .stat.invalid{background:var(--red-bg);}
+  .stat.critical{background:var(--amber-bg);}
+
+  /* ===== tables ===== */
+  .table-wrap{overflow-x:auto;border:1px solid var(--hairline-strong);border-radius:10px;margin-bottom:8px;}
+  table{width:100%;border-collapse:collapse;min-width:640px;background:var(--paper);}
+  th{
+    font-family:var(--mono);font-size:11px;letter-spacing:0.06em;text-transform:uppercase;
+    color:var(--ink-faint);text-align:left;padding:13px 16px;background:var(--bg-alt);
+    border-bottom:1px solid var(--hairline-strong);white-space:nowrap;
+  }
+  td{
+    padding:15px 16px;border-bottom:1px solid var(--hairline);font-size:14px;
+    vertical-align:top;color:var(--ink-dim);
+  }
+  tr:last-child td{border-bottom:none;}
+  td.pos{font-family:var(--mono);font-size:12.5px;color:var(--gold);white-space:nowrap;font-weight:600;}
+  td.before-cell{color:var(--ink-faint);font-style:normal;}
+  td.after-cell{color:var(--ink);}
+  td.after-cell strong{color:var(--gold);}
+
+  .domain-callout{
+    margin-top:22px;background:var(--paper-raised);border:1px dashed var(--hairline-strong);
+    border-radius:10px;padding:18px 22px;
+  }
+  .callout-label{
+    display:block;font-family:var(--mono);font-size:11px;letter-spacing:0.06em;
+    text-transform:uppercase;color:var(--ink-faint);margin-bottom:8px;
+  }
+  .callout-label small{text-transform:none;letter-spacing:0;}
+  .domain-callout p{margin:0;font-size:14.5px;color:var(--ink-dim);}
+
+  /* ===== legend ===== */
+  .legend{
+    display:flex;flex-wrap:wrap;gap:10px 22px;margin-bottom:34px;padding:16px 20px;
+    background:var(--paper);border:1px solid var(--hairline-strong);border-radius:10px;
+  }
+  .legend-item{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-dim);}
+
+  .badge{
+    font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:0.04em;
+    padding:3px 8px;border-radius:5px;display:inline-block;
+  }
+  .badge.pass{background:var(--green-bg);color:var(--green);border:1px solid var(--green-line);}
+  .badge.fail{background:var(--red-bg);color:var(--red);border:1px solid var(--red-line);}
+  .badge.critical-tag{background:rgba(224,85,77,0.22);color:#ff8079;border:1px solid var(--red);}
+
+  .stamp-mini{
+    font-family:var(--mono);font-size:10.5px;font-weight:700;padding:2px 8px;
+    border-radius:4px;letter-spacing:0.03em;
+  }
+  .stamp-mini.confirmed{background:var(--green-bg);color:var(--green);border:1px solid var(--green-line);}
+  .stamp-mini.invalid{background:var(--red-bg);color:var(--red);border:1px solid var(--red-line);}
+
+  /* ===== round matrix ===== */
+  table.round-matrix td.round-id{
+    font-family:var(--mono);font-weight:700;color:var(--ink);font-size:15px;white-space:nowrap;
+  }
+  table.round-matrix td.round-id small{
+    display:block;font-family:var(--sans);font-weight:400;font-size:10.5px;color:var(--ink-faint);
+    margin-top:3px;white-space:normal;
+  }
+  td.cell{white-space:nowrap;}
+  .cm{
+    display:block;font-family:var(--mono);font-size:12px;color:var(--ink-faint);margin-top:5px;
+  }
+  td.cell.critical-cell{
+    background:var(--red-bg);
+    box-shadow:inset 3px 0 0 var(--red);
+    border-radius:0 6px 6px 0;
+  }
+  td.cell.critical-cell .cm{color:var(--red);font-weight:700;}
+  td.dim-cell{color:var(--ink-faint);font-family:var(--mono);}
+  td.catch{font-size:13.5px;line-height:1.75;min-width:280px;color:var(--ink-dim);}
+  td.catch strong{color:var(--red);}
+
+  /* verdict table */
+  table.verdict-table tr.row-confirmed{background:linear-gradient(90deg, var(--green-bg), transparent 60%);}
+  table.verdict-table tr.row-invalid{background:linear-gradient(90deg, var(--red-bg), transparent 60%);}
+  td.claim{font-size:14.5px;color:var(--ink);font-weight:500;max-width:220px;}
+  td.verdict-cell{white-space:nowrap;}
+  td.reason{font-size:13.5px;line-height:1.7;}
+
+  .stamp{
+    display:inline-flex;flex-direction:column;align-items:center;gap:2px;
+    font-family:var(--mono);font-weight:800;font-size:12px;letter-spacing:0.05em;
+    padding:6px 12px;border-radius:6px;text-align:center;white-space:nowrap;
+  }
+  .stamp.confirmed{
+    background:var(--green-bg);color:var(--green);border:1.5px solid var(--green);
+    transform:rotate(-2deg);
+  }
+  .stamp.invalid{
+    background:var(--red-bg);color:var(--red);border:1.5px solid var(--red);
+    transform:rotate(-2deg);
+    box-shadow:0 0 0 3px rgba(224,85,77,0.08);
+  }
+  .stamp .stamp-sub{font-size:9px;font-weight:600;letter-spacing:0.08em;color:inherit;opacity:0.85;}
+
+  /* ===== disagreement cards ===== */
+  .disagreement-grid{display:grid;gap:14px;margin-top:6px;}
+  .disagree-card{
+    border:1px dashed var(--hairline-strong);border-radius:10px;padding:18px 20px;
+    background:transparent;
+  }
+  .disagree-who{
+    font-family:var(--mono);font-size:11px;letter-spacing:0.05em;text-transform:uppercase;
+    color:var(--ink-faint);margin-bottom:8px;display:flex;align-items:center;gap:8px;
+  }
+  .disagree-tag{
+    font-size:9.5px;padding:2px 7px;border-radius:4px;border:1px dashed var(--ink-faint);
+    color:var(--ink-faint);text-transform:none;letter-spacing:0.02em;
+  }
+  .disagree-card p{margin:0;font-size:14px;color:var(--ink-dim);line-height:1.75;}
+  .disagree-card strong{color:var(--ink-dim);text-decoration:underline;text-decoration-color:var(--ink-faint);}
+
+  /* ===== §4 methodology ===== */
+  .method-list{list-style:none;margin:0;padding:0;display:grid;gap:16px;counter-reset:m;}
+  .method-list li{
+    counter-increment:m;
+    background:var(--paper);border:1px solid var(--hairline-strong);border-radius:12px;
+    padding:22px 24px 22px 68px;position:relative;font-size:14.5px;line-height:1.8;color:var(--ink-dim);
+  }
+  .method-list li::before{
+    content:counter(m);
+    position:absolute;left:20px;top:22px;
+    font-family:var(--serif);font-weight:900;font-size:26px;color:var(--gold);
+    opacity:0.85;
+  }
+  .method-list li strong{color:var(--ink);}
+
+  /* ===== §5 pending ===== */
+  .pending-banner{
+    display:flex;gap:18px;align-items:flex-start;padding:22px 24px;border-radius:12px;
+    background:repeating-linear-gradient(135deg, rgba(224,169,74,0.09) 0 14px, rgba(224,169,74,0.03) 14px 28px);
+    border:1px solid var(--amber-line);margin-bottom:32px;
+  }
+  .pending-icon{font-size:26px;line-height:1;flex-shrink:0;}
+  .pending-banner h2{margin-bottom:8px;}
+  .pending-banner .num{background:var(--amber);}
+  .pending-note{
+    margin:0;font-family:var(--mono);font-size:12.5px;color:var(--amber);
+    letter-spacing:0.02em;text-transform:uppercase;
+  }
+  .pending-block{margin-bottom:26px;}
+  .pending-block h3{
+    font-family:var(--sans);font-size:14px;font-weight:800;color:var(--ink);
+    margin:0 0 12px;display:flex;align-items:center;gap:8px;
+  }
+  .pending-block h3::before{content:'○';color:var(--amber);font-size:12px;}
+  .pending-block p{font-size:14.5px;color:var(--ink-dim);margin:0 0 10px;}
+  .pending-block ul{margin:0;padding-left:0;list-style:none;display:grid;gap:10px;}
+  .pending-block li{
+    font-size:14px;color:var(--ink-dim);line-height:1.75;
+    border-left:2px dashed var(--amber-line);padding:2px 0 2px 16px;
+  }
+  .pending-block li strong{color:var(--ink);}
+
+  /* ===== footer ===== */
+  footer{
+    max-width:960px;margin:0 auto;padding:32px 24px 60px;
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;
+    font-family:var(--mono);font-size:11.5px;color:var(--ink-faint);
+    border-top:1px solid var(--hairline);
+  }
+
+  /* ===== reveal ===== */
+  .reveal{opacity:0;transform:translateY(14px);transition:opacity 0.6s ease,transform 0.6s ease;}
+  .reveal.in{opacity:1;transform:none;}
+  @media print{.reveal{opacity:1!important;transform:none!important;transition:none!important}}
+  @media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+
+  /* ===== responsive ===== */
+  @media (max-width:780px){
+    .hero{padding:52px 18px 36px;}
+    main{padding:0 18px 50px;}
+    .meta-strip, .meta-strip.secondary{grid-template-columns:1fr;}
+    .meta-item{border-right:none;border-bottom:1px solid var(--hairline);}
+    .stat-strip{grid-template-columns:1fr 1fr;}
+    h2{font-size:23px;}
+    .lead-quote p{font-size:16.5px;}
+    .method-list li{padding:20px 20px 20px 58px;}
+  }
+</style>
+</head>
+<body>
+<div class="grain"></div>
+<div class="vignette"></div>
+
+<header class="hero">
+  <div class="hero-inner">
+    <p class="eyebrow">held-out 검증 원장 · 자동 Tier 3</p>
+    <h1>디자인 시스템 층 소유 경계</h1>
+    <p class="subtitle">템플릿 정본의 "누가 소유하는가" 공백이 5라운드 교차검증을 거쳐 확정되기까지 — 3인 held-out이 남긴 판정·이견·오라클 교정 전 기록</p>
+
+    <div class="meta-strip">
+      <div class="meta-item"><span class="meta-label">일자</span><span class="meta-value">2026-07-27</span></div>
+      <div class="meta-item"><span class="meta-label">Tier</span><span class="meta-value">자동 T3 (메타 워크플로우)</span></div>
+      <div class="meta-item"><span class="meta-label">maker</span><span class="meta-value">dakman-setup 진행자</span></div>
+      <div class="meta-item"><span class="meta-label">held-out</span><span class="meta-value">codex(gpt-5.5 high) · grok(4.5 high) · claude-debater(Opus 5)</span></div>
+    </div>
+    <div class="meta-strip secondary">
+      <div class="meta-item"><span class="meta-label">발단</span><span class="meta-value">dakman-oraebom 발견 → dakman-design-system 위임</span></div>
+      <div class="meta-item"><span class="meta-label">정본</span><span class="meta-value"><code>.claude/workflows/workflow.md</code> 원칙 8 / §0 / §10.2 / §11 / §12</span></div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ===== §1 ===== -->
+  <section class="section reveal" id="s1">
+    <h2><span class="num">1</span>핵심 결론</h2>
+    <blockquote class="lead-quote">
+      <p>템플릿 정본이 “4레이어·토큰”만 말하고 <strong>누가 어느 층을 소유하는지 말하지 않아서</strong>, 이 템플릿으로 깔린 제품 프로젝트가 “자기 repo에서 DS·토큰을 정의하라”로 읽었다. 중앙 DS가 토큰 정본을 갖는 구조와 정면 충돌한다. 무증상이었던 이유는 오라이봄이 Phase 0이라 아직 그 파일을 안 만들었기 때문이고, Phase 1에서 실제로 쓰는 순간 토큰 정본이 둘로 갈라진다 — <strong>그때 고치면 이미 값이 갈라진 뒤다.</strong></p>
+    </blockquote>
+    <div class="correction-box">
+      <span class="correction-label">교정</span>
+      <p>층 소유를 <code>{중앙DS}</code> 변수(§0)로 <strong>3분기 규범화</strong>하고, 산출물 문서를 <em>DS 정의</em>에서 <strong>DS 소비 계약</strong>으로 재정의했다.</p>
+    </div>
+    <div class="stat-strip">
+      <div class="stat"><span class="stat-num">5</span><span class="stat-label">held-out 라운드</span></div>
+      <div class="stat"><span class="stat-num">3</span><span class="stat-label">교차검증 참여자</span></div>
+      <div class="stat critical"><span class="stat-num">3</span><span class="stat-label">Critical 판정 칸<br>(R1 claude · R2 codex·claude)</span></div>
+      <div class="stat invalid"><span class="stat-num">2</span><span class="stat-label">오라클로 무효 판정된 주장</span></div>
+    </div>
+  </section>
+
+  <!-- ===== §2 ===== -->
+  <section class="section reveal" id="s2">
+    <h2><span class="num">2</span>무엇이 바뀌었나</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>위치</th><th>before</th><th>after</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="pos">원칙 8</td>
+            <td class="before-cell">“Foundation → Component → Pattern → Screen 4 레이어, 토큰 단일 소스.” (소유 주체 없음)</td>
+            <td class="after-cell">층 소유를 <code>{중앙DS}</code>(§0)가 정함 — <strong>repo·판</strong>=F·C 중앙 / P·S 제품, 참조 <strong>제품→중앙 단방향</strong> · <strong><code>없음</code></strong>=제품 4층 · <strong><code>본체</code></strong>=이 repo가 F·C 정본(P·S는 소비 제품). 접근성 바닥은 P·S에서도 강제, <strong>소유자가 발명 금지</strong>·WCAG·ARIA 인용</td>
+          </tr>
+          <tr>
+            <td class="pos">§0</td>
+            <td class="before-cell">—</td>
+            <td class="after-cell"><strong><code>{중앙DS}</code> 변수 신설</strong> — 중앙 DS 관계값(repo·판 / <code>없음</code> / <code>본체</code>). <strong>프로젝트 시작 시 확정</strong>(읽는 시점 자기선언 차단)</td>
+          </tr>
+          <tr>
+            <td class="pos">§11 산출물 표</td>
+            <td class="before-cell"><code>디자인 시스템 4 레이어, 토큰</code></td>
+            <td class="after-cell"><strong>DS 소비 계약</strong> — 소비 판 + 제품 소유 P·S. <code>없음</code>=4층 자체 정의 / <code>본체</code>=정본 위치 명시 / <strong>DS 미사용=<code>n/a</code> 비움</strong></td>
+          </tr>
+          <tr>
+            <td class="pos">§10.2</td>
+            <td class="before-cell">—</td>
+            <td class="after-cell"><strong>DS 층 경계 준수</strong> — 토큰 재정의 건수(목표 0, <code>없음</code>·<code>본체</code> 제외) ↔ <strong>counter-metric</strong>: 경계로 막힌 제품 작업 건수</td>
+          </tr>
+          <tr>
+            <td class="pos">§11 출처</td>
+            <td class="before-cell">—</td>
+            <td class="after-cell">emotion-design-system <code>lessons.md</code> R-6 · dakman-design-system <code>lessons.md</code> 함정 클래스 11-가 (2행 등재)</td>
+          </tr>
+          <tr>
+            <td class="pos"><code>docs/project-init.md</code></td>
+            <td class="before-cell">“디자인 시스템 4 레이어”만</td>
+            <td class="after-cell">층 소유 3분기 + §0 목록에 <code>{중앙DS}</code>·<code>{E2E실행}</code>·<code>{실행환경}</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <aside class="domain-callout">
+      <span class="callout-label">dakman-setup 도메인 판단 <small>(요청 스펙 밖)</small></span>
+      <p>이 템플릿은 <strong>공용</strong>이라 중앙 DS 없는 프로젝트에도 깔린다 → 경계를 무조건문으로 쓰면 그 프로젝트가 자기 토큰을 못 만드는 모순. <strong>조건 분기</strong>로 썼다.</p>
+    </aside>
+  </section>
+
+  <!-- ===== §3 ===== -->
+  <section class="section reveal" id="s3">
+    <h2><span class="num">3</span>검증 원장 <span class="section-sub">held-out 5라운드</span></h2>
+
+    <div class="legend">
+      <span class="legend-item"><span class="badge pass">PASS</span> 통과</span>
+      <span class="legend-item"><span class="badge fail">FAIL</span> 결함 적발</span>
+      <span class="legend-item"><span class="badge critical-tag">C1</span> Critical 결함 포함 칸</span>
+      <span class="legend-item"><span class="stamp-mini confirmed">✅ 확정</span> 로컬 오라클로 확인됨</span>
+      <span class="legend-item"><span class="stamp-mini invalid">❌ 무효</span> 오라클로 반증·교정됨</span>
+    </div>
+
+    <h3 class="sub-h">라운드 매트릭스</h3>
+    <div class="table-wrap">
+      <table class="round-matrix">
+        <thead><tr><th>R</th><th>codex</th><th>grok</th><th>claude</th><th>그 라운드가 잡은 것</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="round-id">R1</td>
+            <td class="cell"><span class="badge fail">FAIL</span><span class="cm">C0M3</span></td>
+            <td class="cell"><span class="badge fail">FAIL</span><span class="cm">C0M2</span></td>
+            <td class="cell critical-cell"><span class="badge fail">FAIL</span><span class="cm">C1M6</span></td>
+            <td class="catch">🔴 <strong>인용 주체 반전</strong>(Critical) · 요구 4 미반영 · 참조 방향 모호 · 자기선언 구멍 · 측정 지표 부재 · 전파 없음 · 본체 분기 없음 · §11 미등재</td>
+          </tr>
+          <tr>
+            <td class="round-id">R2</td>
+            <td class="cell critical-cell"><span class="badge fail">FAIL</span><span class="cm">C1M1</span></td>
+            <td class="cell"><span class="badge pass">PASS</span><span class="cm">C0M0</span></td>
+            <td class="cell critical-cell"><span class="badge fail">FAIL</span><span class="cm">C1M2</span></td>
+            <td class="catch">🔴 🔒 <strong>emotion 원문이 PUBLIC repo에 복사</strong>(Critical, 2인) · 전파 완료 시제 · 본체 분기 지표 오염</td>
+          </tr>
+          <tr>
+            <td class="round-id">R3</td>
+            <td class="cell"><span class="badge pass">PASS</span></td>
+            <td class="cell"><span class="badge pass">PASS</span></td>
+            <td class="cell"><span class="badge fail">FAIL</span><span class="cm">C0M2</span></td>
+            <td class="catch">단축이 <strong>조건절 소실</strong> → 무조건 단언 + 3자 불일치 · §12가 R2를 “3인”으로 오기술</td>
+          </tr>
+          <tr>
+            <td class="round-id">R4<small>축소 · rtong 승인</small></td>
+            <td class="cell dim-cell">—</td>
+            <td class="cell dim-cell">—</td>
+            <td class="cell"><span class="badge pass">PASS</span><span class="cm">C0M0</span></td>
+            <td class="catch">claude 자진 신고: <strong>최종 문안 저자가 자신이라 품질 판정은 self-approval</strong> + 본체 분기 P·S 미지정</td>
+          </tr>
+          <tr>
+            <td class="round-id">R5<small>초경량 · rtong 승인</small></td>
+            <td class="cell"><span class="badge pass">PASS</span><span class="cm">C0M0</span></td>
+            <td class="cell"><span class="badge pass">PASS</span><span class="cm">C0M0</span></td>
+            <td class="cell dim-cell">—</td>
+            <td class="catch">작성 비참여 2인이 최종 문안 확인 → <strong>절차 갭 해소</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="sub-h">판정 원장</h3>
+    <div class="table-wrap">
+      <table class="verdict-table">
+        <thead><tr><th>주장</th><th>판정</th><th>근거</th></tr></thead>
+        <tbody>
+          <tr class="row-confirmed">
+            <td class="claim">템플릿 3곳에 동일 결함 행 존재</td>
+            <td class="verdict-cell"><span class="stamp confirmed">✅ 확정</span></td>
+            <td class="reason">setup:533 · design-system:535 · oraebom:529 — <strong>발견 시점 기준</strong>(이후 oraebom이 자체 ⚠️ 주석을 달아 현재는 바이트 불일치)</td>
+          </tr>
+          <tr class="row-invalid">
+            <td class="claim">접근성 조항 = “제품이 발명하지 않는다”</td>
+            <td class="verdict-cell"><span class="stamp invalid">❌ 무효<span class="stamp-sub">요청측 요약 주체 반전</span></span></td>
+            <td class="reason">1차 원문 R-6의 제약 주체는 <strong>DS</strong>. 로컬 read-only 대조로 확정 → <strong>소유자 중립(양방향)으로 확장 채택</strong>(확장은 우리 도메인 판단이지 원문 주장 아님)</td>
+          </tr>
+          <tr class="row-invalid">
+            <td class="claim">이 repo는 private</td>
+            <td class="verdict-cell"><span class="stamp invalid">❌ 무효</span></td>
+            <td class="reason"><code>gh repo view</code> → <code>dakman-io/dakman-setup</code> <strong>visibility: PUBLIC</strong>. 🔒 emotion 원문 복사가 실제 유출이 될 뻔함</td>
+          </tr>
+          <tr class="row-confirmed">
+            <td class="claim">교정 후 🔒 emotion 원문 잔존</td>
+            <td class="verdict-cell"><span class="stamp confirmed">✅ 0건</span></td>
+            <td class="reason">마커 6종 python 전수 — emotion 원본 299KB 대조군 non-zero, md·html·project-init 전건 0</td>
+          </tr>
+          <tr class="row-confirmed">
+            <td class="claim">md↔html 대칭</td>
+            <td class="verdict-cell"><span class="stamp confirmed">✅ 확정</span></td>
+            <td class="reason">정규화 후 핵심 11구 <strong>비대칭 0</strong>, 무변경 앵커 대조군 유효</td>
+          </tr>
+          <tr class="row-confirmed">
+            <td class="claim">3자 정합(원칙 8 ↔ §12 ↔ project-init)</td>
+            <td class="verdict-cell"><span class="stamp confirmed">✅ 확정</span></td>
+            <td class="reason"><code>있으면</code> 잔존 0</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="sub-h muted-h">잔여 이견 <small>지우지 않고 보존 — §9.7</small></h3>
+    <div class="disagreement-grid">
+      <div class="disagree-card">
+        <div class="disagree-who">grok <span class="disagree-tag">미채택 · 보존</span></div>
+        <p>원칙 8 본문에 “DS 미사용=<code>n/a</code>” 한 토막을 넣으면 원칙 한 줄만 읽어도 미사용 경로가 보인다. <strong>미채택</strong> — §11 표 + 포인터로 성립하고, R5 PASS 이후 새 미검증 편집을 만들지 않기 위해.</p>
+      </div>
+      <div class="disagree-card">
+        <div class="disagree-who">codex · grok · claude <span class="disagree-tag">Minor · 대응함</span></div>
+        <p>원칙 8이 469자로 13원칙 최장(중앙값 4.9배). <strong>3인 모두 “길이보다 정확성 우선”에 동의</strong> — 분기를 다시 빼면 R3 M-1(조건절 소실) 재발.</p>
+      </div>
+      <div class="disagree-card">
+        <div class="disagree-who">claude <span class="disagree-tag">퇴화 케이스 · 실무 영향 낮음</span></div>
+        <p><code>본체</code> 분기가 DS 본체 repo의 데모/문서 화면 소유를 완전히 규정하진 않는다(퇴화 케이스, 실무 영향 낮음).</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== §4 ===== -->
+  <section class="section methodology reveal" id="s4">
+    <h2><span class="num">4</span>방법론에서 건진 것</h2>
+    <ol class="method-list">
+      <li><strong>held-out은 인용을 원문까지 따라가야 값이 나온다.</strong> R1 Critical(주체 반전)은 리뷰어가 emotion 1차 원문을 직접 열었기 때문에 잡혔다. 요약 경유는 요약자의 오류를 그대로 상속한다.</li>
+      <li><strong>“공개 범위”는 규율이 아니라 사실로 확인해야 한다.</strong> <code>gh repo view</code> 한 번이 “기밀 한 구절쯤”을 “PUBLIC 유출”로 재분류했다. 규율 문장(🔒 로컬-only)만으로는 위반을 못 막았다 — <strong>선언과 위반이 같은 셀에 있었다.</strong></li>
+      <li><strong>과공학 교정이 규범을 죽일 수 있다.</strong> R3에서 “원칙 8이 최장”이라는 Minor를 받아 단축했더니 조건절이 소실돼 규범이 거짓 단언이 됐다. <strong>길이는 대리 지표고 정확성이 본지표다.</strong></li>
+      <li><strong>리뷰어의 제안을 채택하면 그 리뷰어는 그 문안의 held-out이 아니게 된다.</strong> R4에서 claude가 이걸 자진 신고했다. 채택 = 저자성 이전이고, 종결은 작성 비참여 노드가 해야 한다.</li>
+      <li><strong>합의 headcount를 반올림하지 마라.</strong> §12가 R2를 “3인”이라 적었지만 실제는 2인(grok은 PASS·같은 지점을 Minor로 분류)이었다. 거짓 합의는 잔여 이견을 지우는 데서 생긴다.</li>
+      <li><strong>정본은 처방과 함께 결함도 복제한다</strong>(함정 클래스 11-가). 템플릿은 복제력이 가장 큰 정본이라, 여기서의 검토 공백은 곧 복제되는 공백이다.</li>
+    </ol>
+  </section>
+
+  <!-- ===== §5 ===== -->
+  <section class="section pending reveal" id="s5">
+    <div class="pending-banner">
+      <span class="pending-icon">⏳</span>
+      <div>
+        <h2><span class="num">5</span>미완 <small style="font-family:var(--sans);font-size:15px;color:var(--ink-faint);">(머지 후)</small></h2>
+        <p class="pending-note">아래 항목은 아직 실행되지 않았다 — 예정 상태, 완료 아님</p>
+      </div>
+    </div>
+
+    <div class="pending-block">
+      <h3>전파</h3>
+      <p>템플릿 수정만으로 배포된 사본은 치유되지 않는다. <code>cross-project-notify</code>로 통지 예정(사본 수정은 각 세션 소유):</p>
+      <ul>
+        <li><strong>dakman-design-system</strong>(:535 원문 잔존) — 인용 반전 사실도 함께 통지(그쪽 <code>lessons.md</code>·요약 경로 점검용)</li>
+        <li><strong>dakman-oraebom</strong>(:529 stale TODO — 이 수정이 도착했음을 알 경로가 없다)</li>
+      </ul>
+    </div>
+
+    <div class="pending-block">
+      <h3>부수 통지</h3>
+      <p><strong>claude-config</strong>: <code>grok 0.2.112</code>가 <strong>trust 프롬프트를 새로 추가</strong>했다(스킬의 0.2.93 실측 노트 “trust 프롬프트 없음”과 어긋남 — 첫 디스패치가 조용히 종료된 원인).</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <span>design-layer-ownership.md → HTML 시각화</span>
+  <span>held-out 검증 원장 · dakman-setup</span>
+</footer>
+
+<script>
+  const reveals = document.querySelectorAll('.reveal');
+  if('IntersectionObserver' in window){
+    const io = new IntersectionObserver((entries)=>{
+      entries.forEach(e=>{
+        if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, {threshold:0.08, rootMargin:'0px 0px -40px 0px'});
+    reveals.forEach(el=>io.observe(el));
+  } else {
+    reveals.forEach(el=>el.classList.add('in'));
+  }
+  // safety net: ensure nothing stays invisible for print / stuck observers
+  setTimeout(()=>document.querySelectorAll('.reveal:not(.in)').forEach(el=>el.classList.add('in')), 4000);
+</script>
+
+</body>
+</html>

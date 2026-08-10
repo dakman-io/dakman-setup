@@ -469,7 +469,10 @@ cd &lt;도메인&gt;/workspace/&lt;repo&gt;   <span class="c"># origin 이미 �
 │   ├── planning/            <span class="c"># prd.md · architecture.md · ci-cd.md</span>
 │   │   └── user-stories/    <span class="c"># US + AC (Given-When-Then)</span>
 │   ├── design/              <span class="c"># design-system.md · us-to-frame-map.md · 프레임</span>
-│   ├── progress/            <span class="c"># todo.md (spine) · loop-triage.md</span>
+│   ├── progress/            <span class="c"># todo.md (spine — 작업 단위 원장) · loop-triage.md</span>
+│                            <span class="c">#   ⚠️ docs/todo.md(상태문서)를 채택하면 현재 위치·다음 관문·</span>
+│                            <span class="c">#      열린 결정은 그쪽 소유. 항목별 다음 행동은 그 문서에</span>
+│                            <span class="c">#      슬롯이 없어 계속 spine 소유 (workflow.md §9 DoD)</span>
 │   ├── review/              <span class="c"># 리뷰 이슈 파일 (us/design/code/e2e)</span>
 │   └── tests/               <span class="c"># E2E flow · pass-fail 로그 · 커버리지 리포트</span>
 ├── docs/
@@ -500,8 +503,8 @@ cd &lt;도메인&gt;/workspace/&lt;repo&gt;   <span class="c"># origin 이미 �
             <li><code>workflow.html</code> — md와 동일 내용의 시각화 뷰 (md 갱신 시 함께 갱신)</li>
           </ul>
         </li>
-        <li><b>§0 placeholder 채우기</b> — workflow.md §0 표의 프로젝트별 값을 채운다: <code>{프로젝트명}</code>·<code>{플랫폼}</code>·<code>{타입체크}</code>·<code>{단위테스트}</code>·<code>{린트}</code>·<code>{E2E도구}</code>·<code>{디자인도구}</code>·<code>{커버리지}</code>·<code>{위험도메인}</code>·<code>{AI예산}</code>. <b><code>{위험도메인}</code>은 특히 명시적으로</b> — 실패 시 데이터·돈·신뢰에 직접 영향 주는 핵심 로직 (자동 T3 입력값).</li>
-        <li><b>핵심 원칙 정합 확인</b> — 본 프로젝트의 방법론이 workflow.md 원칙과 일치하는지 점검: <b>SDD</b>(원칙 1, 문서→디자인→소스) · <b>ATDD+TDD 이중 루프</b>(원칙 3) · <b>디자인 시스템 4 레이어</b>(원칙 8) · <b>Tier 분류</b>(§2). 상세 정의는 workflow.md를 정본으로 참조.</li>
+        <li><b>§0 placeholder 채우기</b> — workflow.md §0 표의 프로젝트별 값을 채운다: <code>{프로젝트명}</code>·<code>{플랫폼}</code>·<code>{타입체크}</code>·<code>{단위테스트}</code>·<code>{린트}</code>·<code>{E2E도구}</code>·<code>{E2E실행}</code>·<code>{디자인도구}</code>·<code>{중앙DS}</code>·<code>{실행환경}</code>·<code>{커버리지}</code>·<code>{위험도메인}</code>·<code>{AI예산}</code>. <b><code>{위험도메인}</code>은 특히 명시적으로</b> — 실패 시 데이터·돈·신뢰에 직접 영향 주는 핵심 로직 (자동 T3 입력값). <b><code>{중앙DS}</code>도 시작 시 확정</b> — 소비하는 중앙 디자인시스템 repo·판(<code>없음</code>/<code>본체</code> 포함). 원칙 8 층 소유의 입력값이라 나중에 읽는 시점의 자기선언으로 정하면 안 된다.</li>
+        <li><b>핵심 원칙 정합 확인</b> — 본 프로젝트의 방법론이 workflow.md 원칙과 일치하는지 점검: <b>SDD</b>(원칙 1, 문서→디자인→소스) · <b>ATDD+TDD 이중 루프</b>(원칙 3) · <b>디자인 시스템 4 레이어 + 층 소유</b>(원칙 8 — <code>{중앙DS}</code> 값이 정함: repo·판이면 Foundation·Component=중앙 DS / Pattern·Screen=제품 · <code>없음</code>=제품 4층 · <code>본체</code>=이 repo가 정본) · <b>Tier 분류</b>(§2). 상세 정의는 workflow.md를 정본으로 참조.</li>
         <li><b>검증 인프라 결정</b> (셋업 시 1회) — 어떤 도구를 연결할지 정한다:
           <ul>
             <li>E2E: 웹 = playwright(+mcp) / 모바일 = maestro</li>

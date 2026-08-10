@@ -170,7 +170,10 @@ project/
 │   ├── planning/            # prd.md · architecture.md · ci-cd.md
 │   │   └── user-stories/    # US + AC (Given-When-Then)
 │   ├── design/              # design-system.md · us-to-frame-map.md · 프레임
-│   ├── progress/            # todo.md (spine) · loop-triage.md
+│   ├── progress/            # todo.md (spine — 작업 단위 원장) · loop-triage.md
+│                            #   ⚠️ docs/todo.md(상태문서)를 채택하면 현재 위치·다음 관문·
+│                            #      열린 결정은 그쪽 소유. 항목별 다음 행동은 그 문서에
+│                            #      슬롯이 없어 계속 spine 소유 (workflow.md §9 DoD)
 │   ├── review/              # 리뷰 이슈 파일 (us/design/code/e2e)
 │   └── tests/               # E2E flow · pass-fail 로그 · 커버리지 리포트
 ├── docs/
